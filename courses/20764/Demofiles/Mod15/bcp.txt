@@ -1,0 +1,11 @@
+:: show bcp options
+bcp -?
+
+:: generate a text format file
+bcp salesapp1.HR.Employees format nul -S MIA-SQL -T -w  -t | -r \n -f D:\Demofiles\Mod15\bcp\EmployeesFmt.txt
+
+:: generate an XML format file
+bcp salesapp1.HR.Employees format nul -S MIA-SQL -T -w  -t | -r \n -x -f D:\Demofiles\Mod15\bcp\EmployeesFmt.xml
+
+:: export using the XML format file
+bcp salesapp1.HR.Employees out D:\Demofiles\Mod15\bcp\Employees.csv -S MIA-SQL -T -f D:\Demofiles\Mod15\bcp\EmployeesFmt.xml

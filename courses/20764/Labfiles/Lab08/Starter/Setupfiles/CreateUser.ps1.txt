@@ -1,0 +1,11 @@
+﻿$userName = "FileAgent"
+[ADSI]$server="WinNT://mia-sql"
+try
+{
+    $server.delete("user", $userName)
+}
+catch
+{
+    Write-Host "..."
+}
+$FileAgent=$server.Create("User", $userName)$FileAgent.SetPassword("Pa`$`$w0rd")$flag=$FileAgent.UserFlags.value -bor 0x10000$FileAgent.put("userflags",$flag)$FileAgent.SetInfo()

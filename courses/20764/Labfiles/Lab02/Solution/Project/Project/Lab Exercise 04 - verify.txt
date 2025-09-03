@@ -1,0 +1,51 @@
+###########################
+##  Module 2 Exercise 4  ##
+## VERIFICATION COMMANDS ##
+###########################
+
+########################################
+# Task 1 - Test IT Support Permissions #
+########################################
+
+runas /user:adventureworks\anthonyfrizzell /noprofile sqlcmd
+# when prompted, use the password: Pa$$w0rd
+
+# In SQLCMD:
+SELECT SUSER_NAME();
+GO
+
+ALTER LOGIN Marketing_Application WITH PASSWORD = 'NewPa$$w0rd';
+GO
+
+ALTER LOGIN [ADVENTUREWORKS\WebApplicationSvc] DISABLE;
+GO
+
+############################################
+# Task 2 - Test Sales Employee Permissions #
+############################################
+
+runas /user:adventureworks\dandrayton /noprofile sqlcmd
+# when prompted, use the password: Pa$$w0rd
+
+# In SQLCMD:
+SELECT TOP (10) * FROM salesapp1.Sales.Orders;
+GO
+
+UPDATE salesapp1.Sales.Orders SET shippeddate = getdate() WHERE orderid = 10257;
+GO
+
+###########################################
+# Task 3 - Test Sales Manager Permissions #
+###########################################
+
+runas /user:adventureworks\deannaball /noprofile sqlcmd
+
+# In SQLCMD:
+SELECT TOP (10) * FROM salesapp1.Sales.Orders;
+GO
+
+SELECT TOP (10) * FROM salesapp1.Production.Suppliers;
+GO
+
+UPDATE salesapp1.Sales.Orders SET shippeddate = getdate() WHERE orderid = 10257;
+GO

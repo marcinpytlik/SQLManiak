@@ -1,0 +1,39 @@
+﻿# CreateBlobStorageContainerAndSAS_3
+
+# Create variables with account name etc
+$accountName = 'your.account@email.co.uk';
+$subscriptionName = 'Azure Pass';
+$storageAccountName = 'storageaccountname';
+$containerName = 'aw2016';
+
+# Log in to your Azure account
+Add-AzureAccount;
+Select-AzureSubscription -SubscriptionName $subscriptionName;
+
+# Create a storage context for the Azure storage account
+$accountKeys = Get-AzureStorageKey -StorageAccountName $storageAccountName;
+$storageContext = New-AzureStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $accountKeys.Primary;
+
+# Create a storage container
+$container = New-AzureStorageContainer -Context $storageContext -Name $containerName;
+$cbc = $container.CloudBlobContainer;
+
+# Create a shared access policy
+$permissions = $cbc.GetPermissions();
+$policyName = 'policy1';
+$policy = New-Object 'Microsoft.WindowsAzure.Storage.Blob.SharedAccessBlobPolicy';
+$policy.SharedAccessStartTime = $(Get-Date).ToUniversalTime().AddMinutes(-5);
+$policy.SharedAccessExpiryTime = $(Get-Date).ToUniversalTime().AddYears(10);
+$policy.Permissions = "Read,Write,List,Delete";
+$permissions.SharedAccessPolicies.Add($policyName, $policy);
+$cbc.SetPermissions($permissions);
+
+# Get a shared access signature, based on the policy
+# You'll use the values displayed here in Lesson2 of the tutorial to create a SQL Server credential
+$policy = New-Object 'Microsoft.WindowsAzure.Storage.Blob.SharedAccessBlobPolicy';
+$sas = $cbc.GetSharedAccessSignature($policy, $policyName);
+Write-Host 'Shared Access Signature = '$($sas.Substring(1))'';
+Write-Host 'Cloud Blob Container URL = '$($cbc.Uri)'';
+
+# Log out of your azure account
+Remove-AzureAccount -Name $accountName;
