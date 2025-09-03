@@ -31,7 +31,8 @@ Materiały do oficjalnych kursów Microsoft SQL Server i Azure Data.
 ### 🎓 Kurs autorski
 - [SQL Server 2022 – Instalacja i integracja w różnych środowiskach](courses/SQL2022-Install/)  
   Instalacja SQL Server 2022 w środowiskach Windows (GUI, Core), Linux, Docker oraz integracja z Active Directory i automatyzacja wdrożeń.
-
+- [Administracja bazą danych SQL Server](courses/SQL2022-Admin/)  
+  Kompleksowa administracja SQL Server 2016–2022: architektura, bezpieczeństwo, backup/restore, utrzymanie, monitoring i optymalizacja.
 ---
 
 ## 🎯 Cel
