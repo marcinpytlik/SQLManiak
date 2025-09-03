@@ -11,11 +11,30 @@ Repozytorium prowadzone przez **Marcin Pytlika (aka SQLManiak)** – pasjonata i
 - `checklists/` – listy kontrolne
 - `dashboards/` – dashboardy Grafana/InfluxDB
 - `docs/` – dodatkowe materialy (PDF, slajdy)
+## 📂 Courses
+
+Materiały do oficjalnych kursów Microsoft SQL Server i Azure Data.
+
+- [20761 – Querying Data with Transact-SQL](courses/20761/)  
+  Składnia SELECT, JOIN, GROUP BY, podzapytania, funkcje, transakcje.
+
+- [20762 – Developing SQL Databases](courses/20762/)  
+  Projektowanie tabel, indeksów, procedur i funkcji. Implementacja logiki w T-SQL.
+
+- [20764 – Administering a SQL Database Infrastructure](courses/20764/)  
+  Administracja instancjami SQL Server, bezpieczeństwo, backup/restore, monitorowanie, HA/DR.
+
+- [20765 – Provisioning SQL Databases](courses/20765/)  
+  Instalacja i konfiguracja SQL Server, Azure SQL Database, Managed Instance, automatyzacja wdrożeń.
+
+---
+
 
 ---
 
 ## 🎯 Cel
 Repozytorium edukacyjne – do nauki, testow i dzielenia sie wiedza.
+
 
 ---
 
