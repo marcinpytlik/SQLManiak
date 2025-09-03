@@ -1,0 +1,19 @@
+USE master
+GO
+
+-- Drop and restore Databases
+IF EXISTS(SELECT * FROM sys.sysdatabases WHERE name = 'TestPSDB')
+BEGIN
+	DROP DATABASE TestPSDB
+END
+GO
+
+
+
+RESTORE DATABASE [TestPSDB] FROM  DISK = N'$(SUBDIR)SetupFiles\TSQL.bak' WITH  REPLACE,
+MOVE N'TSQL' TO N'$(SUBDIR)SetupFiles\TestPSDB.mdf', 
+MOVE N'TSQL_Log' TO N'$(SUBDIR)SetupFiles\TestPSDB_log.ldf'
+GO
+ALTER AUTHORIZATION ON DATABASE::TestPSDB TO [ADVENTUREWORKS\Student];
+GO
+

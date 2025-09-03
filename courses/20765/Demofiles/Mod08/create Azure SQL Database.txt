@@ -1,0 +1,44 @@
+# Demonstration: Creating an Azure SQL Database from PowerShell
+
+# 1. Link Azure account to PowerShell
+# At the sign-in screen, use your Azure credentials
+Add-AzureRmAccount
+# (If your Azure credentials are already linked to PowerShell on this VM, use Login-AzureRMAccount)
+
+# 2. Use the subscription Id returned by the previous command to
+# confirm the subscription you want to work with
+Select-AzureRmSubscription -SubscriptionId <your subscription id>
+
+# 3. Return a list of Azure data centers supporting SQL Database
+(Get-AzureRmResourceProvider -ListAvailable | Where-Object {$_.ProviderNamespace -eq 'Microsoft.Sql'}).Locations
+
+# 4. Create a resource group. Replace <location> with one of the 
+# locations returned by the previous command
+New-AzureRmResourceGroup -Name "resourcegroupPSTest" -Location "<location>"
+
+# 5. Create a new database server. Replace <location> with the same 
+# value as used in the previous step. Replace <your server name>
+# with a unique server name
+# Use the following credentials when requested:
+# User name: psUser 
+# Password:  Pa$$w0rd
+#
+# This step may take several minutes to complete
+New-AzureRmSqlServer -ResourceGroupName "resourcegroupPSTest" -ServerName "<your server name>" -Location "<location>" -ServerVersion "12.0"
+
+# 6. Create a firewall rule to allow remote connections to the
+# server from your current IP Address. Replace <your server name> with the 
+# server name used in the previous command.
+# You must set the $CurrentIP variable to your current external IP. You can get this from the Azure
+# Portal (see the value returned by the "Add Client IP" button on the firewall for an existing server),
+# or from third party services like Google (search Google for "what is my ip") 
+# or www.whatismyip.com
+$currentIP = "<your external ip"
+New-AzureRmSqlServerFirewallRule -ResourceGroupName "resourcegroupPSTest" -ServerName "<your server name>" -FirewallRuleName "clientFirewallRule1" -StartIpAddress $currentIP -EndIpAddress $currentIP
+
+# 7. Create a new database. Replace <your server name> with the 
+# server name used in the previous command
+New-AzureRmSqlDatabase -ResourceGroupName "resourcegroupPSTest" -ServerName "<your server name>" -DatabaseName "TestPSDB" -Edition Standard -RequestedServiceObjectiveName "S1"
+
+
+

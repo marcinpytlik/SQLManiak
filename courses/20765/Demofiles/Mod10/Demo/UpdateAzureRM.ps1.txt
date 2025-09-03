@@ -1,0 +1,8 @@
+﻿# Uninstall AzureRM module
+#Takes about ten minutes
+Get-Module -Name AzureRM* -ListAvailable | Uninstall-Module
+
+
+# Install latest AzureRM module
+# Click yes at warning
+Install-Module AzureRM

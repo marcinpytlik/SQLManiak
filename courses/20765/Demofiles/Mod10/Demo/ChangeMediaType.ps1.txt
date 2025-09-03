@@ -1,0 +1,33 @@
+﻿# DemoStorageSpacesInAzureVm
+# v1.0.0  2017-02-28
+
+################################################################################
+# List the physical disks
+################################################################################
+
+# Clear screen
+C:
+cd\
+cls
+
+# List the physical disks
+Get-PhysicalDisk | Select-Object -Property UniqueId, FriendlyName, PhysicalLocation, Size, MediaType | Format-List;
+
+
+################################################################################
+# Set the media types
+################################################################################
+
+# Initialize variables
+[string] $uniqueIdPremium1 = "";
+[string] $uniqueIdStandard1 = "";
+[string] $uniqueIdStandard2 = "";
+[string] $uniqueIdStandard3 = "";
+
+# Set media type
+Set-PhysicalDisk -UniqueId $uniqueIdPremium1 -MediaType SSD;
+Set-PhysicalDisk -UniqueId $uniqueIdStandard1 -MediaType HDD;
+Set-PhysicalDisk -UniqueId $uniqueIdStandard2 -MediaType HDD;
+Set-PhysicalDisk -UniqueId $uniqueIdStandard3 -MediaType HDD;
+
+

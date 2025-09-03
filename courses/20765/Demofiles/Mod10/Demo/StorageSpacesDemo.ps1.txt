@@ -1,0 +1,150 @@
+﻿# StorageSpacesDemo_CreateAzureResources.ps1
+# v1.0.0  2017-02-28
+
+
+################################################################################
+# Initialize
+################################################################################
+
+#Require -Version 5.0
+using namespace System.Management.Automation;
+using namespace Microsoft.Azure.Commands.Network.Models;
+using namespace Microsoft.Azure.Commands.Compute.Models;
+using namespace Microsoft.Azure.Management.Compute.Models;
+
+# Clear screen
+C:
+cd\
+cls
+
+# Initialize variables
+[string] $subscriptionName = "Azure Pass";
+[string] $tenantId = "95964dcc-6b22-49e2-a30e-40987724f954";
+[string] $location = "West Europe";
+
+[string] $resGroupName = "StorageSpacesDemo";
+
+[string] $subnetName = "Subnet1";
+[string] $virtualNetworkName = "Vnet1";
+[string] $publicIPName = "PublicIP1";
+[string] $networkInterfaceName = "NIC1";
+[string] $vmName = "VM1";
+[string] $computerName = "VM1";
+
+
+################################################################################
+# Sign in to Azure and select subscription
+################################################################################
+
+Login-AzureRmAccount -SubscriptionName $subscriptionName -TenantId $tenantId;
+
+
+################################################################################
+# Prompt for credentials for VM and SQL Server
+################################################################################
+
+[PSCredential] $vmCred = Get-Credential -Message "Enter the name and password for the VM local administrator" `
+                                        -UserName "Student";
+
+
+################################################################################
+# Create resource group
+################################################################################
+
+New-AzureRmResourceGroup -Name $resGroupName -Location $location;
+
+
+################################################################################
+# Create a virtual network
+################################################################################
+
+[PSSubnet] $subnet = New-AzureRmVirtualNetworkSubnetConfig -Name $subnetName `
+                                                           -AddressPrefix 10.0.0.0/24;
+
+[PSVirtualNetwork] $vnet = New-AzureRmVirtualNetwork -Name $virtualNetworkName `
+                                                     -ResourceGroupName $resGroupName `
+                                                     -Location $location `
+                                                     -AddressPrefix 10.0.0.0/16 `
+                                                     -Subnet $subnet;
+
+
+################################################################################
+# Create public IP address and network interface
+################################################################################
+
+[PSPublicIpAddress] $publicIP = New-AzureRmPublicIpAddress -Name $publicIPName `
+                                                           -ResourceGroupName $resGroupName `
+                                                           -Location $location `
+                                                           -AllocationMethod Dynamic;
+
+[PSNetworkInterface] $nic = New-AzureRmNetworkInterface -Name $networkInterfaceName `
+                                                        -ResourceGroupName $resGroupName `
+                                                        -Location $location `
+                                                        -SubnetId $vnet.Subnets[0].Id `
+                                                        -PublicIpAddressId $publicIP.Id;
+
+
+################################################################################
+# Create virtual machine
+################################################################################
+
+[PSVirtualMachine] $vmConfig = New-AzureRmVMConfig -VMName $vmName -VMSize "Standard_D2_v3";
+
+$vmConfig = Set-AzureRmVMOperatingSystem -VM $vmConfig -Windows -ComputerName $computerName `
+                                         -Credential $vmCred -ProvisionVMAgent -EnableAutoUpdate;
+
+$vmConfig = Set-AzureRmVMSourceImage -VM $vmConfig -PublisherName "MicrosoftWindowsServer" `
+                                     -Offer "WindowsServer" -Skus "2016-Datacenter" `
+                                     -Version "latest";
+
+$vmConfig = Add-AzureRmVMNetworkInterface -VM $vmConfig -Id $nic.Id;
+
+[string] $osDiskName = $vmName + "-OsDisk1";
+
+$vmConfig = Set-AzureRmVMOSDisk -VM $vmConfig -Name $osDiskName -StorageAccountType StandardLrs `
+                                -DiskSizeInGB 128 -CreateOption FromImage -Caching ReadWrite;
+
+# Create a new VM
+# The command may take several minutes to complete
+New-AzureRmVM -ResourceGroupName $resGroupName -Location $location -VM $vmConfig;
+
+
+################################################################################
+# Add data disks to the VM
+################################################################################
+
+# Disk configurations for Premium and Standard disks
+# Make the sizes different because it's how we will identify them
+[Disk] $diskConfigPremium = New-AzureRmDiskConfig -AccountType StandardLRS -Location $location `
+                                                  -CreateOption Empty -DiskSizeGB 128;
+
+[Disk] $diskConfigStandard = New-AzureRmDiskConfig -AccountType StandardLRS -Location $location `
+                                                   -CreateOption Empty -DiskSizeGB 100;
+
+# Create the disks
+[string] $diskNameS1 = $vmName + "-StandardDisk1";
+[Disk] $dataDiskS1 = New-AzureRmDisk -DiskName $diskNameS1 -Disk $diskConfigPremium -ResourceGroupName $resGroupName;
+
+[string] $diskNameS4 = $vmName + "-StandardDisk4";
+[Disk] $dataDiskS4 = New-AzureRmDisk -DiskName $diskNameS4 -Disk $diskConfigStandard -ResourceGroupName $resGroupName;
+
+[string] $diskNameS2 = $vmName + "-StandardDisk2";
+[Disk] $dataDiskS2 = New-AzureRmDisk -DiskName $diskNameS2 -Disk $diskConfigStandard -ResourceGroupName $resGroupName;
+
+[string] $diskNameS3 = $vmName + "-StandardDisk3";
+[Disk] $dataDiskS3 = New-AzureRmDisk -DiskName $diskNameS3 -Disk $diskConfigStandard -ResourceGroupName $resGroupName;
+
+
+# Attach the disks to the VM
+[PSVirtualMachine] $vm = Get-AzureRmVM -Name $vmName -ResourceGroupName $resGroupName;
+
+$vm = Add-AzureRmVMDataDisk -VM $vm -Name $diskNameS4 -CreateOption Attach -ManagedDiskId $dataDiskS4.Id -Lun 4;
+$vm = Add-AzureRmVMDataDisk -VM $vm -Name $diskNameS1 -CreateOption Attach -ManagedDiskId $dataDiskS1.Id -Lun 1;
+$vm = Add-AzureRmVMDataDisk -VM $vm -Name $diskNameS2 -CreateOption Attach -ManagedDiskId $dataDiskS2.Id -Lun 2;
+$vm = Add-AzureRmVMDataDisk -VM $vm -Name $diskNameS3 -CreateOption Attach -ManagedDiskId $dataDiskS3.Id -Lun 3;
+
+Update-AzureRmVM -VM $vm -ResourceGroupName $resGroupName;
+
+Get-AzureRmAvailabilitySet -ResourceGroupName $resGroupName;
+
+Get-AzureRmVMSize

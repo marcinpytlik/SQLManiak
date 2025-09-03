@@ -1,0 +1,15 @@
+USE master
+GO
+
+
+IF EXISTS(SELECT * FROM sys.sysdatabases WHERE name = 'DemoDB1')
+BEGIN
+	DROP DATABASE DemoDB1
+END
+GO
+
+IF EXISTS(SELECT * FROM sys.sysdatabases WHERE name = 'DemoDB2')
+BEGIN
+	DROP DATABASE DemoDB2
+END
+GO

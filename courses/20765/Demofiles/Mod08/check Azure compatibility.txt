@@ -1,0 +1,3 @@
+cd C:\Program Files (x86)\Microsoft SQL Server\130\DAC\bin
+sqlpackage.exe /Action:Export /ssn:MIA-SQL /sdn:TestPSDB /tf:D:\Demofiles\Mod08\TSQL.compatibility.bacpac /p:TableData=Stats.Tests > D:\Demofiles\Mod08\ExportReport.txt 2>&1
+Notepad D:\Demofiles\Mod08\ExportReport.txt
