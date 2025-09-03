@@ -35,6 +35,8 @@ Materiały do oficjalnych kursów Microsoft SQL Server i Azure Data.
   Kompleksowa administracja SQL Server 2016–2022: architektura, bezpieczeństwo, backup/restore, utrzymanie, monitoring i optymalizacja.
 - [Optymalizacja bazy danych SQL Server 2022](courses/SQL2022-Optimize/)  
   Zaawansowana optymalizacja SQL Server 2022: diagnostyka, indeksy, partycjonowanie, filegroups, tempdb, parallelism i rozwiązania hybrydowe.
+- [Monitoring i wizualizacja danych z wykorzystaniem Grafany – Windows i SQL Server](courses/Grafana-Monitoring/)  
+  Monitoring systemów Windows i SQL Server z użyciem Grafany, InfluxDB i Telegraf: dashboardy, alerting, provisioning i bezpieczeństwo.
   ### 🛤️ Ścieżka kursów autorskich SQL Server 2022
 
 [SQL Server 2022 – Instalacja i integracja w różnych środowiskach](courses/SQL2022-Install/) →  
@@ -45,7 +47,14 @@ Ta ścieżka prowadzi uczestnika od podstaw instalacji i integracji, przez admin
 
 
 ---
+## 📚 Dokumentacja
 
+- [Quick Reference Handbook - DMV](docs/dmvs_quick_reference.md)  
+  Skondensowana ściąga DMV z podziałem na kategorie + link do skryptu generującego pełną listę.
+- [Post-Migration Checklist: SQL Server 2016 → 2022](docs/post_migration_checklist.md)  
+  Lista kontrolna kroków po migracji bazy danych: DBCC, statystyki, konfiguracja instancji, Query Store, backupy i testy odzyskiwania.
+- [Compatibility Level: SQL Server 2016 → 2022](docs/compatibility_level.md)  
+  Wyjaśnienie poziomów zgodności, ich wpływ na optymalizator, strategia testowania oraz dobre praktyki.
 ## 🎯 Cel
 Repozytorium edukacyjne – do nauki, testow i dzielenia sie wiedza.
 
