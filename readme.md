@@ -33,6 +33,17 @@ Materiały do oficjalnych kursów Microsoft SQL Server i Azure Data.
   Instalacja SQL Server 2022 w środowiskach Windows (GUI, Core), Linux, Docker oraz integracja z Active Directory i automatyzacja wdrożeń.
 - [Administracja bazą danych SQL Server](courses/SQL2022-Admin/)  
   Kompleksowa administracja SQL Server 2016–2022: architektura, bezpieczeństwo, backup/restore, utrzymanie, monitoring i optymalizacja.
+- [Optymalizacja bazy danych SQL Server 2022](courses/SQL2022-Optimize/)  
+  Zaawansowana optymalizacja SQL Server 2022: diagnostyka, indeksy, partycjonowanie, filegroups, tempdb, parallelism i rozwiązania hybrydowe.
+  ### 🛤️ Ścieżka kursów autorskich SQL Server 2022
+
+[SQL Server 2022 – Instalacja i integracja w różnych środowiskach](courses/SQL2022-Install/) →  
+[Administracja bazą danych SQL Server](courses/SQL2022-Admin/) →  
+[Optymalizacja bazy danych SQL Server 2022](courses/SQL2022-Optimize/)
+
+Ta ścieżka prowadzi uczestnika od podstaw instalacji i integracji, przez administrację, aż do zaawansowanej optymalizacji SQL Server 2022.
+
+
 ---
 
 ## 🎯 Cel
