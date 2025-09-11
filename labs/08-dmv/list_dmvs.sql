@@ -17,7 +17,7 @@
    - SQL Server 2022 (Developer Edition)
 
  Usage:
-   Run in SSMS, Azure Data Studio or sqlcmd. Results include:
+   Run in SSMS, VSCode or sqlcmd. Results include:
      * DMV name
      * Category
      * Short description

@@ -1,0 +1,24 @@
+USE master;
+IF DB_ID('QS_Lab') IS NOT NULL ALTER DATABASE QS_Lab SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+IF DB_ID('QS_Lab') IS NOT NULL DROP DATABASE QS_Lab;
+GO
+CREATE DATABASE QS_Lab;
+ALTER DATABASE QS_Lab SET RECOVERY SIMPLE;
+GO
+ALTER DATABASE QS_Lab SET QUERY_STORE = ON
+    (OPERATION_MODE = READ_WRITE, CLEANUP_POLICY = (STALE_QUERY_THRESHOLD_DAYS = 7));
+GO
+USE QS_Lab;
+CREATE TABLE dbo.Sales
+(
+    Id int IDENTITY(1,1) PRIMARY KEY,
+    CustomerId int NOT NULL,
+    Amount money NOT NULL,
+    CreateDate date NOT NULL
+);
+;WITH n AS (SELECT TOP (500000) ROW_NUMBER() OVER(ORDER BY (SELECT 1)) AS rn FROM sys.all_objects a CROSS JOIN sys.all_objects b)
+INSERT dbo.Sales(CustomerId, Amount, CreateDate)
+SELECT (rn % 10000) + 1, (rn % 100) + 1, DATEADD(day, - (rn % 365), GETDATE())
+FROM n;
+CREATE INDEX IX_Sales_Customer_CreateDate ON dbo.Sales(CustomerId, CreateDate);
+GO

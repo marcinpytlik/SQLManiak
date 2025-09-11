@@ -1,0 +1,131 @@
+{
+  "version": "2.0.0",
+  "inputs": [
+    {
+      "id": "serverName",
+      "type": "promptString",
+      "description": "Nazwa serwera SQL (np. localhost lub hostname, opcj. z portem: localhost,1433)",
+      "default": "localhost"
+    },
+    {
+      "id": "sqlUser",
+      "type": "promptString",
+      "description": "SQL Login (gdy używasz SQL Auth)",
+      "default": "sa"
+    },
+    {
+      "id": "sqlPassword",
+      "type": "promptString",
+      "description": "Hasło SQL (niezapisane)",
+      "default": "",
+      "password": true
+    }
+  ],
+  "tasks": [
+    {
+      "label": "SQL: Run Current File (Windows Auth)",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:serverName}",
+        "-d",
+        "master",
+        "-E",
+        "-b",
+        "-i",
+        "${file}"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "SQL: Run Current File (SQL Auth)",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:serverName}",
+        "-d",
+        "master",
+        "-U",
+        "${input:sqlUser}",
+        "-P",
+        "${input:sqlPassword}",
+        "-b",
+        "-i",
+        "${file}"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "SQL: Run ALL labs (Windows Auth)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/run_all.ps1",
+        "-Server",
+        "${input:serverName}",
+        "-Database",
+        "AQP_Lab"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "SQL: Run ALL labs (SQL Auth)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/run_all.ps1",
+        "-Server",
+        "${input:serverName}",
+        "-Database",
+        "AQP_Lab",
+        "-SqlAuth",
+        "-User",
+        "${input:sqlUser}",
+        "-Password",
+        "${input:sqlPassword}"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "SQL: Cleanup (DROP AQP_Lab)",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:serverName}",
+        "-d",
+        "master",
+        "-E",
+        "-b",
+        "-i",
+        "${workspaceFolder}/sql/99_cleanup.sql"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always"
+      }
+    }
+  ]
+}
