@@ -9,12 +9,12 @@ Możesz odinstalować SQL Server bez posiadania instalatora `.exe` – system Wi
 ### 1. Panel sterowania
 - Otwórz **Panel sterowania → Programy i funkcje**.  
 - Znajdź wpisy takie jak:
-  - `Microsoft SQL Server 2022 (64-bit)`
-  - `Microsoft SQL Server 2022 Setup (English)`
+  - `Microsoft SQL Server 2016 (64-bit)`
+  - `Microsoft SQL Server 2016 Setup (English)`
   - `Microsoft SQL Server Management Studio` (jeśli było instalowane osobno).
 
 ### 2. Odinstalowanie instancji
-- Kliknij **Microsoft SQL Server 2022 (64-bit)** → *Odinstaluj/Zmień*.  
+- Kliknij **Microsoft SQL Server 2016 (64-bit)** → *Odinstaluj/Zmień*.  
 - Uruchomi się **SQL Server Setup**.  
 - Wybierz opcję **Remove**.  
 - Zaznacz instancję do usunięcia (np. `MSSQLSERVER`, `SQL2022DEV`).  
@@ -55,7 +55,7 @@ Możliwe jest odinstalowanie SQL Server w trybie cichym przez PowerShell, np. w 
 - Realna deinstalacja całej instancji
 - .\Uninstall-SqlInstance.ps1 -InstanceName "MSSQLSERVER"
 - Deinstalacja + próba usunięcia współdzielonych komponentów
-- .\Uninstall-SqlInstance.ps1 -InstanceName "SQL2022DEV" -RemoveShared
+- .\Uninstall-SqlInstance.ps1 -InstanceName "SQL2016DEV" -RemoveShared
 - Więcej logów (pliki w C:\Temp\SqlUninstall)
-- .\Uninstall-SqlInstance.ps1 -InstanceName "SQL2022DEV" -VerboseLog
+- .\Uninstall-SqlInstance.ps1 -InstanceName "SQL2016DEV" -VerboseLog
 
