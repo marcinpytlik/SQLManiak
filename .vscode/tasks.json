@@ -19,6 +19,60 @@
       "description": "Hasło SQL (niezapisane)",
       "default": "",
       "password": true
+    },
+    {
+      "id": "databaseName",
+      "type": "promptString",
+      "description": "Baza docelowa (dla sqlcmd/bcp)",
+      "default": "master"
+    },
+    {
+      "id": "schemaName",
+      "type": "promptString",
+      "description": "Schemat (dla bcp)",
+      "default": "dbo"
+    },
+    {
+      "id": "tableName",
+      "type": "promptString",
+      "description": "Tabela (dla bcp)",
+      "default": "YourTable"
+    },
+    {
+      "id": "csvPath",
+      "type": "promptString",
+      "description": "Ścieżka do CSV (export/import bcp)",
+      "default": "${workspaceFolder}\\data\\export.csv"
+    },
+    {
+      "id": "errorlogPath",
+      "type": "promptString",
+      "description": "Pełna ścieżka do ERRORLOG",
+      "default": "C:\\\\Program Files\\\\Microsoft SQL Server\\\\MSSQL16.MSSQLSERVER\\\\MSSQL\\\\Log\\\\ERRORLOG"
+    },
+    {
+      "id": "serviceName",
+      "type": "promptString",
+      "description": "Nazwa usługi SQL do sterowania",
+      "default": "MSSQLSERVER"
+    },
+    {
+      "id": "backupFolder",
+      "type": "promptString",
+      "description": "Folder backupów do szybkiego otwarcia",
+      "default": "E:\\\\SQLBackups"
+    },
+    {
+      "id": "instanceFolderHint",
+      "type": "promptString",
+      "description": "Fragment ścieżki instancji do odnalezienia procesu (dla SQLDumper)",
+      "default": "MSSQL16.MSSQLSERVER"
+    },
+    {
+      "id": "ssisPkgPath",
+      "type": "promptString",
+      "description": "Ścieżka do pakietu SSIS (.dtsx) dla dtexec",
+      "default": "${workspaceFolder}\\ssis\\Package.dtsx"
     }
   ],
   "tasks": [
@@ -37,9 +91,7 @@
         "${file}"
       ],
       "problemMatcher": [],
-      "presentation": {
-        "reveal": "always"
-      }
+      "presentation": { "reveal": "always" }
     },
     {
       "label": "SQL: Run Current File (SQL Auth)",
@@ -59,9 +111,7 @@
         "${file}"
       ],
       "problemMatcher": [],
-      "presentation": {
-        "reveal": "always"
-      }
+      "presentation": { "reveal": "always" }
     },
     {
       "label": "SQL: Run ALL labs (Windows Auth)",
@@ -72,16 +122,14 @@
         "-ExecutionPolicy",
         "Bypass",
         "-File",
-        "${workspaceFolder}/run_all.ps1",
+        "${workspaceFolder}\\run_all.ps1",
         "-Server",
         "${input:serverName}",
         "-Database",
         "AQP_Lab"
       ],
       "problemMatcher": [],
-      "presentation": {
-        "reveal": "always"
-      }
+      "presentation": { "reveal": "always" }
     },
     {
       "label": "SQL: Run ALL labs (SQL Auth)",
@@ -92,7 +140,7 @@
         "-ExecutionPolicy",
         "Bypass",
         "-File",
-        "${workspaceFolder}/run_all.ps1",
+        "${workspaceFolder}\\run_all.ps1",
         "-Server",
         "${input:serverName}",
         "-Database",
@@ -104,9 +152,7 @@
         "${input:sqlPassword}"
       ],
       "problemMatcher": [],
-      "presentation": {
-        "reveal": "always"
-      }
+      "presentation": { "reveal": "always" }
     },
     {
       "label": "SQL: Cleanup (DROP AQP_Lab)",
@@ -120,12 +166,198 @@
         "-E",
         "-b",
         "-i",
-        "${workspaceFolder}/sql/99_cleanup.sql"
+        "${workspaceFolder}\\sql\\99_cleanup.sql"
       ],
       "problemMatcher": [],
-      "presentation": {
-        "reveal": "always"
-      }
+      "presentation": { "reveal": "always" }
+    },
+
+    /* ==== DBA toolbox – logi i Config Manager ==== */
+
+    {
+      "label": "Open ERRORLOG (in VS Code)",
+      "type": "shell",
+      "command": "code",
+      "args": [
+        "${input:errorlogPath}"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Tail ERRORLOG (last 200 lines)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "Get-Content '${input:errorlogPath}' -Tail 200"
+      ],
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "Open SQL Config Manager – SQL 2016",
+      "type": "shell",
+      "command": "C:\\\\Windows\\\\SysWOW64\\\\mmc.exe",
+      "args": [ "C:\\\\Windows\\\\SysWOW64\\\\SQLServerManager13.msc" ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Open SQL Config Manager – SQL 2017",
+      "type": "shell",
+      "command": "C:\\\\Windows\\\\SysWOW64\\\\mmc.exe",
+      "args": [ "C:\\\\Windows\\\\SysWOW64\\\\SQLServerManager14.msc" ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Open SQL Config Manager – SQL 2019",
+      "type": "shell",
+      "command": "C:\\\\Windows\\\\SysWOW64\\\\mmc.exe",
+      "args": [ "C:\\\\Windows\\\\SysWOW64\\\\SQLServerManager15.msc" ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Open SQL Config Manager – SQL 2022",
+      "type": "shell",
+      "command": "C:\\\\Windows\\\\SysWOW64\\\\mmc.exe",
+      "args": [ "C:\\\\Windows\\\\SysWOW64\\\\SQLServerManager16.msc" ],
+      "problemMatcher": []
+    },
+
+    /* ==== DBA toolbox – usługi i foldery ==== */
+
+    {
+      "label": "Start SQL Server service",
+      "type": "shell",
+      "command": "powershell",
+      "args": [ "Start-Service", "${input:serviceName}" ],
+      "problemMatcher": [],
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "Stop SQL Server service",
+      "type": "shell",
+      "command": "powershell",
+      "args": [ "Stop-Service", "${input:serviceName}" ],
+      "problemMatcher": [],
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "Restart SQL Server service",
+      "type": "shell",
+      "command": "powershell",
+      "args": [ "Restart-Service", "${input:serviceName}" ],
+      "problemMatcher": [],
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "Check SQL Services",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "Get-Service | Where-Object { $_.Name -like 'MSSQL*' -or $_.Name -like 'SQL*' } | Sort-Object Status, Name | Format-Table -AutoSize"
+      ],
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "Open Backup Folder",
+      "type": "shell",
+      "command": "explorer",
+      "args": [ "${input:backupFolder}" ],
+      "problemMatcher": []
+    },
+
+    /* ==== DBA toolbox – sqlcmd / bcp / sqldiag / dtexec / sqldumper ==== */
+
+    {
+      "label": "SQLCMD – interactive session (Windows Auth)",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [ "-S", "${input:serverName}", "-d", "${input:databaseName}", "-E" ],
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "Data Move: bcp EXPORT → CSV",
+      "type": "shell",
+      "command": "bcp",
+      "args": [
+        "${input:databaseName}.${input:schemaName}.${input:tableName}",
+        "out",
+        "${input:csvPath}",
+        "-S",
+        "${input:serverName}",
+        "-T",
+        "-c",
+        "-t",
+        ",",
+        "-r",
+        "\\n"
+      ],
+      "problemMatcher": [],
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "Data Move: bcp IMPORT ← CSV",
+      "type": "shell",
+      "command": "bcp",
+      "args": [
+        "${input:databaseName}.${input:schemaName}.${input:tableName}",
+        "in",
+        "${input:csvPath}",
+        "-S",
+        "${input:serverName}",
+        "-T",
+        "-c",
+        "-t",
+        ",",
+        "-r",
+        "\\n",
+        "-q"
+      ],
+      "problemMatcher": [],
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "Diagnostics: sqldiag (quick collect → dist/sqldiag)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "$d=(Get-ChildItem 'C:\\\\Program Files\\\\Microsoft SQL Server' -Recurse -Filter sqldiag.exe -ErrorAction SilentlyContinue | Select-Object -First 1).FullName; if(-not $d){Write-Error 'sqldiag.exe not found'; exit 1}; $out='${workspaceFolder}\\\\dist\\\\sqldiag'; New-Item -ItemType Directory -Force -Path $out | Out-Null; & $d /O $out /NOCONSOLE"
+      ],
+      "problemMatcher": [],
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "ETL: dtexec run package (.dtsx)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "$dx=(Get-ChildItem 'C:\\\\Program Files\\\\Microsoft SQL Server' -Recurse -Filter dtexec.exe -ErrorAction SilentlyContinue | Sort-Object FullName -Descending | Select-Object -First 1).FullName; if(-not $dx){Write-Error 'dtexec.exe not found'; exit 1}; & $dx /F \"${input:ssisPkgPath}\""
+      ],
+      "problemMatcher": [],
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "Run SQLDumper (full dump 0x01100)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "$paths=@('C:\\\\Program Files\\\\Microsoft SQL Server\\\\160\\\\Shared\\\\SQLDumper.exe','C:\\\\Program Files\\\\Microsoft SQL Server\\\\150\\\\Shared\\\\SQLDumper.exe','C:\\\\Program Files\\\\Microsoft SQL Server\\\\140\\\\Shared\\\\SQLDumper.exe','C:\\\\Program Files\\\\Microsoft SQL Server\\\\130\\\\Shared\\\\SQLDumper.exe'); $dumper=$paths|Where-Object{Test-Path $_}|Select-Object -First 1; if(-not $dumper){Write-Error 'SQLDumper.exe not found'; exit 1}; $p=Get-Process sqlservr -ErrorAction Stop | Where-Object { $_.Path -like ('*\\\\' + '${input:instanceFolderHint}' + '\\\\*') } | Select-Object -First 1; if(-not $p){Write-Error ('sqlservr not found for hint ' + '${input:instanceFolderHint}'); exit 1}; & $dumper $($p.Id) 0 0x01100"
+      ],
+      "problemMatcher": [],
+      "presentation": { "reveal": "always" }
     }
   ]
 }
