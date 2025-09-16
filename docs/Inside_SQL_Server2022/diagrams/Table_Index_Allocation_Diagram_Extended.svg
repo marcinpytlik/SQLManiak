@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="900" viewBox="0 0 1300 900">
+  <style>
+    .title { font: bold 20px sans-serif; fill: #0b3d91; }
+    .box { fill: #ffffff; stroke: #2b547e; stroke-width:1.4; rx:8; }
+    .bigbox { fill:#f4f7fb; stroke:#1f3b6f; stroke-width:2; rx:12; }
+    .label { font: 14px sans-serif; fill: #12233b; }
+    .small { font: 12px sans-serif; fill: #12233b; }
+    .muted { font: 11px sans-serif; fill: #5a6b7a; }
+    .arrow { stroke: #0b66d1; stroke-width:2; marker-end: url(#a); fill: none; }
+    .note { font: 12px sans-serif; fill: #5a6b7a; }
+  </style>
+  <defs>
+    <marker id="a" markerWidth="10" markerHeight="10" refX="6" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#0b66d1" />
+    </marker>
+  </defs>
+
+  <text x="40" y="40" class="title">Rozszerzone relacje: tables → indexes → partitions → allocation_units → files</text>
+
+  <!-- schemas -->
+  <rect x="40" y="80" width="260" height="120" class="box" />
+  <text x="60" y="105" class="label">sys.schemas</text>
+  <text x="60" y="125" class="small">schema_id, name</text>
+  <text x="60" y="142" class="small">principal_id</text>
+
+  <!-- sys.tables -->
+  <rect x="340" y="80" width="280" height="120" class="box" />
+  <text x="360" y="105" class="label">sys.tables</text>
+  <text x="360" y="125" class="small">object_id, name, schema_id</text>
+  <text x="360" y="142" class="small">rows, create_date</text>
+
+  <line x1="300" y1="130" x2="340" y2="130" class="arrow" />
+  <text x="260" y="118" class="note">t.schema_id → s.schema_id</text>
+
+  <!-- sys.indexes -->
+  <rect x="660" y="60" width="320" height="160" class="box" />
+  <text x="680" y="85" class="label">sys.indexes</text>
+  <text x="680" y="105" class="small">object_id, index_id, name, type_desc</text>
+  <text x="680" y="122" class="small">is_primary_key, is_unique</text>
+
+  <line x1="620" y1="140" x2="660" y2="140" class="arrow" />
+  <text x="630" y="128" class="note">t.object_id = i.object_id</text>
+
+  <!-- sys.partitions -->
+  <rect x="1040" y="60" width="320" height="200" class="box" />
+  <text x="1060" y="85" class="label">sys.partitions</text>
+  <text x="1060" y="105" class="small">object_id, index_id, partition_number</text>
+  <text x="1060" y="122" class="small">partition_id (catalog id), hobt_id, rows</text>
+  <text x="1060" y="139" class="small">partition_scheme_id</text>
+
+  <line x1="980" y1="160" x2="1040" y2="160" class="arrow" />
+  <text x="1000" y="148" class="note">i.object_id + i.index_id = p.object_id + p.index_id</text>
+
+  <!-- sys.allocation_units -->
+  <rect x="340" y="320" width="420" height="180" class="box" />
+  <text x="360" y="345" class="label">sys.allocation_units</text>
+  <text x="360" y="365" class="small">allocation_unit_id, container_id (hobt_id)</text>
+  <text x="360" y="382" class="small">type_desc (IN_ROW/LOB/ROW_OVERFLOW)</text>
+  <text x="360" y="399" class="small">total_pages, used_pages, data_space_id</text>
+
+  <line x1="1180" y1="220" x2="760" y2="320" class="arrow" />
+  <text x="980" y="210" class="note">p.hobt_id → a.container_id</text>
+
+  <!-- data_spaces / filegroups -->
+  <rect x="40" y="320" width="260" height="140" class="box" />
+  <text x="60" y="345" class="label">sys.data_spaces / sys.filegroups</text>
+  <text x="60" y="365" class="small">data_space_id, name</text>
+  <text x="60" y="382" class="small">type: ROW/FUNCTION/FILEGROUP</text>
+
+  <line x1="700" y1="400" x2="300" y2="400" class="arrow" />
+  <text x="460" y="388" class="note">a.data_space_id → ds.data_space_id</text>
+
+  <!-- sys.database_files -->
+  <rect x="340" y="520" width="420" height="160" class="box" />
+  <text x="360" y="545" class="label">sys.database_files (physical files)</text>
+  <text x="360" y="565" class="small">file_id, name, physical_name, type_desc</text>
+  <text x="360" y="582" class="small">size, max_size, growth, data_space_id</text>
+
+  <line x1="300" y1="420" x2="300" y2="520" class="arrow" />
+  <text x="320" y="460" class="note">filegroups → database_files (data_space_id)</text>
+
+  <!-- Partition scheme / partition functions (note) -->
+  <rect x="760" y="520" width="340" height="140" class="box" />
+  <text x="780" y="545" class="label">sys.partition_schemes / sys.partition_functions</text>
+  <text x="780" y="565" class="small">mapowanie zakresów → filegroups</text>
+  <text x="780" y="582" class="small">używane gdy tabela/index jest partycjonowany</text>
+
+  <line x1="1100" y1="260" x2="880" y2="520" class="arrow" />
+  <text x="930" y="280" class="note">p.partition_scheme_id → partition_schemes</text>
+
+  <!-- Example box -->
+  <rect x="40" y="700" width="1260" height="140" class="bigbox" />
+  <text x="60" y="730" class="label">Przykład zapytania: rozmiar indeksu + mapping do plików</text>
+  <text x="60" y="752" class="small">SELECT s.name schema_name, t.name table_name, i.index_id, p.partition_id, a.allocation_unit_id, ds.name data_space, df.physical_name</text>
+  <text x="60" y="772" class="muted">Uwaga: przy partycjonowaniu dodatkowe kroki by określić które zakresy idą do których filegroups.</text>
+
+  <text x="60" y="800" class="muted">ostatnia aktualizacja: 2025-09-16</text>
+</svg>
