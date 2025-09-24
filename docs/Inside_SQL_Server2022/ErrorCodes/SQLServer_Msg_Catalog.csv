@@ -1,0 +1,46 @@
+Msg,Tytuł,Znaczenie,Typowe przyczyny,Fix
+21,Severity 21 errors,Błędy poziomu 21 – awarie bazy/procesu.,Poważne błędy wewnętrzne.,"Przejrzyj errorlog, pamięć/dyski, skontaktuj MS Support przy powtarzalności."
+53,Could not open a connection,Nie udało się połączyć z serwerem.,Firewall/port/alias/instancja.,"Test połączenia, porty, Browser, TCP/IP."
+102,Incorrect syntax near …,Błąd składni.,"Literówki, brak średników, batch.",Popraw składnię.
+105,Unclosed quotation mark,Niezamknięty cudzysłów.,Łańcuchy znakowe.,Zamknij/literal-escape.
+120,Wait type timeout,Timeout operacji (różny kontekst).,"Konkurencja, locki.","Indeksy, skróć transakcje, diagnostyka waits."
+121,The semaphore timeout period has expired,Timeout I/O/SMB (Windows).,Sieć/dyski/SMB.,"Sprawdź łącza, sterowniki HBA/NIC."
+207,Invalid column name,Nieprawidłowa nazwa kolumny.,"Zmieniony schemat, literówka.",Popraw nazwę; odśwież plan.
+208,Invalid object name,Nieprawidłowa nazwa obiektu.,Zła baza/schemat.,"Ustaw `USE`, kwalifikuj `schema.object`."
+229,Permission denied,Brak uprawnień do obiektu.,"Brak GRANT, DENY, schemat.",GRANT/rola; usuń DENY.
+233,Client disconnected,Klient rozłączył się.,"Keepalive, network reset, pooling.","Sprawdź sieć, pooling, timeouts."
+245,Conversion failed,Błędna konwersja danych.,Nieliczbowe znaki itp.,"TRY_CONVERT/TRY_CAST, walidacja."
+2627,Violation of PRIMARY KEY,Duplikat klucza głównego.,Wstawiasz istniejący klucz.,"UPSERT, deduplikacja."
+2601,Cannot insert duplicate key row,Naruszenie indeksu unikalnego.,Duplikat wartości.,"UPSERT, deduplikacja."
+2714,There is already an object named …,Obiekt już istnieje.,Ponowna kreacja.,IF NOT EXISTS / DROP.
+2812,Could not find stored procedure,Nie znaleziono procedury.,Zła baza/schemat.,USE + schema.proc.
+3013,BACKUP/RESTORE terminating,Kończący komunikat backup/restore.,Patrz poprzedzający błąd.,Napraw przyczynę powyżej.
+3154,RESTORE… WITH REPLACE needed,Przywracasz inną bazę.,Niezgodny nagłówek.,WITH REPLACE / DROP DB.
+3201,Cannot open backup device,Nie można otworzyć urządzenia kopii.,Ścieżka/NTFS/SMB/brak praw.,"Nadaj prawa kontu usługi SQL, popraw ścieżkę."
+3271,A nonrecoverable I/O error occurred,Błąd I/O podczas backup/restore.,Awaria dysku/SMB.,Sprawdź dyski/sieć.
+3456,Database marked RESTORING,Baza w stanie RESTORING.,Sekwencja RESTORE niepełna.,"Dokończ łańcuch RESTORE, RECOVERY."
+4060,Cannot open database,Nie można otworzyć bazy dla danego loginu.,Default DB nie istnieje/brak praw.,ALTER LOGIN default DB; nadaj prawa.
+5120,Unable to open the physical file,Brak dostępu do pliku .mdf/.ldf.,Ścieżka/prawa NTFS/SMB.,Nadaj prawa kontu usługi SQL; popraw ścieżkę.
+5149,MODIFY FILE failed,Błąd zmiany pliku.,Zła ścieżka/prawa.,Popraw ścieżkę/prawa.
+5171,Cannot recognize database format,Nieprawidłowy format pliku DB.,Uszkodzenie/niezgodność wersji.,Odtwórz z backupu; sprawdź wersję.
+5177,File is in use by another process,Plik używany przez inny proces.,Antywirus/backup OS.,"Wyłącz blokady, użyj COPY_ONLY."
+5184,Filegroup is full,Brak miejsca w FG.,"Dysk pełny, autogrowth blokowany.",Dodaj plik/dysk; włącz autogrowth.
+701,There is insufficient system memory,Brak pamięci.,"Max server memory za niski, presja.",Dopasuj pamięć; analiza grants.
+823,I/O error (hard),Błąd I/O na stronie.,Dysk/kontroler.,"Sprawdź system plików/dyski, odtwarzaj."
+824,Logical I/O error (checksum),Błąd logiczny strony.,Uszkodzenie danych.,"DBCC CHECKDB, odtwarzaj backupy."
+825,Read-retry warnings,Ostrzeżenia retriable I/O.,Niestałe I/O.,Pilna diagnostyka dysków/kabli.
+8645,Insufficient memory for plan,Brak pamięci na plan.,Złożone zapytanie/statystyki.,"Uprość zapytanie, zaktualizuj statystyki."
+8651,Low memory during query,Brak memory grant.,Duże sort/hash.,"Indeksy, hinty, dopasuj pamięć."
+8623,Query is too complex to compile,Plan zbyt złożony.,Bardzo złożone zapytanie.,"Podziel zapytanie, indeksy."
+9002,The transaction log is full,Zapełniony log transakcyjny.,"Duże transakcje, brak backup LOG.","BACKUP LOG, powiększ log, batchuj DML."
+1105,Could not allocate space,Brak miejsca w pliku/FG.,"Pełny dysk, autogrowth OFF.",Dodaj plik/przestrzeń.
+1205,Deadlock victim,Ofiara zakleszczenia.,"Konkurencja, kolejność blokad.",Retry + popraw transakcje/indeksy.
+1222,Lock request timeout/Deadlock graph,Szczegóły deadlocka.,—,"Analiza XE, popraw kolejność/indeksy."
+15151,Cannot find object / permission denied,Brak obiektu lub praw DDL.,Zły schemat/brak roli.,Popraw kwalifikację; GRANT/ALTER ROLE.
+15638,Default database unavailable,Domyślna baza loginu niedostępna.,Usunięta/offline/brak praw.,ALTER LOGIN ... DEFAULT_DATABASE = master;
+17142,Server in single-user mode,Serwer w trybie single-user.,Start z -m.,Wyłącz single-user; zamknij inne sesje.
+17300,CLR: insufficient stack,Błąd CLR.,Duże rekurencje CLR.,Zoptymalizuj CLR; zwiększ limity.
+17806,SSPI handshake failed,Błąd Kerberos/SSPI.,SPN/Delegacja/AD.,Napraw SPN/Kerberos; fallback NTLM.
+18452,Login failed (not associated),Login NT niepowiązany z zaufaniem.,"Brak trust, inny domenowy kontekst.",Użyj SQL Auth lub napraw trust/kerberos.
+18456,Login failed for user,Błąd logowania (STATE w errorlog).,"Hasło, zablokowany login, brak serwera.",Napraw przyczynę wg STATE.
+35250,AG: connection lost to replica,Always On utracono połączenie z repliką.,Sieć/firewall/endpoint.,"Diagnozuj endpoint, HADR, sieć."

@@ -1,0 +1,25 @@
+SQLSTATE,Kategoria,Znaczenie,Typowe przyczyny,Fix
+00000,Success,Operacja zakończona bez błędów.,—,—
+01000,General warning,Ogólne ostrzeżenie/informacja (opakowanie dla Msg).,Silnik zwrócił ostrzeżenie lub komunikat informacyjny.,Czytaj właściwy Msg w treści komunikatu; oceń wpływ.
+01003,Null value eliminated in set function,NULL pominięty w funkcji agregującej.,SUM/AVG itp. na kolumnie z NULL.,Świadomie zaakceptuj lub użyj COALESCE/ISNULL; ewentualnie ANSI_WARNINGS.
+07001,Wrong number of parameters,Za mało parametrów.,Wywołanie proc/param query z mniejszą liczbą parametrów.,Uzupełnij brakujące parametry.
+07002,Count field incorrect,Za dużo parametrów.,Wiązanie parametrów nie zgadza się ze skryptem.,Usuń zbędne parametry lub dopasuj zapytanie.
+08001,Client unable to establish connection,Nie udało się zestawić połączenia.,"Serwer offline, port/firewall, DNS/alias, protokół, SPN/Kerberos.","Sprawdź TCP 1433/instancję, SQL Server Browser, firewall, SPN."
+08004,Server rejected the connection,Serwer odrzucił połączenie.,"Brak uprawnień, deny, limit połączeń, endpointy.","Zweryfikuj loginy, uprawnienia, limity, endpoint TDS."
+08006,Connection failure,Połączenie przerwane.,"Reset TDS, restart serwera, przerwa sieci, timeout.","Sprawdź errorlog, sieć; retry z backoff."
+22001,"String data, right truncation",Ucięcie danych znakowych.,Wstawiasz dłuższy tekst niż kolumna.,"Zwiększ kolumnę, waliduj długości."
+22003,Numeric value out of range,Przepełnienie numeryczne.,Za duża wartość/liczba miejsc po przecinku.,Zmień typ/skalę; waliduj dane.
+22007,Invalid datetime format,Nieprawidłowy format daty/czasu.,Konwersja z varchar → datetime.,"Użyj TRY_CONVERT, popraw format/kolację."
+22018,Invalid character value for cast,Błędna konwersja tekstu do liczby.,Ciąg zawiera znaki nieliczbowe.,"Waliduj, TRY_CONVERT/TRY_CAST."
+23000,Integrity constraint violation,Naruszenie ograniczenia integralności.,PK/FK/UNIQUE/CHECK.,"Zapewnij spójność, kolejność DML, deduplikację."
+24000,Invalid cursor state,Nieprawidłowy stan kursora.,Zły cykl FETCH/OPEN/CLOSE.,Popraw obsługę kursora.
+40001,Serialization failure (deadlock),Zakleszczenie/konflikt transakcji.,"Deadlock, konkurencja.","Krótsze transakcje, indeksy, stała kolejność, retry logic."
+42000,Syntax error or access violation,Błąd składni lub brak uprawnień.,"Literówki, brak obiektów, DENY, rola.","Popraw składnię, nadaj prawa, kwalifikuj schemat."
+42S02,Base table or view not found,Nie znaleziono tabeli/widoku.,Zła baza/schemat; obiekt nie istnieje.,Ustaw poprawną bazę; kwalifikuj `schema.object`.
+HY000,General error,Ogólny błąd sterownika.,"Różne przyczyny, patrz Msg.",Sprawdź Msg i szczegóły sterownika.
+HY001,Memory allocation error,Błąd alokacji pamięci.,Braki pamięci po stronie klienta/sterownika.,"Zwolnij zasoby, 64‑bit sterownik, aktualizacja."
+HYT00,Timeout expired,Przekroczony czas oczekiwania.,Command/connection timeout.,"Indeksy, plan, zwiększ timeout, retry."
+S0001,Table already exists,Tabela już istnieje.,CREATE TABLE na istniejącej tabeli.,Użyj IF NOT EXISTS / DROP-and-create.
+S0002,Base table not found,Tabela nie istnieje.,CREATE/SELECT na złej bazie/schemacie.,"Ustaw `USE`, popraw schemat."
+S0022,Column not found,Brak kolumny.,Literówka/zmiana schematu.,"Popraw nazwę, ALTER TABLE."
+S1T00,Login timeout expired,Timeout logowania.,"Serwer nie odpowiada, sieć, firewall.",Diagnostyka sieci/portów; retry.
