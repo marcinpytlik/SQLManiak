@@ -1,0 +1,17 @@
+Msg,Krótki opis,Znaczenie,Typowe przyczyny,Fix
+7202,Could not find server in sys.servers,Nazwa linked server nie istnieje w sys.servers.,Literówka; brak utworzonego LS.,Utwórz LS: sp_addlinkedserver; sprawdź sys.servers.
+7302,Cannot create OLE DB provider instance,Nie można utworzyć instancji providera OLE DB.,Brak providera/niezarejestrowany; zła architektura (x86 vs x64); brak uprawnień DCOM.,Zainstaluj/rejestruj provider we właściwej architekturze; restart usługi SQL; UAC/DCOM.
+7303,Cannot initialize data source object,"Provider działa, ale nie może zainicjalizować źródła.",Złe parametry danych logowania/DSN; brak dostępu do pliku/udostępnienia; brak praw.,Zweryfikuj connection string/DSN; uprawnienia konta usługi SQL do ścieżek/SMB.
+7308,OLE DB provider does not contain table,Brak wskazanego obiektu w providerze.,Zła nazwa katalogu/tabeli; brak schematu; provider nie wspiera.,Użyj OPENQUERY lub popraw kwalifikację; sprawdź katalogi.
+7320,Cannot execute the query against OLE DB provider,Zapytanie nie może być wykonane przez provider.,Składnia nieobsługiwana; brak pass-through; brak RPC OUT.,Użyj OPENQUERY; włącz RPC OUT jeśli to TDS/MSOLEDBSQL.
+7346,Cannot get the data of the row from OLE DB provider,Provider zwrócił błąd podczas pobierania danych.,Konwersja typów; nullability; bug providera.,Wymuś CAST/CONVERT; popraw typy; aktualizuj provider.
+7357,Cannot process the object,Obiekt/komenda nie rozpoznana przez provider.,Nieprawidłowe czary przy czteroczęściowych nazwach; funkcje nieobsługiwane.,Przełącz na OPENQUERY; testuj bezpośrednio u źródła.
+7391,Distributed transaction (MSDTC) failed,Operacja DML wymaga MSDTC i nie może wystartować transakcji rozproszonej.,MSDTC wyłączony/blokowany; firewall; brak trustu/kerberos.,Włącz i skonfiguruj MSDTC na obu końcach; otwórz porty; użyj SET XACT_ABORT ON/2PC.
+7399,OLE DB provider reported an error,Provider zwrócił błąd ogólny; brak informacji.,Błąd uwierzytelnienia; brak uprawnień; ścieżki; bug.,Sprawdź inner error (EventLog); popraw mapowanie logowania.
+7405,ANSI_NULLS/ANSI_WARNINGS required,Wymagane ANSI_NULLS i ANSI_WARNINGS = ON.,Ustawienia sesji OFF.,SET ANSI_NULLS ON; SET ANSI_WARNINGS ON.
+7411,DATA ACCESS disabled,Opcja DATA ACCESS = OFF.,Domyślnie OFF po utworzeniu LS.,"EXEC sp_serveroption @srvname, 'data access', 'true'."
+7412,RPC disabled,RPC = OFF.,Brak RPC lub RPC OUT.,"sp_serveroption 'rpc','true' i/lub 'rpc out','true'."
+7416,Security context not trusted,Brak zaufania/impersonacji do zdalnego serwera.,Brak mapowania logowania; podwójna hopka bez Kerberos.,sp_addlinkedsrvlogin z login/hasłem; Kerberos delegacja.
+18456,Login failed (remote),Błąd logowania na zdalnym serwerze przez LS.,Złe hasło/mapowanie; brak logina.,Popraw mapowanie lub utwórz login na zdalnym serwerze.
+65535,Provider-specific error,Kod błędu dostawcy (Excel/Oracle/ODBC) bez mapowania.,Brak drivera; 32/64-bit mismatch; prawa.,Zainstaluj właściwy provider; dopasuj architekturę; prawa OS.
+8501,RPC out not enabled,Wywołanie zdalne zablokowane.,RPC OUT OFF.,"sp_serveroption @opt='rpc out','true'."

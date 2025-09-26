@@ -1,0 +1,13 @@
+Kod/Hex,Krótki opis,Znaczenie,Typowe przyczyny,Fix
+0xC0202009,Data conversion / Acquire connection,Błąd konwersji danych lub połączeń w Data Flow.,Niekompatybilne typy; brak drivera; zły CM.,Konwersje; zainstaluj provider; popraw CM.
+0xC0047012,Pipeline failed,Ogólny błąd potoku.,Błąd komponentu upstream.,Czytaj pierwszy OnError; włącz logowanie.
+0xC020801C,Cannot acquire connection,Nie można uzyskać połączenia.,Brak uprawnień/providera; 32/64‑bit mismatch.,Instalacja providera; 32‑bit runtime; proxy/credential.
+0xC001000E,Connection not found,Brak zdefiniowanego połączenia.,Zmieniona nazwa CM/parametr.,Napraw parametry/CM.
+0xC0011007,Variable not found,Brak zmiennej.,Zmieniona/nieprzekazana.,Utwórz/parametryzuj; Environment.
+0xC0016016,Failed to load/validate package,Walidacja/ładowanie pakietu nieudane.,ProtectionLevel; brak zasobów; brak parametrów.,DontSaveSensitive; parametry; uprawnienia.
+0xC000F427,ProtectionLevel / sensitive,Błąd deszyfracji danych wrażliwych.,Inny klucz użytkownika/maszyny.,DontSaveSensitive; SSISDB parametry; kredencjały.
+0x80004005,Unspecified error,Błąd ogólny providera/COM.,Driver/COM; prawa.,Aktualizuj provider; sprawdź prawa konta usługi Agenta.
+0xC002F210,Execute SQL Task failed,Zadanie SQL zakończyło się błędem.,SQL/parametry; prawa.,Popraw SQL; GRANT; parametry.
+DTS_E_PRODUCTLEVELTOLOW,Edition/feature not supported,Brak SSIS/za niski poziom.,Składnik SSIS nie zainstalowany.,Do-instaluj SSIS; uruchamiaj we właściwym runtime.
+0xC0209303,Excel provider error,Błąd providera Excel.,Brak ACE OLE DB; 32/64‑bit mismatch.,Zainstaluj Access Database Engine; `/32`.
+0xC00160AE,32/64-bit mismatch,Uruchomiono niewłaściwą architekturę.,Agent 64‑bit vs provider 32‑bit.,Use 32-bit runtime / dtexec /32.
