@@ -1,0 +1,34 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run OneShot_Compat160 (sqlcmd)",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:server}",
+        "-d",
+        "${input:database}",
+        "-i",
+        "OneShot_Compat160.sql",
+        "-b",
+        "-r",
+        "1"
+      ],
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "server",
+      "type": "promptString",
+      "description": "SQL Server (np. SQLSRV2022\\DEV)"
+    },
+    {
+      "id": "database",
+      "type": "promptString",
+      "description": "Baza danych (np. TwojaBaza)"
+    }
+  ]
+}
