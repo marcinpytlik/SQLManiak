@@ -45,7 +45,7 @@ EXEC xp_readerrorlog 0, 1, 'Cannot generate SSPI context';
 ## 4. Kontrola aktualnych SPN w systemie
 Na kontrolerze domeny (PowerShell):
 ```powershell
-setspn -L CONTOSO\gmsa-sql2022$
+setspn -L SQLMANAIK\gmsa-sql2022$
 ```
 
 ---
