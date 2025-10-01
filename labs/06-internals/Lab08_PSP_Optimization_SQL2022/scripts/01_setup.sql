@@ -1,0 +1,41 @@
+-- scripts/01_setup.sql
+USE master;
+IF DB_ID('PSP_Lab') IS NOT NULL BEGIN ALTER DATABASE PSP_Lab SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE PSP_Lab; END;
+GO
+CREATE DATABASE PSP_Lab;
+ALTER DATABASE PSP_Lab SET COMPATIBILITY_LEVEL = 160;
+ALTER DATABASE SCOPED CONFIGURATION SET PARAMETER_SENSITIVE_PLAN_OPTIMIZATION = ON;
+GO
+
+USE PSP_Lab;
+GO
+CREATE TABLE dbo.OrdersSkew
+(
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    CustomerId INT NOT NULL,
+    Amount INT NOT NULL,
+    Region INT NOT NULL,
+    Pad CHAR(200) NOT NULL DEFAULT REPLICATE('P',200)
+);
+
+-- Skew: 90% Region=1, 10% 2..100
+INSERT dbo.OrdersSkew (CustomerId, Amount, Region)
+SELECT TOP (500000)
+       ABS(CHECKSUM(NEWID())) % 100000,
+       ABS(CHECKSUM(NEWID())) % 1000,
+       CASE WHEN (ROW_NUMBER() OVER (ORDER BY (SELECT NULL))) % 10 = 0 THEN (ABS(CHECKSUM(NEWID())) % 100)+1 ELSE 1 END
+FROM sys.all_objects a CROSS JOIN sys.all_objects b;
+
+CREATE INDEX IX_OrdersSkew_Region ON dbo.OrdersSkew(Region);
+GO
+
+-- Parametryzowana procedura typowo wrażliwa na rozkład
+CREATE OR ALTER PROCEDURE dbo.GetOrdersByRegion @region INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT COUNT(*) AS cnt, SUM(Amount) AS totalAmount
+    FROM dbo.OrdersSkew
+    WHERE Region = @region;
+END
+GO

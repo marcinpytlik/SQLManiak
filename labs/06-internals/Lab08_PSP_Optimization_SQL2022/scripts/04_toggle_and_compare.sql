@@ -1,0 +1,20 @@
+-- scripts/04_toggle_and_compare.sql
+-- Porównanie z PSP OFF
+ALTER DATABASE SCOPED CONFIGURATION SET PARAMETER_SENSITIVE_PLAN_OPTIMIZATION = OFF;
+GO
+DBCC FREEPROCCACHE;
+GO
+USE PSP_Lab;
+GO
+EXEC dbo.GetOrdersByRegion @region = 77;
+EXEC dbo.GetOrdersByRegion @region = 1;
+GO 20
+
+-- Ponownie ON i test
+ALTER DATABASE SCOPED CONFIGURATION SET PARAMETER_SENSITIVE_PLAN_OPTIMIZATION = ON;
+GO
+DBCC FREEPROCCACHE;
+GO
+EXEC dbo.GetOrdersByRegion @region = 77;
+EXEC dbo.GetOrdersByRegion @region = 1;
+GO 20

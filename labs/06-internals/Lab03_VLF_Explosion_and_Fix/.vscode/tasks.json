@@ -1,0 +1,89 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "VLF_Lab: Setup",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:SqlServer}",
+        "-d",
+        "master",
+        "-E",
+        "-b",
+        "-i",
+        "scripts/01_setup.sql"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "VLF_Lab: Repro VLF Explosion",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:SqlServer}",
+        "-d",
+        "VLF_Lab",
+        "-E",
+        "-b",
+        "-i",
+        "scripts/02_repro_vlf_explosion.sql"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "VLF_Lab: Fix VLF (shrink+regrow)",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:SqlServer}",
+        "-d",
+        "VLF_Lab",
+        "-E",
+        "-b",
+        "-i",
+        "scripts/03_fix.sql"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "VLF_Lab: Best Practices Report",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:SqlServer}",
+        "-d",
+        "VLF_Lab",
+        "-E",
+        "-b",
+        "-i",
+        "scripts/04_best_practices.sql"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "SqlServer",
+      "type": "promptString",
+      "description": "Podaj nazwę serwera SQL (np. localhost, . , SERVER\\INSTANCE)",
+      "default": "localhost"
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "QS_Lab: Setup (DB + Query Store + data)",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:SqlServer}",
+        "-d",
+        "master",
+        "-E",
+        "-b",
+        "-i",
+        "scripts/01_setup.sql"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "QS_Lab: Workload (sniffing, różne parametry)",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:SqlServer}",
+        "-d",
+        "QS_Lab",
+        "-E",
+        "-b",
+        "-i",
+        "scripts/02_workload_sniffing.sql"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "QS_Lab: Find & Force Plan (edytuj EXEC)",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:SqlServer}",
+        "-d",
+        "QS_Lab",
+        "-E",
+        "-b",
+        "-i",
+        "scripts/03_find_and_force_plan.sql"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "QS_Lab: Test forced vs unforced",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:SqlServer}",
+        "-d",
+        "QS_Lab",
+        "-E",
+        "-b",
+        "-i",
+        "scripts/04_test_forced_vs_unforced.sql"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "QS_Lab: Unforce & cleanup (opcjonalne)",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:SqlServer}",
+        "-d",
+        "QS_Lab",
+        "-E",
+        "-b",
+        "-i",
+        "scripts/05_unforce_and_cleanup.sql"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "SqlServer",
+      "type": "promptString",
+      "description": "Nazwa serwera SQL (np. localhost, . , SERVER\\INSTANCE)",
+      "default": "localhost"
+    }
+  ]
+}

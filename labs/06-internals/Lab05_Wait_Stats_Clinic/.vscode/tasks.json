@@ -1,0 +1,70 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "tempdb: Snapshot START",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:SqlServer}",
+        "-d",
+        "master",
+        "-E",
+        "-b",
+        "-i",
+        "scripts/01_snapshot_start.sql"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "tempdb: Run workload",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:SqlServer}",
+        "-d",
+        "tempdb",
+        "-E",
+        "-b",
+        "-i",
+        "scripts/02_workload.sql"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "tempdb: Snapshot END + DELTA",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:SqlServer}",
+        "-d",
+        "tempdb",
+        "-E",
+        "-b",
+        "-i",
+        "scripts/03_snapshot_end_and_delta.sql"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "SqlServer",
+      "type": "promptString",
+      "description": "Nazwa serwera SQL (np. localhost, . , SERVER\\INSTANCE)",
+      "default": "localhost"
+    }
+  ]
+}

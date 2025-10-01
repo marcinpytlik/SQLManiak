@@ -1,0 +1,108 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "QSH_Lab: Setup (DB + QS + proc)",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:SqlServer}",
+        "-d",
+        "master",
+        "-E",
+        "-b",
+        "-i",
+        "scripts/01_setup.sql"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "QSH_Lab: Baseline",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:SqlServer}",
+        "-d",
+        "QSH_Lab",
+        "-E",
+        "-b",
+        "-i",
+        "scripts/02_baseline.sql"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "QSH_Lab: Apply QS Hints",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:SqlServer}",
+        "-d",
+        "QSH_Lab",
+        "-E",
+        "-b",
+        "-i",
+        "scripts/03_apply_qs_hints.sql"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "QSH_Lab: Test with Hints",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:SqlServer}",
+        "-d",
+        "QSH_Lab",
+        "-E",
+        "-b",
+        "-i",
+        "scripts/04_test_with_hints.sql"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "QSH_Lab: Remove Hints",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:SqlServer}",
+        "-d",
+        "QSH_Lab",
+        "-E",
+        "-b",
+        "-i",
+        "scripts/05_remove_hints.sql"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "SqlServer",
+      "type": "promptString",
+      "description": "Serwer SQL (np. localhost, . , SERVER\\INSTANCE)",
+      "default": "localhost"
+    }
+  ]
+}
