@@ -32,4 +32,3 @@ Zawiera checklisty, runbooki, skrypty T‑SQL/PowerShell i prekonfigurację VS C
 - Testuj w środowisku **LAB** przed produkcją.
 
 ## Credits
-Ten kit ma służyć jako baza do dalszego rozwoju w Twoim repo (VS Code).
