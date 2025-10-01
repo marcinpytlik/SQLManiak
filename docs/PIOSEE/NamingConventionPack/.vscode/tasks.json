@@ -1,0 +1,71 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Audit naming (read-only)",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:server}",
+        "-d",
+        "${input:database}",
+        "-E",
+        "-b",
+        "-i",
+        "${workspaceFolder}/sql/audit_naming.sql"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Preview renames (PRINT only)",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:server}",
+        "-d",
+        "${input:database}",
+        "-E",
+        "-b",
+        "-v",
+        "APPLY=0",
+        "-i",
+        "${workspaceFolder}/sql/rename_auto.sql"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Apply renames",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:server}",
+        "-d",
+        "${input:database}",
+        "-E",
+        "-b",
+        "-v",
+        "APPLY=1",
+        "-i",
+        "${workspaceFolder}/sql/rename_auto.sql"
+      ],
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "server",
+      "type": "promptString",
+      "description": "SQL Server (e.g., .\\SQL2022 or tcp:localhost,1433)",
+      "default": "localhost"
+    },
+    {
+      "id": "database",
+      "type": "promptString",
+      "description": "Database name",
+      "default": "master"
+    }
+  ]
+}
