@@ -1,0 +1,50 @@
+/* 01_filegroups_partitioning.sql
+PARAMETRY: zmień nazwę bazy i ścieżki.
+*/
+USE master;
+GO
+IF DB_ID(N'VLDB') IS NULL
+BEGIN
+    CREATE DATABASE VLDB;
+END
+GO
+-- Przyklad tworzenia filegroup i plików
+ALTER DATABASE VLDB ADD FILEGROUP FG_HOT;
+ALTER DATABASE VLDB ADD FILE (NAME = N'VLDB_HOT_1', FILENAME = N'D:\Data\VLDB_HOT_1.ndf', SIZE=256MB, FILEGROWTH=1024MB) TO FILEGROUP FG_HOT;
+ALTER DATABASE VLDB ADD FILEGROUP FG_WARM;
+ALTER DATABASE VLDB ADD FILE (NAME = N'VLDB_WARM_1', FILENAME = N'E:\Data\VLDB_WARM_1.ndf', SIZE=256MB, FILEGROWTH=1024MB) TO FILEGROUP FG_WARM;
+ALTER DATABASE VLDB ADD FILEGROUP FG_COLD;
+ALTER DATABASE VLDB ADD FILE (NAME = N'VLDB_COLD_1', FILENAME = N'F:\Data\VLDB_COLD_1.ndf', SIZE=256MB, FILEGROWTH=1024MB) TO FILEGROUP FG_COLD;
+GO
+
+-- Funkcja i schemat partycjonowania po dacie (RANGE RIGHT)
+USE VLDB;
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.partition_functions WHERE name = N'pf_VLDB_Date')
+    CREATE PARTITION FUNCTION pf_VLDB_Date (date) AS RANGE RIGHT FOR VALUES ('2024-01-01','2024-07-01','2025-01-01','2025-07-01','2026-01-01');
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.partition_schemes WHERE name = N'ps_VLDB_Date')
+    CREATE PARTITION SCHEME ps_VLDB_Date AS PARTITION pf_VLDB_Date TO ([FG_HOT],[FG_HOT],[FG_WARM],[FG_WARM],[FG_COLD],[FG_COLD]);
+GO
+
+-- Tabela partycjonowana (przykład)
+IF OBJECT_ID('dbo.FactSale','U') IS NULL
+BEGIN
+    CREATE TABLE dbo.FactSale
+    (
+        SaleId     bigint NOT NULL,
+        SaleDate   date   NOT NULL,
+        CustomerId int    NOT NULL,
+        Amount     money  NOT NULL,
+        CONSTRAINT PK_FactSale PRIMARY KEY CLUSTERED (SaleDate, SaleId)
+    ) ON ps_VLDB_Date(SaleDate);
+END
+GO
+
+-- Indeks kolumnowy nieklastrowy na filegroupie FG_WARM (przykład)
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'CCI_FactSale')
+BEGIN
+    CREATE CLUSTERED COLUMNSTORE INDEX CCI_FactSale ON dbo.FactSale
+    WITH (DROP_EXISTING = OFF, DATA_COMPRESSION = COLUMNSTORE_ARCHIVE) ON FG_WARM;
+END
+GO

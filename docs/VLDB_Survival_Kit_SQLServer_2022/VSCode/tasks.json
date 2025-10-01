@@ -1,0 +1,23 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "SQL: Run current file",
+      "type": "shell",
+      "command": "sqlcmd -S localhost -i ${file}",
+      "problemMatcher": []
+    },
+    {
+      "label": "PS: Backup VLDB (striped)",
+      "type": "shell",
+      "command": "pwsh ./SCRIPTS/PowerShell/Backup-Stripe.ps1",
+      "problemMatcher": []
+    },
+    {
+      "label": "PS: Verify backup chain",
+      "type": "shell",
+      "command": "pwsh ./SCRIPTS/PowerShell/Verify-BackupChain.ps1",
+      "problemMatcher": []
+    }
+  ]
+}
