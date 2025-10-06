@@ -1,0 +1,70 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Lab01: Setup",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:SqlServer}",
+        "-d",
+        "master",
+        "-E",
+        "-b",
+        "-i",
+        "scripts/01_setup.sql"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Lab01: Demo Ghosts",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:SqlServer}",
+        "-d",
+        "GhostLabDB",
+        "-E",
+        "-b",
+        "-i",
+        "scripts/02_demo_ghosts.sql"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Lab01: Cleanup/Rebuild",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:SqlServer}",
+        "-d",
+        "GhostLabDB",
+        "-E",
+        "-b",
+        "-i",
+        "scripts/03_cleanup.sql"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "SqlServer",
+      "type": "promptString",
+      "description": "Wpisz nazwę serwera SQL (np. . , (local), localhost, SERVER\\INSTANCE)",
+      "default": "localhost"
+    }
+  ]
+}

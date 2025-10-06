@@ -1,0 +1,17 @@
+{
+  "DBCC_PAGE_template": {
+    "prefix": "dbcc_page3",
+    "description": "DBCC PAGE file:page, printopt=3 with TABLERESULTS",
+    "body": [
+      "-- Zamień file_id i page_id poniżej:",
+      "DBCC PAGE ('GhostLabDB', ${1:1}, ${2:12345}, 3) WITH TABLERESULTS;"
+    ]
+  },
+  "DBCC_IND_template": {
+    "prefix": "dbcc_ind",
+    "description": "DBCC IND to list index/heap pages",
+    "body": [
+      "DBCC IND ('GhostLabDB', 'dbo.GhostLab', 1);"
+    ]
+  }
+}
