@@ -37,7 +37,7 @@ Pakiet repo‑ready pokazujący **wewnętrzne procesy SQL Server (SPID \< 50)** 
 - **PerfMon** — lista liczników: Lazy Writes/sec, Log Flushes/sec, Ghost Cleanup Tasks/sec itd.
 - **XE (helpery)** — skrypty do **wyszukania dostępnych eventów** (różnice między wersjami) i **bezpieczny szablon** sesji z ring_buffer.
 - **Fiszki** — Markdown + TSV (Anki) dla SPID 1,2,3,4,5,7 oraz klas funkcjonalnych.
-- **Diagram** — wersja Mermaid do README (render w Git), plus **GraphViz DOT** do własnej obróbki.
+
 
 ## Mini‑mapa: kto jest kim (SPID \< 50)
 
