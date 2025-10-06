@@ -1,0 +1,45 @@
+{
+  "version": "2.0",
+  "tasks": [
+    {
+      "label": "SQLCMD: Lab00_Setup",
+      "type": "shell",
+      "command": "sqlcmd -S localhost -E -i Lab00_Setup.sql"
+    },
+    {
+      "label": "SQLCMD: Lab01_GrowLog",
+      "type": "shell",
+      "command": "sqlcmd -S localhost -E -i Lab01_GrowLog.sql"
+    },
+    {
+      "label": "SQLCMD: Lab02_ShrinkNoTrunc",
+      "type": "shell",
+      "command": "sqlcmd -S localhost -E -i Lab02_ShrinkWithoutTruncation.sql"
+    },
+    {
+      "label": "SQLCMD: Lab03_ActiveXact",
+      "type": "shell",
+      "command": "sqlcmd -S localhost -E -i Lab03_ActiveTransactionBlocksTruncation.sql"
+    },
+    {
+      "label": "SQLCMD: Lab04_SimpleVsFull",
+      "type": "shell",
+      "command": "sqlcmd -S localhost -E -i Lab04_SimpleVsFull.sql"
+    },
+    {
+      "label": "SQLCMD: Lab05_VLFs",
+      "type": "shell",
+      "command": "sqlcmd -S localhost -E -i Lab05_VLFs_and_Autogrowth.sql"
+    },
+    {
+      "label": "SQLCMD: Lab06_Diagnostics",
+      "type": "shell",
+      "command": "sqlcmd -S localhost -E -i Lab06_Diagnostics.sql"
+    },
+    {
+      "label": "SQLCMD: Lab07_tempdb",
+      "type": "shell",
+      "command": "sqlcmd -S localhost -E -i Lab07_tempdb_VersionStore.sql"
+    }
+  ]
+}
