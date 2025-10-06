@@ -1,0 +1,79 @@
+{
+  "version": "2.0.0",
+  "inputs": [
+    {
+      "id": "sqlInstance",
+      "type": "promptString",
+      "description": "SQL Server instance (e.g. localhost\\SQL2022)",
+      "default": "localhost"
+    },
+    {
+      "id": "auditPath",
+      "type": "promptString",
+      "description": "Audit files path (must exist)",
+      "default": "D:\\SQLAudit\\"
+    },
+    {
+      "id": "dbName",
+      "type": "promptString",
+      "description": "Target database for DB Audit SPEC",
+      "default": "YourDB"
+    },
+    {
+      "id": "filePattern",
+      "type": "promptString",
+      "description": "Audit file pattern (*.sqlaudit)",
+      "default": "D:\\SQLAudit\\Audit_PermChanges_*.sqlaudit"
+    }
+  ],
+  "tasks": [
+    {
+      "label": "Create: Server Audit",
+      "type": "shell",
+      "command": "sqlcmd -S ${input:sqlInstance} -E -b -i ./sql/CreateServerAudit.sql -v AuditPath=\"${input:auditPath}\"",
+      "problemMatcher": []
+    },
+    {
+      "label": "Create: Server Audit SPEC",
+      "type": "shell",
+      "command": "sqlcmd -S ${input:sqlInstance} -E -b -i ./sql/CreateServerAuditSpec.sql",
+      "problemMatcher": []
+    },
+    {
+      "label": "Create: DB Audit SPEC",
+      "type": "shell",
+      "command": "sqlcmd -S ${input:sqlInstance} -E -b -i ./sql/CreateDbAuditSpec.sql -v DbName=\"${input:dbName}\"",
+      "problemMatcher": []
+    },
+    {
+      "label": "Run: Smoke Test",
+      "type": "shell",
+      "command": "sqlcmd -S ${input:sqlInstance} -E -b -i ./sql/TestSmoke.sql -v DbName=\"${input:dbName}\"",
+      "problemMatcher": []
+    },
+    {
+      "label": "Run: Read Audit",
+      "type": "shell",
+      "command": "sqlcmd -S ${input:sqlInstance} -E -b -i ./sql/ReadAudit.sql -v AuditPath=\"${input:auditPath}Audit_PermChanges_*.sqlaudit\"",
+      "problemMatcher": []
+    },
+    {
+      "label": "Create: AuditDB (schema)",
+      "type": "shell",
+      "command": "sqlcmd -S ${input:sqlInstance} -E -b -i ./sql/AuditDB_Create.sql && sqlcmd -S ${input:sqlInstance} -E -b -i ./sql/AuditDB_Tables_Views.sql",
+      "problemMatcher": []
+    },
+    {
+      "label": "Create: Job \u2013 Archive",
+      "type": "shell",
+      "command": "sqlcmd -S ${input:sqlInstance} -E -b -i ./sql/Job_Audit_Archive.sql -v FilePattern=\"${input:filePattern}\"",
+      "problemMatcher": []
+    },
+    {
+      "label": "Create: Job \u2013 Healthcheck",
+      "type": "shell",
+      "command": "sqlcmd -S ${input:sqlInstance} -E -b -i ./sql/Job_Audit_Healthcheck.sql",
+      "problemMatcher": []
+    }
+  ]
+}
