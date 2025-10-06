@@ -1,0 +1,26 @@
+// GraphViz DOT — SQL Server Internal Processes (SPID < 50)
+digraph SQLServerInternals {
+  rankdir=LR;
+  node [shape=box, style=rounded];
+  subgraph cluster_engine {
+    label="Engine";
+    BP [label="Buffer Pool"];
+    LW [label="Lazy Writer (SPID 2)"];
+    CKP [label="Checkpoint (SPID 3)"];
+    LWRT [label="Log Writer (SPID 5)"];
+    GC [label="Ghost Cleanup (SPID 7)"];
+    RM [label="Resource Monitor (SPID 4)"];
+  }
+  APP [label="Session / Query", shape=oval];
+  MDF [label=".mdf / .ndf", shape=folder];
+  LDF [label=".ldf", shape=folder];
+
+  APP -> BP;
+  BP -> CKP [label="dirty pages"];
+  BP -> LW [label="evict"];
+  CKP -> MDF [label="flush"];
+  APP -> LWRT [label="WAL: log records"];
+  LWRT -> LDF [label="flush"];
+  GC -> MDF [label="remove ghost rows"];
+  RM -> BP [label="memory pressure"];
+}

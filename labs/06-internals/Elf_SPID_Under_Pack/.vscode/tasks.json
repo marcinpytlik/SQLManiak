@@ -1,0 +1,84 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "DMV: All SPID < 50",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${env:SQLINSTANCE}",
+        "-d",
+        "${env:DB}",
+        "-i",
+        "${workspaceFolder}/dmv/all_spid_lt50.sql",
+        "-W",
+        "-s",
+        ","
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "DMV: Exec Requests Snapshot",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${env:SQLINSTANCE}",
+        "-d",
+        "${env:DB}",
+        "-i",
+        "${workspaceFolder}/dmv/exec_requests_snapshot.sql",
+        "-W",
+        "-s",
+        ","
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "DMV: OS Tasks & Waiting",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${env:SQLINSTANCE}",
+        "-d",
+        "${env:DB}",
+        "-i",
+        "${workspaceFolder}/dmv/os_tasks_waiting.sql",
+        "-W",
+        "-s",
+        ","
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "XE: Create InternalsWatch",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${env:SQLINSTANCE}",
+        "-d",
+        "${env:DB}",
+        "-i",
+        "${workspaceFolder}/xe/Create-InternalsWatch.sql"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Scripts: QuickCheck (all)",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${env:SQLINSTANCE}",
+        "-d",
+        "${env:DB}",
+        "-i",
+        "${workspaceFolder}/scripts/QuickCheck.sql"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}
