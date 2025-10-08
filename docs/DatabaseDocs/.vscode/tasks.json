@@ -1,0 +1,35 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Docs: Generate (CSV+MD)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/PowerShell/Generate-DbDocs.ps1",
+        "-ServerInstance",
+        "localhost",
+        "-Database",
+        "AdventureWorks2022",
+        "-OutputRoot",
+        "${workspaceFolder}/Docs"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Docs: Validate MS_Description",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "Invoke-Sqlcmd -ServerInstance localhost -Database AdventureWorks2022 -InputFile ${workspaceFolder}/Scripts/Validate_Missing_MS_Description.sql | Format-Table -AutoSize"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}

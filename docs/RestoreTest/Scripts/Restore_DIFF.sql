@@ -1,0 +1,4 @@
+-- Apply DIFF to DemoDB_Test
+RESTORE DATABASE [DemoDB_Test]
+FROM DISK = N'D:\Backup\DemoDB_DIFF.bak'
+WITH NORECOVERY;
