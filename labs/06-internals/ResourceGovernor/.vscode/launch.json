@@ -1,0 +1,35 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C#: Debug APP_NAME demo (Windows auth)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "C#: Build APP_NAME demo",
+      "program": "${workspaceFolder}/samples/csharp/bin/Release/net9.0/AppNameDemo.dll",
+      "args": [
+        "--server",
+        "${input:server}",
+        "--db",
+        "${input:DbName}"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "stopAtEntry": false
+    }
+  ],
+  "inputs": [
+    {
+      "id": "server",
+      "type": "promptString",
+      "description": "SQL Server instance",
+      "default": "localhost"
+    },
+    {
+      "id": "DbName",
+      "type": "promptString",
+      "description": "Database name",
+      "default": "TwojaBaza"
+    }
+  ]
+}
