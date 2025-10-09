@@ -1,0 +1,1 @@
+EXEC sp_adddistributor @distributor=N'ServerC',@password=N'***'; EXEC sp_adddistributiondb @database=N'distribution',@log_file_size=2; EXEC sp_adddistpublisher @publisher=N'ServerC',@distribution_db=N'distribution',@security_mode=1,@working_directory=N'D:\ReplShare',@trusted='false'; EXEC sp_addpublication_snapshot @publication=N'PubName';

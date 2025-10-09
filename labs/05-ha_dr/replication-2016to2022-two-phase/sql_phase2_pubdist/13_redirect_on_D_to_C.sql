@@ -1,0 +1,1 @@
+EXEC sp_redirect_publisher @original_publisher=N'ServerA',@publisher_db=N'TwojaBaza',@redirected_publisher=N'ServerC'; EXEC sp_get_redirected_publisher @publisher=N'ServerA',@publisher_db=N'TwojaBaza';

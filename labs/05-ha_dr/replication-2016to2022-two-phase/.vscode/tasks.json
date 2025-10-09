@@ -1,0 +1,15 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Phase1 Runbook",
+      "type": "shell",
+      "command": "powershell -ExecutionPolicy Bypass -File ./scripts/Runbook-Phase1.ps1 -ParamsPath ./scripts/Params.psd1"
+    },
+    {
+      "label": "Phase2 Runbook",
+      "type": "shell",
+      "command": "powershell -ExecutionPolicy Bypass -File ./scripts/Runbook-Phase2.ps1 -ParamsPath ./scripts/Params.psd1"
+    }
+  ]
+}

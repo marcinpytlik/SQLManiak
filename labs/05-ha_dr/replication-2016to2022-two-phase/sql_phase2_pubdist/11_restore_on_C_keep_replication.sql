@@ -1,0 +1,1 @@
+RESTORE DATABASE [TwojaBaza] FROM DISK=N'\\A\Backups\TwojaBaza_p1_full.bak' WITH NORECOVERY, REPLACE; RESTORE LOG [TwojaBaza] FROM DISK=N'\\A\Backups\TwojaBaza_p1_log.trn' WITH NORECOVERY; RESTORE LOG [TwojaBaza] FROM DISK=N'\\A\Backups\TwojaBaza_p2_FINAL_LOG.trn' WITH KEEP_REPLICATION, RECOVERY; EXEC sp_vupgrade_replication;

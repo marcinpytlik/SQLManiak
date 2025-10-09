@@ -1,0 +1,1 @@
+Opis topologii i uzasadnienia.
