@@ -1,0 +1,102 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Restore: FULL+DIFF+LOG (DemoDB_Test)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/PowerShell/Restore_AutomatedTest.ps1",
+        "-ServerInstance",
+        "localhost",
+        "-DbName",
+        "DemoDB_Test",
+        "-DataPath",
+        "D:\\SQLData",
+        "-LogPath",
+        "D:\\SQLLog",
+        "-BackupFull",
+        "D:\\Backup\\DemoDB_FULL.bak",
+        "-BackupDiff",
+        "D:\\Backup\\DemoDB_DIFF.bak",
+        "-BackupLogs",
+        "D:\\Backup\\DemoDB_LOG_1.trn",
+        "D:\\Backup\\DemoDB_LOG_2.trn",
+        "-ReportCsv",
+        "${workspaceFolder}\\Reports\\Restore_Test_Log.csv"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Restore: Point-in-Time (STOPAT)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/PowerShell/Restore_AutomatedTest.ps1",
+        "-ServerInstance",
+        "localhost",
+        "-DbName",
+        "DemoDB_Test",
+        "-DataPath",
+        "D:\\SQLData",
+        "-LogPath",
+        "D:\\SQLLog",
+        "-BackupFull",
+        "D:\\Backup\\DemoDB_FULL.bak",
+        "-BackupLogs",
+        "D:\\Backup\\DemoDB_LOG_1.trn",
+        "D:\\Backup\\DemoDB_LOG_2.trn",
+        "-PointInTime",
+        "-StopAt",
+        "2025-10-08T08:15:00",
+        "-ReportCsv",
+        "${workspaceFolder}\\Reports\\Restore_Test_Log.csv"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "VerifyOnly: wszystkie .bak w D:\\Backup",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/PowerShell/Restore_VerifyOnly.ps1",
+        "-ServerInstance",
+        "localhost",
+        "-BackupPath",
+        "D:\\Backup",
+        "-Pattern",
+        "*.bak"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Cleanup: DemoDB_Test",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/PowerShell/Cleanup_RestoreTest.ps1",
+        "-ServerInstance",
+        "localhost",
+        "-DbName",
+        "DemoDB_Test",
+        "-DataPath",
+        "D:\\SQLData",
+        "-LogPath",
+        "D:\\SQLLog"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}

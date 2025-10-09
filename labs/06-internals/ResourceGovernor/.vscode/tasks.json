@@ -1,0 +1,123 @@
+{
+  "version": "2.0.0",
+  "inputs": [
+    {
+      "id": "server",
+      "type": "promptString",
+      "description": "SQL Server instance (np. localhost, .\\SQL2022)",
+      "default": "localhost"
+    },
+    {
+      "id": "auth",
+      "type": "pickString",
+      "description": "Uwierzytelnianie",
+      "options": [
+        "Windows",
+        "SQL"
+      ],
+      "default": "Windows"
+    },
+    {
+      "id": "user",
+      "type": "promptString",
+      "description": "Login SQL (je\u015bli wybrano SQL)",
+      "default": "",
+      "password": false
+    },
+    {
+      "id": "password",
+      "type": "promptString",
+      "description": "Has\u0142o SQL (je\u015bli wybrano SQL)",
+      "default": "",
+      "password": true
+    },
+    {
+      "id": "DbName",
+      "type": "promptString",
+      "description": "DbName (domy\u015blna baza logowania, klasyfikacja)",
+      "default": "TwojaBaza"
+    },
+    {
+      "id": "AdGroupLab",
+      "type": "promptString",
+      "description": "Grupa AD dla LAB (escape: DOMENA\\\\Nazwa)",
+      "default": "DOMENA\\\\RG_LAB_TwojaBaza"
+    },
+    {
+      "id": "AdGroupProd",
+      "type": "promptString",
+      "description": "Grupa AD dla PROD (escape: DOMENA\\\\Nazwa)",
+      "default": "DOMENA\\\\RG_PROD_TwojaBaza"
+    },
+    {
+      "id": "AppLab",
+      "type": "promptString",
+      "description": "Application Name pattern LAB",
+      "default": "%LAB%"
+    },
+    {
+      "id": "AppProd",
+      "type": "promptString",
+      "description": "Application Name pattern PROD",
+      "default": "%PROD%"
+    }
+  ],
+  "tasks": [
+    {
+      "label": "RG: Deploy presets (A/B)",
+      "type": "shell",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "command": "${input:auth} -eq 'SQL'; if($?) { $auth = '-U \"${input:user}\" -P \"${input:password}\"' } else { $auth = '-E' }; sqlcmd -S \"${input:server}\" $auth -d master -b -i \"scripts/00_prereqs.sql\"; if($LASTEXITCODE -ne 0){ exit $LASTEXITCODE }; sqlcmd -S \"${input:server}\" $auth -d master -b -i \"scripts/10_presets_ab.sql\" -v DbName=\"${input:DbName}\" AdGroupLab=\"${input:AdGroupLab}\" AdGroupProd=\"${input:AdGroupProd}\" AppNameLabPattern=\"${input:AppLab}\" AppNameProdPattern=\"${input:AppProd}\"",
+      "problemMatcher": []
+    },
+    {
+      "label": "RG: Verify",
+      "type": "shell",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "command": "${input:auth} -eq 'SQL'; if($?) { $auth = '-U \"${input:user}\" -P \"${input:password}\"' } else { $auth = '-E' }; sqlcmd -S \"${input:server}\" $auth -d master -b -i \"scripts/20_verify.sql\"",
+      "problemMatcher": []
+    },
+    {
+      "label": "RG: Cleanup",
+      "type": "shell",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "command": "${input:auth} -eq 'SQL'; if($?) { $auth = '-U \"${input:user}\" -P \"${input:password}\"' } else { $auth = '-E' }; sqlcmd -S \"${input:server}\" $auth -d master -b -i \"scripts/90_cleanup.sql\"",
+      "problemMatcher": []
+    },
+    {
+      "label": "C#: Build APP_NAME demo",
+      "type": "shell",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "command": "dotnet build samples/csharp/AppNameDemo.csproj -c Release",
+      "problemMatcher": [
+        "$msCompile"
+      ]
+    },
+    {
+      "label": "C#: Run APP_NAME demo (Windows auth)",
+      "type": "shell",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "command": "dotnet run --project samples/csharp/AppNameDemo.csproj -- --server \"${input:server}\" --db \"${input:DbName}\"",
+      "problemMatcher": []
+    },
+    {
+      "label": "C#: Run APP_NAME demo (SQL auth)",
+      "type": "shell",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "command": "dotnet run --project samples/csharp/AppNameDemo.csproj -- -S \"${input:server}\"; dotnet run --project samples/csharp/AppNameDemo.csproj -- --server \"${input:server}\" --db \"${input:DbName}\" --user \"${input:user}\" --password \"${input:password}\"",
+      "problemMatcher": []
+    }
+  ]
+}
