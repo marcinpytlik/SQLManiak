@@ -10,6 +10,16 @@
       "label": "SQL: 09 Monitoring",
       "type": "shell",
       "command": "echo 'Uruchom w SSMS/Azure Data Studio: sql/09_monitoring.sql'"
+    },
+    {
+      "label": "Runbook: Cutover (PowerShell)",
+      "type": "shell",
+      "command": "powershell -ExecutionPolicy Bypass -File ./scripts/Runbook-Cutover.ps1 -ParamsPath ./scripts/Params.psd1"
+    },
+    {
+      "label": "Distributor: Move A\u2192C (PowerShell)",
+      "type": "shell",
+      "command": "powershell -ExecutionPolicy Bypass -File ./scripts/20.Move-Distributor.ps1 -P (Import-PowerShellDataFile ./scripts/Params.psd1)"
     }
   ]
 }
