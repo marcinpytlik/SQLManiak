@@ -1,0 +1,41 @@
+
+name: Register SPN (post-deploy)
+
+on:
+  workflow_dispatch:
+    inputs:
+      domain:
+        description: 'AD Domain (e.g., sqlmaniak.lab)'
+        required: true
+        type: string
+      gmsa:
+        description: 'Engine gMSA (without $), e.g., sqlsvc_fci01'
+        required: true
+        type: string
+      vnn_fqdn:
+        description: 'VNN FQDN, e.g., SQLPROD.sqlmaniak.lab'
+        required: true
+        type: string
+      port:
+        description: 'TCP port (default 1433)'
+        required: false
+        default: '1433'
+        type: string
+
+jobs:
+  register-spn:
+    runs-on: [self-hosted, windows, domain]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Register SPN
+        shell: powershell
+        run: |
+          $domain   = '${{ inputs.domain }}'
+          $gmsa     = '${{ inputs.gmsa }}'
+          $vnn      = '${{ inputs.vnn_fqdn }}'
+          $port     = [int]'${{ inputs.port }}'
+
+          Write-Host "Registering SPN for $vnn on $domain\$gmsa$"
+          ./scripts/Register-SPN.ps1 -Domain $domain -GmsaName $gmsa -VnnFqdn $vnn -Port $port

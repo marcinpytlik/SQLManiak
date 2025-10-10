@@ -1,0 +1,45 @@
+
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "New-gMSA Pair (AD/DC)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy","Bypass",
+        "-File","${workspaceFolder}/scripts/New-gMSA-Pair.ps1",
+        "-Domain","sqlmaniak.lab",
+        "-EngineGmsa","sqlsvc_fci01",
+        "-AgentGmsa","sqlagt_fci01",
+        "-Hosts","NODE1","NODE2",
+        "-HostsGroup","GRP_SQL_FCI01_GMSA_Hosts",
+        "-OuPath","OU=SQL,DC=sqlmaniak,DC=lab"
+      ]
+    },
+    {
+      "label": "Install-gMSA Pair (node)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy","Bypass",
+        "-File","${workspaceFolder}/scripts/Install-gMSA-Pair-OnNodes.ps1",
+        "-EngineGmsa","sqlsvc_fci01",
+        "-AgentGmsa","sqlagt_fci01"
+      ]
+    },
+    {
+      "label": "Register SPN (Engine gMSA)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy","Bypass",
+        "-File","${workspaceFolder}/scripts/Register-SPN.ps1",
+        "-Domain","sqlmaniak.lab",
+        "-GmsaName","sqlsvc_fci01",
+        "-VnnFqdn","SQLPROD.sqlmaniak.lab",
+        "-Port","1433"
+      ]
+    }
+  ]
+}

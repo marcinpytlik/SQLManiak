@@ -1,5 +1,4 @@
 
--- scripts/Test-Kerberos.sql
 SELECT
     @@SERVERNAME            AS [ServerName],
     SUSER_SNAME()           AS [ExecutionContext],
@@ -11,5 +10,4 @@ SELECT
     c.local_tcp_port        AS [LocalPort]
 FROM sys.dm_exec_connections AS c
 WHERE c.session_id = @@SPID;
-
 -- oczekiwane: AuthScheme = KERBEROS
