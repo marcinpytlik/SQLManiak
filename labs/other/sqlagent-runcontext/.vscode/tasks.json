@@ -1,0 +1,102 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run 01_Agent_Accounts_Overview.sql",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:server}",
+        "-d",
+        "master",
+        "-i",
+        "scripts/01_Agent_Accounts_Overview.sql"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run 02_JobSteps_RunAs_Detail.sql",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:server}",
+        "-d",
+        "msdb",
+        "-i",
+        "scripts/02_JobSteps_RunAs_Detail.sql"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run 03_Create_Views_msdb.sql",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:server}",
+        "-d",
+        "msdb",
+        "-i",
+        "scripts/03_Create_Views_msdb.sql"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run 04_Flag_Risky_Steps.sql",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:server}",
+        "-d",
+        "msdb",
+        "-i",
+        "scripts/04_Flag_Risky_Steps.sql"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Export Job Run Context (CSV)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "tools/Export-JobRunContext.ps1",
+        "-ServerInstance",
+        "${input:server}",
+        "-Database",
+        "msdb",
+        "-OutputPath",
+        "JobRunContext.csv"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "server",
+      "description": "Server instance (e.g., . or localhost or MyServer\\Instance)",
+      "default": "."
+    }
+  ]
+}
