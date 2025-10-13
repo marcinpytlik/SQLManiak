@@ -1,0 +1,1 @@
+EXEC sp_addpullsubscription @publisher=N'ServerA',@publisher_db=N'TwojaBaza',@publication=N'PubName',@publisher_security_mode=1; EXEC sp_addpullsubscription_agent @publisher=N'ServerA',@publisher_db=N'TwojaBaza',@publication=N'PubName',@distributor=N'ServerA',@subscriber_security_mode=1,@frequency_type=64,@frequency_interval=1,@frequency_subday=4,@frequency_subday_interval=5;

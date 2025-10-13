@@ -1,0 +1,151 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "00-Preflight",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "migrations/powershell/00-Preflight.ps1"
+      ]
+    },
+    {
+      "label": "10-Backups-A",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "A",
+        "-i",
+        "migrations/sql/10-Backups-A.sql",
+        "-b"
+      ]
+    },
+    {
+      "label": "20-Restore-B",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "B",
+        "-i",
+        "migrations/sql/20-Restore-B.sql",
+        "-b"
+      ]
+    },
+    {
+      "label": "21-DBCC",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "B",
+        "-i",
+        "migrations/sql/21-DBCC-Check.sql",
+        "-b"
+      ]
+    },
+    {
+      "label": "22-Compat",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "B",
+        "-i",
+        "migrations/sql/22-Compat-Level.sql",
+        "-b"
+      ]
+    },
+    {
+      "label": "30-Logins-Export-A",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "A",
+        "-i",
+        "migrations/sql/30-Logins-Export-A.sql",
+        "-b"
+      ]
+    },
+    {
+      "label": "31-Logins-Import-B",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "B",
+        "-i",
+        "migrations/sql/31-Logins-Import-B.sql",
+        "-b"
+      ]
+    },
+    {
+      "label": "40-SSRS-Key-Backup",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "migrations/ssrs/40-SSRS-Keys-C.ps1",
+        "-Action",
+        "Backup"
+      ]
+    },
+    {
+      "label": "41-SSRS-Bind-DB",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "migrations/ssrs/41-SSRS-Bind-DB.ps1"
+      ]
+    },
+    {
+      "label": "50-AX-BI-Binding",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "migrations/powershell/50-AX-BI-Binding.ps1"
+      ]
+    },
+    {
+      "label": "60-Verification",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "B",
+        "-i",
+        "verification/60-Verification.sql",
+        "-b"
+      ]
+    },
+    {
+      "label": "70-Cleanup",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "migrations/powershell/70-Cleanup.ps1"
+      ]
+    }
+  ]
+}

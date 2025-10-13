@@ -1,0 +1,1 @@
+@{ PublisherA='ServerA'; SubscriberB='ServerB'; NewPublisherC='ServerC'; NewSubscriberD='ServerD'; PublisherDb='TwojaBaza'; Publication='PubName'; BackupShareA='\\A\Backups'; SnapshotDirC='D:\ReplShare'; UseSqlAuth=$false; SqlUser=''; SqlPassword='' }
