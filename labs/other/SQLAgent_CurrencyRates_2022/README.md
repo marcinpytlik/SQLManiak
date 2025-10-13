@@ -69,4 +69,4 @@ ORDER BY code, effective_date DESC;
 
 ## Licencja
 
-CC BY 4.0 – używaj śmiało z atrybucją.
+CC BY 4.0 – używaj śmiało  :)
