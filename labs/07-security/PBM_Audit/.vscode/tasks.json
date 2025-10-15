@@ -1,0 +1,20 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run 01_Audit.sql (copy & paste in SSMS/Azure Data Studio)",
+      "type": "shell",
+      "command": "echo 'Otwórz sql/01_Audit.sql w SSMS/ADS i uruchom przeciwko instancji docelowej.'"
+    },
+    {
+      "label": "Run 02_PBM.sql (copy & paste in SSMS/Azure Data Studio)",
+      "type": "shell",
+      "command": "echo 'Otwórz sql/02_PBM.sql w SSMS/ADS i uruchom.'"
+    },
+    {
+      "label": "Run 03_Reports.sql (copy & paste in SSMS/Azure Data Studio)",
+      "type": "shell",
+      "command": "echo 'Otwórz sql/03_Reports.sql w SSMS/ADS i uruchom.'"
+    }
+  ]
+}
