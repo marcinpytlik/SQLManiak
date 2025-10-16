@@ -1,0 +1,103 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Snapshot Demo: 01 Create DB",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        ".",
+        "-E",
+        "-b",
+        "-i",
+        "${workspaceFolder}/scripts/01_CreateDatabase.sql"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Snapshot Demo: 02 Create Snapshot",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        ".",
+        "-E",
+        "-b",
+        "-i",
+        "${workspaceFolder}/scripts/02_CreateSnapshot.sql"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Snapshot Demo: 03 Modify Data",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        ".",
+        "-E",
+        "-b",
+        "-i",
+        "${workspaceFolder}/scripts/03_ModifyData.sql"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Snapshot Demo: 04 Monitor Growth",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        ".",
+        "-E",
+        "-b",
+        "-i",
+        "${workspaceFolder}/scripts/04_MonitorGrowth.sql"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Snapshot Demo: 05 Revert From Snapshot",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        ".",
+        "-E",
+        "-b",
+        "-i",
+        "${workspaceFolder}/scripts/05_RevertFromSnapshot.sql"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Snapshot Demo: 06 Drop All",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        ".",
+        "-E",
+        "-b",
+        "-i",
+        "${workspaceFolder}/scripts/06_DropAll.sql"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Snapshot Demo: 07 Snapshot Full Error Test",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        ".",
+        "-E",
+        "-b",
+        "-i",
+        "${workspaceFolder}/scripts/07_SnapshotFullErrorTest.sql"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}

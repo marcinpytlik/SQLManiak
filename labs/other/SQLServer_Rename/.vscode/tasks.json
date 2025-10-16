@@ -1,0 +1,45 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "SQL: Fix ServerName",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:Server}",
+        "-d",
+        "master",
+        "-E",
+        "-b",
+        "-i",
+        "${workspaceFolder}/scripts/01_Fix_ServerName.sql"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "SQL: Verify",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S",
+        "${input:Server}",
+        "-d",
+        "master",
+        "-E",
+        "-b",
+        "-i",
+        "${workspaceFolder}/scripts/02_Verify.sql"
+      ],
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "Server",
+      "type": "promptString",
+      "description": "Podaj serwer (np. . , localhost , HOST\\INSTANCJA)",
+      "default": "localhost"
+    }
+  ]
+}
