@@ -1,6 +1,6 @@
 # SQLManiak Pearls – Vol.2 (zbiorczo)
 
-Poniżej komplet 10 nowych perełek. Każda z nich może również funkcjonować jako osobny plik w repozytorium.
+Poniżej komplet 10 nowych perełek. 
 
 ---
 
