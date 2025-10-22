@@ -1,4 +1,10 @@
-/* Generate_Logins_2016.sql — v2.1 (collation-safe, temp table)
+/* Generate_Logins_2016.sql — v2.2 (collation-safe, temp table, Windows logins without SID)
+   - SQL Logins (hash + SID)
+   - Windows Logins/Groups (bez SID)
+   - Status (DISABLE)
+   - Default DB / Language / Policy
+   - Server role memberships (modern syntax)
+   - Server-level permissions (SERVER + ENDPOINT; WITH GRANT OPTION via state='W')
 */
 USE master;
 SET NOCOUNT ON;
@@ -7,17 +13,17 @@ IF OBJECT_ID('tempdb..#Src') IS NOT NULL DROP TABLE #Src;
 
 CREATE TABLE #Src
 (
-    principal_id           int         NOT NULL,
-    sid                    varbinary(85) NOT NULL,
-    name                   sysname     NOT NULL,
-    type                   char(1)     NOT NULL,     -- S/U/G
-    type_desc              nvarchar(60) NOT NULL,
-    is_disabled            bit         NOT NULL,
-    password_hash          varbinary(256) NULL,
-    is_policy_checked      bit         NULL,
-    is_expiration_checked  bit         NULL,
-    default_database_name  sysname     NULL,
-    default_language_name  sysname     NULL
+    principal_id           int             NOT NULL,
+    sid                    varbinary(85)   NOT NULL,
+    name                   sysname         NOT NULL,
+    type                   char(1)         NOT NULL,     -- S/U/G
+    type_desc              nvarchar(60)    NOT NULL,
+    is_disabled            bit             NOT NULL,
+    password_hash          varbinary(256)  NULL,
+    is_policy_checked      bit             NULL,
+    is_expiration_checked  bit             NULL,
+    default_database_name  sysname         NULL,
+    default_language_name  sysname         NULL
 );
 
 INSERT INTO #Src (principal_id,sid,name,type,type_desc,is_disabled,password_hash,is_policy_checked,is_expiration_checked,default_database_name,default_language_name)
@@ -33,7 +39,7 @@ WHERE sp.type IN ('S','U','G')
   AND sp.name COLLATE DATABASE_DEFAULT NOT LIKE N'NT AUTHORITY\%';
 
 --------------------------------------------------------------------------------
--- 1) CREATE LOGIN
+-- 1) CREATE LOGIN  (SQL logins z SID; Windows logins/grupy BEZ SID)
 --------------------------------------------------------------------------------
 SELECT
     CASE s.type
@@ -48,14 +54,16 @@ SELECT
             N'DEFAULT_LANGUAGE = ' + CAST(QUOTENAME(COALESCE(NULLIF(s.default_language_name,''),'us_english')) AS nvarchar(4000)) COLLATE DATABASE_DEFAULT + N', ' +
             N'CHECK_POLICY = ' + CASE WHEN s.is_policy_checked = 1 THEN 'ON' ELSE 'OFF' END + N', ' +
             N'CHECK_EXPIRATION = ' + CASE WHEN s.is_expiration_checked = 1 THEN 'ON' ELSE 'OFF' END + N';'
-        WHEN 'U' THEN
-            N'CREATE LOGIN ' + CAST(QUOTENAME(s.name) AS nvarchar(4000)) COLLATE DATABASE_DEFAULT + N' FROM WINDOWS WITH ' +
-            N'SID = 0x' + CONVERT(nvarchar(256), s.sid, 2) + N', ' +
+
+        WHEN 'U' THEN   -- Windows login (BEZ SID)
+            N'CREATE LOGIN ' + CAST(QUOTENAME(s.name) AS nvarchar(4000)) COLLATE DATABASE_DEFAULT +
+            N' FROM WINDOWS WITH ' +
             N'DEFAULT_DATABASE = ' + CAST(QUOTENAME(COALESCE(NULLIF(s.default_database_name,''),'master')) AS nvarchar(4000)) COLLATE DATABASE_DEFAULT + N', ' +
             N'DEFAULT_LANGUAGE = ' + CAST(QUOTENAME(COALESCE(NULLIF(s.default_language_name,''),'us_english')) AS nvarchar(4000)) COLLATE DATABASE_DEFAULT + N';'
-        WHEN 'G' THEN
-            N'CREATE LOGIN ' + CAST(QUOTENAME(s.name) AS nvarchar(4000)) COLLATE DATABASE_DEFAULT + N' FROM WINDOWS WITH ' +
-            N'SID = 0x' + CONVERT(nvarchar(256), s.sid, 2) + N';'
+
+        WHEN 'G' THEN   -- Windows group (BEZ SID)
+            N'CREATE LOGIN ' + CAST(QUOTENAME(s.name) AS nvarchar(4000)) COLLATE DATABASE_DEFAULT +
+            N' FROM WINDOWS;'
     END AS [-- CreateLogins]
 FROM #Src AS s
 ORDER BY s.type, s.name;
