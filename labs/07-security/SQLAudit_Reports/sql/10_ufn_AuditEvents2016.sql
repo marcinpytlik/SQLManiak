@@ -29,22 +29,22 @@ RETURNS @t TABLE
     object_name        sysname       NULL,
     obj3               nvarchar(776)  NULL,
     statement          nvarchar(max)  NULL,
-    application_name   nvarchar(128)  NULL,      -- w 2016 nie zwracane przez fn_get_audit_file
-    client_hostname    nvarchar(128)  NULL,      -- w 2016 podstawimy tu client_ip
+    application_name   nvarchar(128)  NULL, -- 2016: brak w fn_get_audit_file -> NULL
+    client_hostname    nvarchar(128)  NULL, -- 2016: brak w fn_get_audit_file -> NULL
     session_id         int            NULL
 )
 AS
 BEGIN
     DECLARE @FilePath nvarchar(4000);
 
-    -- 1) Spróbuj z aktywnego audytu (dm_server_audit_status)
+    -- 1) Aktywny audyt → ścieżka z DM
     SELECT TOP (1) @FilePath = s.audit_file_path
     FROM sys.dm_server_audit_status AS s
     WHERE s.name = @AuditName
     ORDER BY CASE WHEN s.status_desc = 'STARTED' THEN 0 ELSE 1 END,
              s.status_time DESC;
 
-    -- 2) Jeśli brak, weź z definicji (server_file_audits.log_file_path)
+    -- 2) Jeśli brak → z definicji audytu
     IF @FilePath IS NULL
     BEGIN
         SELECT TOP (1) @FilePath = fa.log_file_path
@@ -58,7 +58,7 @@ BEGIN
     IF @FilePath IS NULL
         RETURN;
 
-    -- 3) Zbuduj wildcard (*.sqlaudit)
+    -- 3) Wildcard na pliki audytu
     IF RIGHT(@FilePath,1) NOT IN ('\','/')
        AND RIGHT(LOWER(@FilePath), 9) <> '.sqlaudit'
        SET @FilePath = @FilePath + N'\*.sqlaudit';
@@ -68,7 +68,7 @@ BEGIN
     DECLARE @utc_from datetime2(7) = @FromDate;
     DECLARE @utc_to   datetime2(7) = @ToDate;
 
-    -- 4) Wczytaj z plików audytu (2016: brak application_name/hostname → uzupełniamy)
+    -- 4) Wczytaj wpisy z plików (2016: bez app/host)
     INSERT INTO @t
     (
         event_time_utc, event_time_local, action_id, operation, succeeded,
@@ -102,8 +102,8 @@ BEGIN
           ELSE NULL
         END AS obj3,
         x.statement,
-        NULL AS application_name,                 -- 2016: brak kolumny w fn_get_audit_file
-        x.client_ip AS client_hostname,           -- 2016: podstawiamy IP w miejsce hosta
+        NULL AS application_name,      -- 2016: brak kolumny
+        NULL AS client_hostname,       -- 2016: brak kolumny
         x.session_id
     FROM sys.fn_get_audit_file(@FilePath, DEFAULT, DEFAULT) AS x
     WHERE (@utc_from IS NULL OR x.event_time >= @utc_from)
