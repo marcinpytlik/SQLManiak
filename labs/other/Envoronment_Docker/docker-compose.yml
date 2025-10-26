@@ -1,0 +1,133 @@
+# autor: Marcin Pytlik (SQLManiak)
+# data: 2025-10-26
+
+# docker-compose dla labu SQLManiak
+# Cel: trzy instancje SQL Server (2017/2019/2022) + InfluxDB 2 + Telegraf + Grafana
+# Komentarze po polsku, bez polskich znakow
+
+version: "3.9"
+
+networks:
+  sqlnet:
+    name: sqlnet
+
+volumes:
+  mssql2017-data:
+  mssql2019-data:
+  mssql2022-data:
+  influxdb-data:
+  grafana-data:
+
+services:
+  # SQL Server 2017
+  sql2017:
+    image: mcr.microsoft.com/mssql/server:2017-latest
+    container_name: sql2017
+    restart: unless-stopped
+    networks: [sqlnet]
+    ports:
+      - "${HOST_PORT_2017}:1433"   # port hosta -> port SQL w kontenerze
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${SA_PASSWORD}
+      - MSSQL_PID=Developer
+      - MSSQL_AGENT_ENABLED=true
+      - TZ=${TZ}
+    volumes:
+      - mssql2017-data:/var/opt/mssql
+      - ./init:/docker-entrypoint-initdb.d:ro  # skrypty inicjalizacyjne
+
+  # SQL Server 2019
+  sql2019:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: sql2019
+    restart: unless-stopped
+    networks: [sqlnet]
+    ports:
+      - "${HOST_PORT_2019}:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${SA_PASSWORD}
+      - MSSQL_PID=Developer
+      - MSSQL_AGENT_ENABLED=true
+      - TZ=${TZ}
+    volumes:
+      - mssql2019-data:/var/opt/mssql
+      - ./init:/docker-entrypoint-initdb.d:ro
+
+  # SQL Server 2022
+  sql2022:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sql2022
+    restart: unless-stopped
+    networks: [sqlnet]
+    ports:
+      - "${HOST_PORT_2022}:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${SA_PASSWORD}
+      - MSSQL_PID=Developer
+      - MSSQL_AGENT_ENABLED=true
+      - TZ=${TZ}
+    volumes:
+      - mssql2022-data:/var/opt/mssql
+      - ./init:/docker-entrypoint-initdb.d:ro
+
+  # InfluxDB 2 (TSDB)
+  influxdb:
+    image: influxdb:2.7
+    container_name: influxdb
+    restart: unless-stopped
+    networks: [sqlnet]
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=${INFLUXDB_ADMIN_USER}
+      - DOCKER_INFLUXDB_INIT_PASSWORD=${INFLUXDB_ADMIN_PASSWORD}
+      - DOCKER_INFLUXDB_INIT_ORG=${INFLUXDB_ORG}
+      - DOCKER_INFLUXDB_INIT_BUCKET=${INFLUXDB_BUCKET}
+      - DOCKER_INFLUXDB_INIT_RETENTION=${INFLUXDB_RETENTION}
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_ADMIN_TOKEN}
+      - TZ=${TZ}
+    ports:
+      - "8086:8086"   # UI i API
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+
+  # Telegraf (zbieranie metryk z SQL i hosta)
+  telegraf:
+    image: telegraf:1.30
+    container_name: telegraf
+    restart: unless-stopped
+    networks: [sqlnet]
+    depends_on:
+      - influxdb
+      - sql2017
+      - sql2019
+      - sql2022
+    environment:
+      - INFLUXDB_URL=${INFLUXDB_URL}
+      - INFLUXDB_ORG=${INFLUXDB_ORG}
+      - INFLUXDB_BUCKET=${INFLUXDB_BUCKET}
+      - INFLUXDB_TOKEN=${INFLUXDB_ADMIN_TOKEN}
+      - SA_PASSWORD=${SA_PASSWORD}
+      - TZ=${TZ}
+    volumes:
+      - ./telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+
+  # Grafana (wizualizacja)
+  grafana:
+    image: grafana/grafana:10.4.3
+    container_name: grafana
+    restart: unless-stopped
+    networks: [sqlnet]
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - TZ=${TZ}
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro

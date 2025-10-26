@@ -1,0 +1,133 @@
+{
+  "title": "SQLManiak – SQL Overview",
+  "uid": "sqlmaniak-overview",
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "editable": true,
+  "refresh": "15s",
+  "tags": [
+    "SQLManiak",
+    "SQL Server",
+    "InfluxDB",
+    "Telegraf"
+  ],
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Sessions (active)",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement =~ /sqlserver_sessions.*/)\n  |> filter(fn: (r) => r._field == \"active_sessions\")\n  |> last()"
+        }
+      ]
+    },
+    {
+      "type": "time-series",
+      "title": "CPU hosta (kontenery) %",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 6,
+        "y": 0
+      },
+      "targets": [
+        {
+          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart)\n  |> filter(fn: (r) => r._measurement == \"cpu\")\n  |> filter(fn: (r) => r._field == \"usage_system\" or r._field == \"usage_user\")\n  |> aggregateWindow(every: 1m, fn: mean)\n  |> yield()"
+        }
+      ]
+    },
+    {
+      "type": "time-series",
+      "title": "Top Waits (mean, 1m)",
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom"
+        }
+      },
+      "targets": [
+        {
+          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart)\n  |> filter(fn: (r) => r._measurement =~ /sqlserver_wait(stats|_stats)/)\n  |> rename(columns: {_value: \"wait_ms\"})\n  |> aggregateWindow(every: 1m, fn: mean)\n  |> group(columns: [\"wait_type\",\"server_instance\"], mode: \"by\")\n  |> top(n:10, columns:[\"wait_ms\"])"
+        }
+      ]
+    },
+    {
+      "type": "time-series",
+      "title": "IO per database (reads+writes MB/s)",
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "targets": [
+        {
+          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart)\n  |> filter(fn: (r) => r._measurement =~ /sqlserver_database_io|sqlserver_db_io/)\n  |> filter(fn: (r) => r._field == \"read_mb_per_sec\" or r._field == \"write_mb_per_sec\")\n  |> aggregateWindow(every: 1m, fn: mean)\n  |> yield()"
+        }
+      ]
+    },
+    {
+      "type": "time-series",
+      "title": "PLE (Page Life Expectancy)",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 14
+      },
+      "targets": [
+        {
+          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart)\n  |> filter(fn: (r) => r._measurement =~ /sqlserver_performance/)\n  |> filter(fn: (r) => r.counter =~ /Page life expectancy/)\n  |> aggregateWindow(every: 1m, fn: mean)\n  |> yield()"
+        }
+      ]
+    },
+    {
+      "type": "time-series",
+      "title": "Buffer cache hit ratio %",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 14
+      },
+      "targets": [
+        {
+          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart)\n  |> filter(fn: (r) => r._measurement =~ /sqlserver_performance/)\n  |> filter(fn: (r) => r.counter =~ /Buffer cache hit ratio/)\n  |> aggregateWindow(every: 1m, fn: mean)\n  |> yield()"
+        }
+      ]
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "type": "query",
+        "name": "bucket",
+        "label": "Bucket",
+        "query": "buckets()",
+        "current": {
+          "text": "sqlmetrics",
+          "value": "sqlmetrics"
+        },
+        "refresh": 2,
+        "hide": 2
+      }
+    ]
+  }
+}

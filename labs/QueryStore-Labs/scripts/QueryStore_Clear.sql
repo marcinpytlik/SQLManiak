@@ -1,0 +1,4 @@
+USE [AdventureWorks2022];
+GO
+ALTER DATABASE [AdventureWorks2022] SET QUERY_STORE CLEAR ALL;
+GO

@@ -1,0 +1,23 @@
+# autor: Marcin Pytlik (SQLManiak)
+# data: 2025-10-26
+apiVersion: 1
+
+datasources:
+  - name: InfluxDB-v2
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    isDefault: true
+    jsonData:
+      version: Flux
+      organization: ${
+        INFLUXDB_ORG
+      }
+      defaultBucket: ${
+        INFLUXDB_BUCKET
+      }
+      tlsSkipVerify: true
+    secureJsonData:
+      token: ${
+        INFLUXDB_ADMIN_TOKEN
+      }

@@ -1,0 +1,15 @@
+# autor: Marcin Pytlik (SQLManiak)
+# data: 2025-10-26
+apiVersion: 1
+
+providers:
+  - name: "SQLManiak Dashboards"
+    orgId: 1
+    folder: "SQLManiak"
+    type: file
+    disableDeletion: false
+    allowUiUpdates: true
+    updateIntervalSeconds: 10
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false
