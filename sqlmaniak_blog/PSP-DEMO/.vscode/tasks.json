@@ -1,0 +1,53 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "00 \u2013 Prereq",
+      "type": "shell",
+      "command": "sqlcmd -C -S ${env:MSSQL_SERVER} -U ${env:MSSQL_USER} -P ${env:MSSQL_PASS} -i \"${workspaceFolder}\\sql\\00-prereq.sql\"",
+      "problemMatcher": []
+    },
+    {
+      "label": "01 \u2013 Create Data",
+      "type": "shell",
+      "command": "sqlcmd -C -S ${env:MSSQL_SERVER} -U ${env:MSSQL_USER} -P ${env:MSSQL_PASS} -i \"${workspaceFolder}\\sql\\01-create-data.sql\"",
+      "problemMatcher": []
+    },
+    {
+      "label": "02 \u2013 Proc & Indexes",
+      "type": "shell",
+      "command": "sqlcmd -C -S ${env:MSSQL_SERVER} -U ${env:MSSQL_USER} -P ${env:MSSQL_PASS} -i \"${workspaceFolder}\\sql\\02-proc-and-indexes.sql\"",
+      "problemMatcher": []
+    },
+    {
+      "label": "03 \u2013 Run Scenarios",
+      "type": "shell",
+      "command": "sqlcmd -C -S ${env:MSSQL_SERVER} -U ${env:MSSQL_USER} -P ${env:MSSQL_PASS} -i \"${workspaceFolder}\\sql\\03-run-scenarios.sql\"",
+      "problemMatcher": []
+    },
+    {
+      "label": "04 \u2013 Compare IO/CPU",
+      "type": "shell",
+      "command": "sqlcmd -C -S ${env:MSSQL_SERVER} -U ${env:MSSQL_USER} -P ${env:MSSQL_PASS} -i \"${workspaceFolder}\\sql\\04-compare-costs.sql\"",
+      "problemMatcher": []
+    },
+    {
+      "label": "04 \u2013 DMV: QS Variants",
+      "type": "shell",
+      "command": "sqlcmd -C -S ${env:MSSQL_SERVER} -U ${env:MSSQL_USER} -P ${env:MSSQL_PASS} -i \"${workspaceFolder}\\sql\\dmv\\qs-variants.sql\"",
+      "problemMatcher": []
+    },
+    {
+      "label": "04 \u2013 DMV: Cached PSP XML",
+      "type": "shell",
+      "command": "sqlcmd -C -S ${env:MSSQL_SERVER} -U ${env:MSSQL_USER} -P ${env:MSSQL_PASS} -i \"${workspaceFolder}\\sql\\dmv\\cached-psp-xml.sql\"",
+      "problemMatcher": []
+    },
+    {
+      "label": "05 \u2013 Cleanup",
+      "type": "shell",
+      "command": "sqlcmd -C -S ${env:MSSQL_SERVER} -U ${env:MSSQL_USER} -P ${env:MSSQL_PASS} -i \"${workspaceFolder}\\sql\\05-cleanup.sql\"",
+      "problemMatcher": []
+    }
+  ]
+}

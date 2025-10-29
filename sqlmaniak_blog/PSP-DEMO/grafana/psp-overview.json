@@ -1,0 +1,51 @@
+{
+  "title": "SQLManiak \u2013 PSP Overview",
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "graph",
+      "title": "CPU %",
+      "targets": [
+        {
+          "refId": "A",
+          "groupBy": [
+            {
+              "type": "time",
+              "params": [
+                "1m"
+              ]
+            }
+          ],
+          "measurement": "sqlserver_performance",
+          "query": "SELECT mean(\"value\") FROM \"sqlserver_performance\" WHERE (\"counter_name\" = '% Processor Time') AND $timeFilter GROUP BY time(1m) fill(null)"
+        }
+      ],
+      "id": 1
+    },
+    {
+      "type": "graph",
+      "title": "Batch Requests/sec",
+      "targets": [
+        {
+          "refId": "A",
+          "query": "SELECT mean(\"value\") FROM \"sqlserver_performance\" WHERE (\"counter_name\" = 'Batch Requests/sec') AND $timeFilter GROUP BY time(1m) fill(null)"
+        }
+      ],
+      "id": 2
+    },
+    {
+      "type": "graph",
+      "title": "SQL Compilations/sec",
+      "targets": [
+        {
+          "refId": "A",
+          "query": "SELECT mean(\"value\") FROM \"sqlserver_performance\" WHERE (\"counter_name\" = 'SQL Compilations/sec') AND $timeFilter GROUP BY time(1m) fill(null)"
+        }
+      ],
+      "id": 3
+    }
+  ]
+}
