@@ -1,0 +1,50 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "00 \u2013 Inspect TempDB",
+      "type": "shell",
+      "command": "sqlcmd -C -S ${env:MSSQL_SERVER} -U ${env:MSSQL_USER} -P ${env:MSSQL_PASS} -i \"${workspaceFolder}\\sql\\00-inspect-tempdb.sql\""
+    },
+    {
+      "label": "01 \u2013 Generate Pressure",
+      "type": "shell",
+      "command": "sqlcmd -C -S ${env:MSSQL_SERVER} -U ${env:MSSQL_USER} -P ${env:MSSQL_PASS} -i \"${workspaceFolder}\\sql\\01-generate-pressure.sql\""
+    },
+    {
+      "label": "02 \u2013 Contention Demo (run in parallel!)",
+      "type": "shell",
+      "command": "sqlcmd -C -S ${env:MSSQL_SERVER} -U ${env:MSSQL_USER} -P ${env:MSSQL_PASS} -i \"${workspaceFolder}\\sql\\02-contention-demo.sql\""
+    },
+    {
+      "label": "03 \u2013 Best Practices Config (template!)",
+      "type": "shell",
+      "command": "sqlcmd -C -S ${env:MSSQL_SERVER} -U ${env:MSSQL_USER} -P ${env:MSSQL_PASS} -i \"${workspaceFolder}\\sql\\03-best-practices-config.sql\""
+    },
+    {
+      "label": "DMV \u2013 IO Stats",
+      "type": "shell",
+      "command": "sqlcmd -C -S ${env:MSSQL_SERVER} -U ${env:MSSQL_USER} -P ${env:MSSQL_PASS} -i \"${workspaceFolder}\\sql\\dmv\\tempdb-io-stats.sql\""
+    },
+    {
+      "label": "DMV \u2013 Usage",
+      "type": "shell",
+      "command": "sqlcmd -C -S ${env:MSSQL_SERVER} -U ${env:MSSQL_USER} -P ${env:MSSQL_PASS} -i \"${workspaceFolder}\\sql\\dmv\\tempdb-usage.sql\""
+    },
+    {
+      "label": "DMV \u2013 PAGELATCH",
+      "type": "shell",
+      "command": "sqlcmd -C -S ${env:MSSQL_SERVER} -U ${env:MSSQL_USER} -P ${env:MSSQL_PASS} -i \"${workspaceFolder}\\sql\\dmv\\wait-pagelatch.sql\""
+    },
+    {
+      "label": "DMV \u2013 Version Store",
+      "type": "shell",
+      "command": "sqlcmd -C -S ${env:MSSQL_SERVER} -U ${env:MSSQL_USER} -P ${env:MSSQL_PASS} -i \"${workspaceFolder}\\sql\\dmv\\version-store.sql\""
+    },
+    {
+      "label": "04 \u2013 Cleanup",
+      "type": "shell",
+      "command": "sqlcmd -C -S ${env:MSSQL_SERVER} -U ${env:MSSQL_USER} -P ${env:MSSQL_PASS} -i \"${workspaceFolder}\\sql\\04-cleanup-demo.sql\""
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "00 \u2013 Create DB",
+      "type": "shell",
+      "command": "sqlcmd -C -S ${env:MSSQL_SERVER} -U ${env:MSSQL_USER} -P ${env:MSSQL_PASS} -i \"${workspaceFolder}\\sql\\00-create-db.sql\""
+    },
+    {
+      "label": "01 \u2013 Transaction Demo",
+      "type": "shell",
+      "command": "sqlcmd -C -S ${env:MSSQL_SERVER} -U ${env:MSSQL_USER} -P ${env:MSSQL_PASS} -i \"${workspaceFolder}\\sql\\01-transaction-demo.sql\""
+    },
+    {
+      "label": "02 \u2013 Checkpoint Demo",
+      "type": "shell",
+      "command": "sqlcmd -C -S ${env:MSSQL_SERVER} -U ${env:MSSQL_USER} -P ${env:MSSQL_PASS} -i \"${workspaceFolder}\\sql\\02-checkpoint-demo.sql\""
+    },
+    {
+      "label": "03 \u2013 Recovery Sim",
+      "type": "shell",
+      "command": "sqlcmd -C -S ${env:MSSQL_SERVER} -U ${env:MSSQL_USER} -P ${env:MSSQL_PASS} -i \"${workspaceFolder}\\sql\\03-recovery-sim.sql\""
+    },
+    {
+      "label": "DMV \u2013 Recovery Status",
+      "type": "shell",
+      "command": "sqlcmd -C -S ${env:MSSQL_SERVER} -U ${env:MSSQL_USER} -P ${env:MSSQL_PASS} -i \"${workspaceFolder}\\sql\\dmv\\recovery-status.sql\""
+    },
+    {
+      "label": "DMV \u2013 Active Transactions",
+      "type": "shell",
+      "command": "sqlcmd -C -S ${env:MSSQL_SERVER} -U ${env:MSSQL_USER} -P ${env:MSSQL_PASS} -i \"${workspaceFolder}\\sql\\dmv\\active-transactions.sql\""
+    },
+    {
+      "label": "DMV \u2013 Log Usage",
+      "type": "shell",
+      "command": "sqlcmd -C -S ${env:MSSQL_SERVER} -U ${env:MSSQL_USER} -P ${env:MSSQL_PASS} -i \"${workspaceFolder}\\sql\\dmv\\log-usage.sql\""
+    }
+  ]
+}

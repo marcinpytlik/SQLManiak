@@ -1,0 +1,31 @@
+{
+  "title": "SQLManiak \u2013 ARIES Log Usage",
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "graph",
+      "title": "Transaction Log Used (%)",
+      "targets": [
+        {
+          "refId": "A",
+          "query": "SELECT mean(\"log_used_percent\") FROM \"sqlserver_database_transaction_log_used_percent\" WHERE (\"database_name\" = 'ARIES_Demo') AND $timeFilter GROUP BY time(1m) fill(null)"
+        }
+      ],
+      "id": 1
+    },
+    {
+      "type": "graph",
+      "title": "Log Flushes/sec",
+      "targets": [
+        {
+          "refId": "A",
+          "query": "SELECT non_negative_derivative(mean(\"cntr_value\"),1s) FROM \"sqlserver_performance\" WHERE (\"counter_name\" = 'Log Flushes/sec') AND (\"instance_name\" = 'ARIES_Demo') AND $timeFilter GROUP BY time(1m) fill(null)"
+        }
+      ],
+      "id": 2
+    }
+  ]
+}
