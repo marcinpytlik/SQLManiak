@@ -28,3 +28,21 @@ SELECT
     [cntr_value] AS PageLifeExpectancy_sec
 FROM sys.dm_os_performance_counters
 WHERE [counter_name] = 'Page life expectancy';
+SELECT 
+    physical_memory_in_use_kb / 1024 AS MemoryUsed_MB,
+    locked_page_allocations_kb / 1024 AS LockedPages_MB,
+    total_virtual_address_space_kb / 1024 AS VirtualSpace_MB,
+    process_physical_memory_low AS IsLowMemory,
+    process_virtual_memory_low AS IsVirtualLowMemory
+FROM sys.dm_os_process_memory;
+SELECT 
+    COUNT(*) AS ActiveMemoryGrants,
+    SUM(requested_memory_kb)/1024 AS Requested_MB,
+    SUM(granted_memory_kb)/1024 AS Granted_MB,
+    SUM(used_memory_kb)/1024 AS Used_MB
+FROM sys.dm_exec_query_memory_grants
+WHERE grant_time IS NULL OR grant_time > DATEADD(MINUTE, -1, GETDATE());
+SELECT 
+    (cntr_value) AS FreeListStallsPerSec
+FROM sys.dm_os_performance_counters
+WHERE counter_name = 'Free list stalls/sec';
