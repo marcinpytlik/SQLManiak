@@ -1,0 +1,40 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "SQL: 1 \u2013 Jobs status",
+      "type": "shell",
+      "command": "sqlcmd -S \"${config:replication.server}\" -E -i \"${workspaceFolder}/sql/1_jobs_status.sql\""
+    },
+    {
+      "label": "SQL: 2 \u2013 Distribution errors",
+      "type": "shell",
+      "command": "sqlcmd -S \"${config:replication.server}\" -E -i \"${workspaceFolder}/sql/2_distribution_errors.sql\""
+    },
+    {
+      "label": "SQL: 3 \u2013 Merge history",
+      "type": "shell",
+      "command": "sqlcmd -S \"${config:replication.server}\" -E -i \"${workspaceFolder}/sql/3_merge_history.sql\""
+    },
+    {
+      "label": "SQL: 4 \u2013 Health (pub/sub)",
+      "type": "shell",
+      "command": "sqlcmd -S \"${config:replication.server}\" -E -i \"${workspaceFolder}/sql/4_health_checks.sql\""
+    },
+    {
+      "label": "SQL: 5 \u2013 Pending cmds (template)",
+      "type": "shell",
+      "command": "sqlcmd -S \"${config:replication.server}\" -E -i \"${workspaceFolder}/sql/5_pending_cmds_template.sql\""
+    },
+    {
+      "label": "SQL: 6 \u2013 Alerts in msdb",
+      "type": "shell",
+      "command": "sqlcmd -S \"${config:replication.server}\" -E -i \"${workspaceFolder}/sql/6_alerts.sql\""
+    },
+    {
+      "label": "SQLAgent: Create email job",
+      "type": "shell",
+      "command": "sqlcmd -S \"${config:replication.server}\" -E -v MailOperator=\"${config:replication.mailOperator}\" -i \"${workspaceFolder}/sqlagent/Create-ReplicationErrorEmailJob.sql\""
+    }
+  ]
+}

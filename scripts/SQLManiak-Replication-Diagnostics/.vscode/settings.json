@@ -1,0 +1,4 @@
+{
+  "replication.server": ".",
+  "replication.mailOperator": "DBA-OnCall"
+}
