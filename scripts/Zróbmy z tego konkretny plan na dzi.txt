@@ -1,0 +1,215 @@
+Zróbmy z tego konkretny plan na dziś 10:00–12:00.
+Pokażę Ci prosty wariant „na szybko” (bez XE) i wersję dokładniejszą (z XE).
+
+1. Ustalenie okna czasowego „dzisiaj 10–12”
+
+Na początku skryptu ustawiamy zmienne na dzisiejszą datę i godziny 10–12:
+
+DECLARE @from DATETIME2 = CONVERT(date, SYSDATETIME()) + CAST('10:00:00' AS time);
+DECLARE @to   DATETIME2 = CONVERT(date, SYSDATETIME()) + CAST('12:00:00' AS time);
+
+SELECT @from AS WindowStart, @to AS WindowEnd;
+
+
+Możesz to odpalić już teraz – pokaże Ci, jakie dokładnie wartości SQL widzi.
+
+2. Co robisz O 12:00 – zbieranie danych z DMV
+2.1. Ile wierszy przeszło przez tabelę w tym oknie
+-- 1) Ile wierszy w JobExecutions w oknie 10:00–12:00
+DECLARE @from DATETIME2 = CONVERT(date, SYSDATETIME()) + CAST('10:00:00' AS time);
+DECLARE @to   DATETIME2 = CONVERT(date, SYSDATETIME()) + CAST('12:00:00' AS time);
+
+SELECT COUNT(*) AS RowCountInWindow
+FROM dbo.JobExecutions
+WHERE StartTime >= @from
+  AND StartTime <  @to;
+
+
+Jeśli masz inną kolumnę czasu (np. EndTime), po prostu podmień w WHERE.
+
+2.2. Najcięższe zapytania na JobExecutions w tym oknie
+
+Kluczowa rzecz: DMV trzymają statystyki kumulacyjne, ale mamy kolumnę last_execution_time, więc możemy przybliżyć okno czasu.
+
+Odpal o 12:00 taki wariant:
+
+DECLARE @from DATETIME2 = CONVERT(date, SYSDATETIME()) + CAST('10:00:00' AS time);
+DECLARE @to   DATETIME2 = CONVERT(date, SYSDATETIME()) + CAST('12:00:00' AS time);
+
+SELECT TOP (50)
+    t.text AS QueryText,
+    qs.execution_count,
+    qs.total_logical_reads / NULLIF(qs.execution_count,0) AS AvgReads,
+    qs.total_logical_writes / NULLIF(qs.execution_count,0) AS AvgWrites,
+    qs.total_elapsed_time / NULLIF(qs.execution_count,0) / 1000.0 AS AvgDurationMs,
+    qs.max_elapsed_time / 1000.0 AS MaxDurationMs,
+    qs.last_execution_time
+FROM sys.dm_exec_query_stats AS qs
+CROSS APPLY sys.dm_exec_sql_text(qs.sql_handle) AS t
+WHERE t.text LIKE '%JobExecutions%'
+  AND qs.last_execution_time >= @from
+  AND qs.last_execution_time <  @to
+ORDER BY qs.total_logical_reads DESC;
+
+
+To Ci pokaże zapytania, które dotykały JobExecutions i były wykonywane w oknie 10–12 (bo ich ostatnie wykonanie mieści się w tym przedziale).
+
+2.3. Blokady / sesje dotykające JobExecutions (w czasie okna)
+
+Blokady trzeba „łapać w locie”, ale możesz o 12:00 obejrzeć, co jeszcze tam wisi (albo w trakcie okna odpalić to kilka razy):
+
+SELECT 
+    r.session_id,
+    r.status,
+    r.command,
+    r.blocking_session_id,
+    r.wait_type,
+    r.wait_time,
+    r.cpu_time,
+    r.logical_reads,
+    r.start_time,
+    t.text AS QueryText
+FROM sys.dm_exec_requests AS r
+CROSS APPLY sys.dm_exec_sql_text(r.sql_handle) AS t
+WHERE t.text LIKE '%JobExecutions%';
+
+
+To bardziej „live view”, więc najlepiej jest odpalić to parę razy w oknie 10–12, kiedy coś „zgrzyta”.
+
+2.4. Brakujące indeksy i fragmentacja
+
+Te DMV działają niezależnie od okna – pokazują stan „od restartu instancji” / od czasu ostatniego wyczyszczenia plan cache, ale i tak są bardzo przydatne.
+
+Brakujące indeksy:
+SELECT TOP (20)
+    migs.user_seeks,
+    migs.user_scans,
+    migs.avg_total_user_cost,
+    migs.avg_user_impact,
+    mid.statement AS TableName,
+    mid.equality_columns,
+    mid.inequality_columns,
+    mid.included_columns
+FROM sys.dm_db_missing_index_group_stats AS migs
+JOIN sys.dm_db_missing_index_groups AS mig
+    ON migs.group_handle = mig.index_group_handle
+JOIN sys.dm_db_missing_index_details AS mid
+    ON mig.index_handle = mid.index_handle
+WHERE mid.statement LIKE '%JobExecutions%'
+ORDER BY (migs.avg_total_user_cost * migs.avg_user_impact) DESC;
+
+Fragmentacja:
+SELECT 
+    OBJECT_NAME(ps.object_id) AS TableName,
+    i.name AS IndexName,
+    ps.index_id,
+    ps.page_count,
+    ps.avg_fragmentation_in_percent
+FROM sys.dm_db_index_physical_stats(
+        DB_ID(),
+        OBJECT_ID('dbo.JobExecutions'),
+        NULL,
+        NULL,
+        'SAMPLED') AS ps
+JOIN sys.indexes AS i
+    ON ps.object_id = i.object_id
+   AND ps.index_id = i.index_id
+WHERE ps.page_count > 128
+ORDER BY ps.avg_fragmentation_in_percent DESC;
+
+
+Te dwa odpalasz „po oknie” – np. o 12:05 – żeby zobaczyć stan fizyczny i podpowiedzi indeksowe po typowym obciążeniu.
+
+3. Wersja „dokładniejsza” – z Extended Events na czas okna
+
+Jeśli chcesz twarde dane tylko z 10–12, najlepsza jest sesja XE, którą:
+
+tworzysz raz,
+
+codziennie START o 10:00, STOP o 12:00.
+
+3.1. Tworzenie sesji (robisz raz)
+CREATE EVENT SESSION [JobExecutions_Updates] ON SERVER
+ADD EVENT sqlserver.sql_statement_completed(
+    ACTION(sqlserver.sql_text, sqlserver.session_id, sqlserver.database_id)
+    WHERE (sqlserver.sql_text LIKE '%JobExecutions%')
+)
+ADD TARGET package0.event_file(
+    SET filename = N'C:\XE\JobExecutions_Updates.xel',
+        max_file_size = 50, 
+        max_rollover_files = 5
+)
+WITH (
+    MAX_MEMORY = 4096 KB, 
+    EVENT_RETENTION_MODE = ALLOW_SINGLE_EVENT_LOSS,
+    MAX_DISPATCH_LATENCY = 5 SECONDS,
+    STARTUP_STATE = OFF
+);
+
+
+Folder C:\XE oczywiście dostosuj do siebie.
+
+3.2. Dzisiaj o 10:00 – start sesji
+
+Odpal:
+
+ALTER EVENT SESSION [JobExecutions_Updates] ON SERVER STATE = START;
+
+3.3. Dzisiaj o 12:00 – stop sesji
+ALTER EVENT SESSION [JobExecutions_Updates] ON SERVER STATE = STOP;
+
+3.4. Po 12:00 – analiza pliku XE
+;WITH XE AS
+(
+    SELECT 
+        DATEADD(hh, DATEDIFF(hh, GETUTCDATE(), SYSDATETIME()), 
+            CAST(event_data.value('(event/@timestamp)[1]', 'datetime2') AS datetime2)) AS EventTimeLocal,
+        event_data.value('(event/data[@name="statement"]/value)[1]', 'nvarchar(max)') AS StatementText,
+        event_data.value('(event/action[@name="session_id"]/value)[1]', 'int') AS SessionId,
+        event_data.value('(event/data[@name="duration"]/value)[1]', 'bigint') / 1000.0 AS DurationMs,
+        event_data.value('(event/data[@name="cpu_time"]/value)[1]', 'bigint') / 1000.0 AS CpuMs,
+        event_data.value('(event/data[@name="logical_reads"]/value)[1]', 'bigint') AS LogicalReads
+    FROM (
+        SELECT CAST(event_data AS XML) AS event_data
+        FROM sys.fn_xe_file_target_read_file(
+                N'C:\XE\JobExecutions_Updates*.xel', 
+                NULL, NULL, NULL
+        )
+    ) AS src
+)
+SELECT *
+FROM XE
+WHERE EventTimeLocal >= CONVERT(date, SYSDATETIME()) + CAST('10:00:00' AS time)
+  AND EventTimeLocal <  CONVERT(date, SYSDATETIME()) + CAST('12:00:00' AS time)
+ORDER BY EventTimeLocal;
+
+
+To da Ci dokładny log wszystkich statementów dotykających JobExecutions w oknie 10–12, z czasami, CPU, odczytami.
+
+4. Minimalny „workflow” na dziś (podsumowanie)
+
+Przed 10:00
+
+(opcjonalnie) utwórz XE (jeśli jeszcze jej nie ma).
+
+O 10:00
+
+ALTER EVENT SESSION ... START;
+
+O 12:00
+
+ALTER EVENT SESSION ... STOP;
+
+uruchom pakiet DMV:
+
+liczba wierszy w JobExecutions z StartTime 10–12,
+
+DMV z last_execution_time 10–12,
+
+missing indexes + fragmentacja.
+
+Po 12:00
+
+odczytaj plik XE i przeanalizuj, które zapytania są najcięższe, ile razy strzelają UPDATE/INSERT/DELETE, jaki mają koszt.
+
+To jest już bardzo przyzwoity mini-audyt dla jednej tabeli w konkretnym oknie czasowym – dokładnie to, o co prosili w tamtym zadaniu „czy nie robimy dużo update, czy są nieefektywne operacje, brak indeksu itd.”
