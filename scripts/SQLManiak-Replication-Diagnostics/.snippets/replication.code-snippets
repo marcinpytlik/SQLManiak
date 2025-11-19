@@ -1,0 +1,24 @@
+{
+  "PendingCmdsTemplate": {
+    "prefix": "repl-pending",
+    "body": [
+      "EXEC sp_replmonitorsubscriptionpendingcmds",
+      "  @publisher       = @@SERVERNAME,",
+      "  @publisher_db    = N'${1:PublisherDB}',",
+      "  @publication     = N'${2:Publication}',",
+      "  @subscriber      = N'${3:SubscriberServer}',",
+      "  @subscriber_db   = N'${4:SubscriberDB}',",
+      "  @subscription_type = 0; -- 0=Push, 1=Pull, 2=Anonymous"
+    ],
+    "description": "Zaleg\u0142e komendy replikacji \u2013 szybki szablon"
+  },
+  "ReplErrorsDashboard": {
+    "prefix": "repl-dashboard",
+    "body": [
+      "SELECT TOP (100) *",
+      "FROM distribution.dbo.Replication_Errors_Dashboard",
+      "ORDER BY ErrorTime DESC;"
+    ],
+    "description": "Szybkie zapytanie do widoku Replication_Errors_Dashboard"
+  }
+}
