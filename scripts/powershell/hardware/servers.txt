@@ -1,0 +1,7 @@
+# produkcja
+prod-sql-01
+prod-sql-02.domena.local
+
+# lab
+lab-node-01
+lab-node-02
