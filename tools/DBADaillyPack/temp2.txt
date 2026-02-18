@@ -1,0 +1,471 @@
+param(
+  [Parameter(Mandatory=$true)]
+  [string]$LoginName,                 # np. konto\domena
+
+  [string]$ServersFile = ".\servers.txt",
+  [string]$OutDir = ".\out",
+
+  # domyślnie Windows Auth
+  [switch]$UseIntegratedSecurity = $true,
+
+  # jeśli chcesz SQL Auth:
+  [string]$SqlUser,
+  [string]$SqlPassword
+)
+
+# --- wymagane: moduł SqlServer (Invoke-Sqlcmd) ---
+if (-not (Get-Module -ListAvailable -Name SqlServer)) {
+  throw "Brak modułu 'SqlServer'. Zainstaluj: Install-Module SqlServer -Scope CurrentUser"
+}
+
+New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
+
+$servers = Get-Content $ServersFile |
+  Where-Object { $_.Trim() -and -not $_.Trim().StartsWith("#") } |
+  ForEach-Object { $_.Trim() }
+
+# T-SQL: audyt uprawnień loginu + uprawnień przez grupy AD
+$tsql = @"
+SET NOCOUNT ON;
+
+DECLARE @Login sysname = N'$(LoginName)';
+
+-- meta instancji
+DECLARE @ServerName sysname = @@SERVERNAME;
+DECLARE @MachineName nvarchar(128) = CAST(SERVERPROPERTY('MachineName') AS nvarchar(128));
+DECLARE @InstanceName nvarchar(128) = CAST(SERVERPROPERTY('InstanceName') AS nvarchar(128));
+DECLARE @ProductVersion nvarchar(50) = CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(50));
+DECLARE @Edition nvarchar(200) = CAST(SERVERPROPERTY('Edition') AS nvarchar(200));
+
+IF SUSER_ID(@Login) IS NULL
+BEGIN
+    SELECT
+        @ServerName AS ServerName,
+        @MachineName AS MachineName,
+        @InstanceName AS InstanceName,
+        @ProductVersion AS ProductVersion,
+        @Edition AS Edition,
+        @Login AS LoginName,
+        0 AS LoginExists,
+        CAST(NULL AS sysname) AS DatabaseName,
+        CAST(NULL AS nvarchar(20)) AS PrincipalSource,    -- Direct / ADGroup
+        CAST(NULL AS sysname) AS PrincipalName,           -- user/group name in DB
+        CAST(NULL AS nvarchar(60)) AS PrincipalType,
+        CAST(NULL AS nvarchar(60)) AS PrincipalAuthType,
+        CAST(NULL AS bit) AS HasPrincipalMapped,
+        CAST(NULL AS nvarchar(max)) AS DbRoles,
+        CAST(NULL AS nvarchar(max)) AS ExplicitPerms,
+        CAST(NULL AS bit) AS GroupsLookupFailed,
+        CAST(NULL AS nvarchar(4000)) AS GroupsLookupError;
+    RETURN;
+END;
+
+DECLARE @LoginSid varbinary(85) = SUSER_SID(@Login);
+
+--------------------------------------------------------------------------------
+-- 1) Pobierz grupy AD użytkownika (xp_logininfo) — jeśli się nie uda, nie zabijaj audytu
+--------------------------------------------------------------------------------
+IF OBJECT_ID('tempdb..#AdGroups') IS NOT NULL DROP TABLE #AdGroups;
+CREATE TABLE #AdGroups
+(
+    account_name sysname NULL,
+    type         varchar(20) NULL,
+    privilege    varchar(20) NULL,
+    mapped_login sysname NULL,
+    permission_path sysname NULL
+);
+
+DECLARE @GroupsLookupFailed bit = 0;
+DECLARE @GroupsLookupError nvarchar(4000) = NULL;
+
+BEGIN TRY
+    INSERT INTO #AdGroups
+    EXEC master..xp_logininfo @acctname = @Login, @option = 'all';
+END TRY
+BEGIN CATCH
+    SET @GroupsLookupFailed = 1;
+    SET @GroupsLookupError = CONCAT('xp_logininfo failed: ', ERROR_MESSAGE());
+END CATCH;
+
+-- Zostaw tylko grupy (zwykle type = 'group')
+IF OBJECT_ID('tempdb..#GroupNames') IS NOT NULL DROP TABLE #GroupNames;
+CREATE TABLE #GroupNames (GroupName sysname NOT NULL PRIMARY KEY);
+
+INSERT INTO #GroupNames(GroupName)
+SELECT DISTINCT account_name
+FROM #AdGroups
+WHERE account_name IS NOT NULL
+  AND (type = 'group' OR type = 'alias' OR type = 'wellknown');
+
+--------------------------------------------------------------------------------
+-- 2) Iteruj po bazach i raportuj:
+--    A) Direct: user po SID loginu
+--    B) ADGroup: user/group w DB po nazwach grup AD
+--------------------------------------------------------------------------------
+DECLARE @db sysname, @sql nvarchar(max);
+
+DECLARE dbs CURSOR LOCAL FAST_FORWARD FOR
+SELECT name
+FROM sys.databases
+WHERE state_desc = 'ONLINE'
+  AND database_id > 4;  -- systemowe pomijamy
+
+OPEN dbs;
+FETCH NEXT FROM dbs INTO @db;
+
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    SET @sql = N'
+USE ' + QUOTENAME(@db) + N';
+SET NOCOUNT ON;
+
+DECLARE @Login sysname = @pLogin;
+DECLARE @LoginSid varbinary(85) = @pSid;
+
+DECLARE @ServerName sysname = @pServerName;
+DECLARE @MachineName nvarchar(128) = @pMachineName;
+DECLARE @InstanceName nvarchar(128) = @pInstanceName;
+DECLARE @ProductVersion nvarchar(50) = @pProductVersion;
+DECLARE @Edition nvarchar(200) = @pEdition;
+
+DECLARE @GroupsLookupFailed bit = @pGroupsFailed;
+DECLARE @GroupsLookupError nvarchar(4000) = @pGroupsError;
+
+-------------------------------------------------------------------------------
+-- A) Direct (po SID loginu)
+-------------------------------------------------------------------------------
+;WITH U AS
+(
+    SELECT dp.name, dp.type_desc, dp.authentication_type_desc, dp.sid
+    FROM sys.database_principals dp
+    WHERE dp.type IN (''S'',''U'',''G'')  
+      AND dp.name NOT IN (''dbo'',''guest'',''INFORMATION_SCHEMA'',''sys'')
+)
+SELECT
+    @ServerName AS ServerName,
+    @MachineName AS MachineName,
+    @InstanceName AS InstanceName,
+    @ProductVersion AS ProductVersion,
+    @Edition AS Edition,
+    @Login AS LoginName,
+    1 AS LoginExists,
+    DB_NAME() AS DatabaseName,
+    N''Direct'' AS PrincipalSource,
+    u.name AS PrincipalName,
+    u.type_desc AS PrincipalType,
+    u.authentication_type_desc AS PrincipalAuthType,
+    CAST(CASE WHEN u.name IS NOT NULL THEN 1 ELSE 0 END AS bit) AS HasPrincipalMapped,
+    STUFF((
+        SELECT N'', '' + r.name
+        FROM sys.database_role_members drm
+        JOIN sys.database_principals r ON r.principal_id = drm.role_principal_id
+        JOIN sys.database_principals m ON m.principal_id = drm.member_principal_id
+        WHERE m.name = u.name
+        ORDER BY r.name
+        FOR XML PATH(''''), TYPE).value(''.'', ''nvarchar(max)'')
+    ,1,2,N'''') AS DbRoles,
+    STUFF((
+        SELECT N'' | '' +
+               p.state_desc + N'' '' + p.permission_name + N'' ON '' +
+               CASE
+                 WHEN p.class_desc = ''DATABASE'' THEN ''DATABASE::'' + QUOTENAME(DB_NAME())
+                 WHEN p.class_desc = ''SCHEMA''   THEN ''SCHEMA::'' + QUOTENAME(SCHEMA_NAME(p.major_id))
+                 WHEN p.class_desc = ''OBJECT_OR_COLUMN'' THEN
+                      ''OBJECT::'' + QUOTENAME(OBJECT_SCHEMA_NAME(p.major_id)) + ''.'' + QUOTENAME(OBJECT_NAME(p.major_id))
+                 ELSE p.class_desc
+               END
+        FROM sys.database_permissions p
+        JOIN sys.database_principals gr ON gr.principal_id = p.grantee_principal_id
+        WHERE gr.name = u.name
+        ORDER BY p.class_desc, p.permission_name, p.state_desc
+        FOR XML PATH(''''), TYPE).value(''.'', ''nvarchar(max)'')
+    ,1,3,N'''') AS ExplicitPerms,
+    @GroupsLookupFailed AS GroupsLookupFailed,
+    @GroupsLookupError AS GroupsLookupError
+FROM U u
+WHERE u.sid = @LoginSid;
+
+IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE sid = @LoginSid)
+BEGIN
+    SELECT
+        @ServerName, @MachineName, @InstanceName, @ProductVersion, @Edition,
+        @Login, 1, DB_NAME(),
+        N''Direct'' AS PrincipalSource,
+        CAST(NULL AS sysname) AS PrincipalName,
+        CAST(NULL AS nvarchar(60)) AS PrincipalType,
+        CAST(NULL AS nvarchar(60)) AS PrincipalAuthType,
+        CAST(0 AS bit) AS HasPrincipalMapped,
+        CAST(NULL AS nvarchar(max)) AS DbRoles,
+        CAST(NULL AS nvarchar(max)) AS ExplicitPerms,
+        @GroupsLookupFailed AS GroupsLookupFailed,
+        @GroupsLookupError AS GroupsLookupError;
+END
+
+-------------------------------------------------------------------------------
+-- B) Via AD Groups (po nazwach grup z #GroupNames)
+-- Uwaga: to mapuje po NAZWIE principal'a w DB (typowo: [DOMENA\\Grupa])
+-------------------------------------------------------------------------------
+IF OBJECT_ID(''tempdb..#GroupNames'') IS NOT NULL
+BEGIN
+    ;WITH G AS
+    (
+        SELECT dp.name, dp.type_desc, dp.authentication_type_desc
+        FROM sys.database_principals dp
+        WHERE dp.type = ''G''
+          AND dp.name IN (SELECT GroupName FROM tempdb..#GroupNames)
+    )
+    SELECT
+        @ServerName AS ServerName,
+        @MachineName AS MachineName,
+        @InstanceName AS InstanceName,
+        @ProductVersion AS ProductVersion,
+        @Edition AS Edition,
+        @Login AS LoginName,
+        1 AS LoginExists,
+        DB_NAME() AS DatabaseName,
+        N''ADGroup'' AS PrincipalSource,
+        g.name AS PrincipalName,
+        g.type_desc AS PrincipalType,
+        g.authentication_type_desc AS PrincipalAuthType,
+        CAST(1 AS bit) AS HasPrincipalMapped,
+        STUFF((
+            SELECT N'', '' + r.name
+            FROM sys.database_role_members drm
+            JOIN sys.database_principals r ON r.principal_id = drm.role_principal_id
+            JOIN sys.database_principals m ON m.principal_id = drm.member_principal_id
+            WHERE m.name = g.name
+            ORDER BY r.name
+            FOR XML PATH(''''), TYPE).value(''.'', ''nvarchar(max)'')
+        ,1,2,N'''') AS DbRoles,
+        STUFF((
+            SELECT N'' | '' +
+                   p.state_desc + N'' '' + p.permission_name + N'' ON '' +
+                   CASE
+                     WHEN p.class_desc = ''DATABASE'' THEN ''DATABASE::'' + QUOTENAME(DB_NAME())
+                     WHEN p.class_desc = ''SCHEMA''   THEN ''SCHEMA::'' + QUOTENAME(SCHEMA_NAME(p.major_id))
+                     WHEN p.class_desc = ''OBJECT_OR_COLUMN'' THEN
+                          ''OBJECT::'' + QUOTENAME(OBJECT_SCHEMA_NAME(p.major_id)) + ''.'' + QUOTENAME(OBJECT_NAME(p.major_id))
+                     ELSE p.class_desc
+                   END
+            FROM sys.database_permissions p
+            JOIN sys.database_principals gr ON gr.principal_id = p.grantee_principal_id
+            WHERE gr.name = g.name
+            ORDER BY p.class_desc, p.permission_name, p.state_desc
+            FOR XML PATH(''''), TYPE).value(''.'', ''nvarchar(max)'')
+        ,1,3,N'''') AS ExplicitPerms,
+        @GroupsLookupFailed AS GroupsLookupFailed,
+        @GroupsLookupError AS GroupsLookupError
+    FROM G g;
+END
+';
+
+    EXEC sp_executesql
+      @sql,
+      N'@pLogin sysname, @pSid varbinary(85),
+        @pServerName sysname, @pMachineName nvarchar(128), @pInstanceName nvarchar(128),
+        @pProductVersion nvarchar(50), @pEdition nvarchar(200),
+        @pGroupsFailed bit, @pGroupsError nvarchar(4000)',
+      @pLogin = @Login,
+      @pSid = @LoginSid,
+      @pServerName = @ServerName,
+      @pMachineName = @MachineName,
+      @pInstanceName = @InstanceName,
+      @pProductVersion = @ProductVersion,
+      @pEdition = @Edition,
+      @pGroupsFailed = @GroupsLookupFailed,
+      @pGroupsError = @GroupsLookupError;
+
+    FETCH NEXT FROM dbs INTO @db;
+END
+
+CLOSE dbs;
+DEALLOCATE dbs;
+"@
+
+$results = New-Object System.Collections.Generic.List[object]
+
+# credential jeśli SQL auth
+$cred = $null
+if (-not $UseIntegratedSecurity) {
+  if (-not $SqlUser -or -not $SqlPassword) { throw "SQL auth: podaj -SqlUser i -SqlPassword albo użyj Windows auth." }
+  $sec = ConvertTo-SecureString $SqlPassword -AsPlainText -Force
+  $cred = New-Object System.Management.Automation.PSCredential($SqlUser, $sec)
+}
+
+foreach ($s in $servers) {
+  try {
+    $params = @{
+      ServerInstance         = $s
+      Database               = "master"
+      Query                  = $tsql
+      Variable               = @("LoginName=$LoginName")
+      TrustServerCertificate = $true
+      ErrorAction            = "Stop"
+    }
+    if ($cred) { $params.Credential = $cred }
+
+    $rows = Invoke-Sqlcmd @params
+
+    foreach ($r in $rows) {
+      $results.Add([pscustomobject]@{
+        Server            = $s
+        Status            = "OK"
+        Error             = ""
+        ServerName        = $r.ServerName
+        MachineName       = $r.MachineName
+        InstanceName      = $r.InstanceName
+        ProductVersion    = $r.ProductVersion
+        Edition           = $r.Edition
+        LoginName         = $r.LoginName
+        LoginExists       = $r.LoginExists
+        DatabaseName      = $r.DatabaseName
+        PrincipalSource   = $r.PrincipalSource      # Direct / ADGroup
+        PrincipalName     = $r.PrincipalName        # user/group in DB
+        PrincipalType     = $r.PrincipalType
+        PrincipalAuthType = $r.PrincipalAuthType
+        HasPrincipalMapped= $r.HasPrincipalMapped
+        DbRoles           = $r.DbRoles
+        ExplicitPerms     = $r.ExplicitPerms
+        GroupsLookupFailed= $r.GroupsLookupFailed
+        GroupsLookupError = $r.GroupsLookupError
+      })
+    }
+  }
+  catch {
+    $results.Add([pscustomobject]@{
+      Server            = $s
+      Status            = "FAIL"
+      Error             = $_.Exception.Message
+      ServerName        = $null
+      MachineName       = $null
+      InstanceName      = $null
+      ProductVersion    = $null
+      Edition           = $null
+      LoginName         = $LoginName
+      LoginExists       = $null
+      DatabaseName      = $null
+      PrincipalSource   = $null
+      PrincipalName     = $null
+      PrincipalType     = $null
+      PrincipalAuthType = $null
+      HasPrincipalMapped= $null
+      DbRoles           = $null
+      ExplicitPerms     = $null
+      GroupsLookupFailed= $null
+      GroupsLookupError = $null
+    })
+  }
+}
+
+$ts = Get-Date -Format "yyyyMMdd_HHmmss"
+$safeLogin = ($LoginName -replace '[\\/:*?""<>|]','_')
+
+$csvPath  = Join-Path $OutDir "audit_dbperms_with_groups_$safeLogin_$ts.csv"
+$htmlPath = Join-Path $OutDir "audit_dbperms_with_groups_$safeLogin_$ts.html"
+
+$results | Export-Csv -NoTypeInformation -Encoding UTF8 -Path $csvPath
+
+# HTML (DataTables)
+$rowsJson = ($results | ConvertTo-Json -Depth 6)
+
+$html = @"
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8"/>
+<title>Audit DB perms (Direct + AD Groups) — $LoginName</title>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<style>
+  body { font-family: Segoe UI, Arial, sans-serif; margin: 16px; }
+  .pill { padding: 2px 8px; border-radius: 999px; display:inline-block; }
+  .ok { background:#e7f7ee; }
+  .fail { background:#fde7e7; }
+  table.dataTable tbody td { vertical-align: top; white-space: pre-wrap; }
+  .small { color:#666; font-size: 12px; }
+</style>
+</head>
+<body>
+<h2>Audit DB permissions (Direct + AD Groups) — <code>$LoginName</code></h2>
+<div class="small">Wygenerowano: $(Get-Date)</div>
+<hr/>
+
+<table id="t" class="display" style="width:100%">
+  <thead>
+    <tr>
+      <th>Status</th>
+      <th>Server</th>
+      <th>Database</th>
+      <th>Source</th>
+      <th>PrincipalName</th>
+      <th>DbRoles</th>
+      <th>ExplicitPerms</th>
+      <th>GroupsLookupFailed</th>
+      <th>GroupsLookupError</th>
+      <th>Version</th>
+      <th>Edition</th>
+      <th>Error</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+const data = $rowsJson;
+
+function pill(status){
+  if(status === "OK") return '<span class="pill ok">OK</span>';
+  return '<span class="pill fail">FAIL</span>';
+}
+
+\$(document).ready(function(){
+  \$('#t').DataTable({
+    data: data,
+    pageLength: 50,
+    order: [[1,'asc'], [2,'asc'], [3,'asc']],
+    columns: [
+      { data: 'Status', render: (d)=>pill(d) },
+      { data: 'Server' },
+      { data: 'DatabaseName' },
+      { data: 'PrincipalSource' },
+      { data: 'PrincipalName' },
+      { data: 'DbRoles' },
+      { data: 'ExplicitPerms' },
+      { data: 'GroupsLookupFailed' },
+      { data: 'GroupsLookupError' },
+      { data: 'ProductVersion' },
+      { data: 'Edition' },
+      { data: 'Error' }
+    ]
+  });
+});
+</script>
+</body>
+</html>
+"@
+
+Set-Content -Path $htmlPath -Value $html -Encoding UTF8
+
+Write-Host "DONE"
+Write-Host "CSV : $csvPath"
+Write-Host "HTML: $htmlPath"
+
+# szybkie podsumowanie
+$ok = $results | Where-Object Status -eq "OK"
+$fail = $results | Where-Object Status -ne "OK"
+Write-Host "`nSummary:"
+Write-Host ("  OK servers:   {0}" -f (($ok | Select-Object -ExpandProperty Server -Unique).Count))
+Write-Host ("  FAIL servers: {0}" -f (($fail | Select-Object -ExpandProperty Server -Unique).Count))
+
+$directAdmin = $ok | Where-Object { $_.PrincipalSource -eq 'Direct' -and ($_.DbRoles -match '\bdb_owner\b' -or $_.ExplicitPerms) }
+$groupAdmin  = $ok | Where-Object { $_.PrincipalSource -eq 'ADGroup' -and ($_.DbRoles -match '\bdb_owner\b' -or $_.ExplicitPerms) }
+
+Write-Host ("  Direct rows with roles/perms: {0}" -f $directAdmin.Count)
+Write-Host ("  ADGroup rows with roles/perms: {0}" -f $groupAdmin.Count)
+
+$groupLookupFails = $ok | Where-Object { $_.GroupsLookupFailed -eq 1 } | Select-Object -ExpandProperty Server -Unique
+if ($groupLookupFails.Count -gt 0) {
+  Write-Host "`nWARNING: xp_logininfo failed on servers:"
+  $groupLookupFails | ForEach-Object { Write-Host "  - $_" }
+}

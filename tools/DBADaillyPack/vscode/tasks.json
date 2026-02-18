@@ -1,0 +1,22 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "DBA Daily Pack (sqlcmd)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\powershell\\Run-DailyPack.ps1",
+        "-ServerInstance",
+        "localhost",
+        "-OutDir",
+        "${workspaceFolder}\\out"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}
