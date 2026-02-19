@@ -3,23 +3,8 @@ param([Parameter(Mandatory=$true)][string]$ConfigPath)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference="Stop"
-
-function Ensure-Folder([string]$Path){ if(-not(Test-Path $Path)){ New-Item -ItemType Directory -Path $Path | Out-Null } }
-function Ensure-SqlServerModule(){ if(-not(Get-Module -ListAvailable -Name SqlServer)){ throw "Brak modułu SqlServer. Install-Module SqlServer -Scope CurrentUser" } }
-function New-ConnParamsFromConfig($ServerCfg,$RootCfg){
-  $p=@{ ServerInstance=[string]$ServerCfg.name; Database="msdb"; QueryTimeout=[int]$RootCfg.options.commandTimeoutSeconds; ErrorAction="Stop" }
-  if($null -ne $ServerCfg.encrypt){ $p.Encrypt=[bool]$ServerCfg.encrypt }
-  if($null -ne $ServerCfg.trustServerCertificate){ $p.TrustServerCertificate=[bool]$ServerCfg.trustServerCertificate }
-  switch($RootCfg.auth.mode){
-    "Windows" { }
-    "SqlLogin" {
-      $sec=ConvertTo-SecureString $RootCfg.auth.password -AsPlainText -Force
-      $p.Username=[string]$RootCfg.auth.user; $p.Password=$sec
-    }
-    default { throw "Nieznany auth.mode: $($RootCfg.auth.mode)" }
-  }
-  $p
-}
+. "$PSScriptRoot\SqlInventory.Helpers.ps1"
+function Ensure-Folder([string]$Path){ Ensure-InvFolder -Path $Path }
 
 Ensure-SqlServerModule
 $config=(Get-Content -Raw -LiteralPath $ConfigPath) | ConvertFrom-Json
@@ -82,14 +67,14 @@ $proxyAll=New-Object System.Collections.Generic.List[object]
 $permAll=New-Object System.Collections.Generic.List[object]
 
 foreach($sv in $config.servers){
-  $endpoint=[string]$sv.name
-  $alias= if($sv.alias){[string]$sv.alias}else{$endpoint}
+  ${endpoint}=[string]$sv.name
+  $alias= if($sv.alias){[string]$sv.alias}else{${endpoint}}
   try{
     $conn=New-ConnParamsFromConfig $sv $config
 
     foreach($r in (Invoke-Sqlcmd @conn -Query $qCred)){
       $credAll.Add([pscustomobject]@{
-        ServerAlias=$alias; ServerEndpoint=$endpoint; SqlServerName=$r.SqlServerName
+        ServerAlias=$alias; ServerEndpoint=${endpoint}; SqlServerName=$r.SqlServerName
         CredentialId=$r.CredentialId; CredentialName=$r.CredentialName; CredentialIdentity=$r.CredentialIdentity
         CreateDate=$r.CreateDate; ModifyDate=$r.ModifyDate
       })|Out-Null
@@ -97,7 +82,7 @@ foreach($sv in $config.servers){
 
     foreach($r in (Invoke-Sqlcmd @conn -Query $qProxy)){
       $proxyAll.Add([pscustomobject]@{
-        ServerAlias=$alias; ServerEndpoint=$endpoint; SqlServerName=$r.SqlServerName
+        ServerAlias=$alias; ServerEndpoint=${endpoint}; SqlServerName=$r.SqlServerName
         ProxyId=$r.ProxyId; ProxyName=$r.ProxyName; Enabled=$r.Enabled
         CredentialId=$r.CredentialId; CredentialName=$r.CredentialName; CredentialIdentity=$r.CredentialIdentity
         Description=$r.Description
@@ -106,13 +91,13 @@ foreach($sv in $config.servers){
 
     foreach($r in (Invoke-Sqlcmd @conn -Query $qPerm)){
       $permAll.Add([pscustomobject]@{
-        ServerAlias=$alias; ServerEndpoint=$endpoint; SqlServerName=$r.SqlServerName
+        ServerAlias=$alias; ServerEndpoint=${endpoint}; SqlServerName=$r.SqlServerName
         ProxyName=$r.ProxyName; Subsystem=$r.Subsystem; GrantedToLogin=$r.GrantedToLogin
       })|Out-Null
     }
 
   } catch {
-    Write-Warning "Błąd $endpoint: $($_.Exception.Message)"
+    Write-Warning "Błąd ${endpoint}: $($_.Exception.Message)"
   }
 }
 

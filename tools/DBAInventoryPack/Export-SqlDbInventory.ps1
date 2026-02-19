@@ -1,3 +1,4 @@
+
 <#
 .SYNOPSIS
   Eksport inventory baz danych do CSV (1 wiersz = 1 DB):
@@ -20,79 +21,14 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+. "$PSScriptRoot\SqlInventory.Helpers.ps1"
+function Ensure-Folder([string]$Path){ Ensure-InvFolder -Path $Path }
 
-function Ensure-Folder([string]$Path){
-  if(-not(Test-Path -LiteralPath $Path)){
-    New-Item -ItemType Directory -Path $Path | Out-Null
-  }
-}
+function Ensure-SqlServerModule(){ Ensure-InvSqlServerModule }
 
-function Ensure-SqlServerModule(){
-  if(-not(Get-Module -ListAvailable -Name SqlServer)){
-    throw "Brak modułu 'SqlServer'. Zainstaluj: Install-Module SqlServer -Scope CurrentUser"
-  }
-}
+function Add-EncryptParamsCompat([hashtable]$ConnParams,[pscustomobject]$ServerCfg){ Add-InvEncryptParamsCompat -ConnParams $ConnParams -ServerCfg $ServerCfg }
 
-function Add-EncryptParamsCompat {
-  param(
-    [Parameter(Mandatory=$true)][hashtable]$ConnParams,
-    [Parameter(Mandatory=$true)][pscustomobject]$ServerCfg
-  )
-
-  $invoke = Get-Command Invoke-Sqlcmd -ErrorAction Stop
-
-  $encryptParam = $invoke.Parameters['Encrypt']
-  if ($encryptParam -and $null -ne $ServerCfg.encrypt) {
-    $encryptRaw = $ServerCfg.encrypt
-
-    $validateSet = $encryptParam.Attributes |
-      Where-Object { $_ -is [System.Management.Automation.ValidateSetAttribute] } |
-      Select-Object -First 1
-
-    if ($validateSet) {
-      # Mandatory|Optional|Strict
-      if ($encryptRaw -is [string]) {
-        $ConnParams.Encrypt = $encryptRaw
-      } else {
-        # bool -> sensowny default
-        $ConnParams.Encrypt = "Optional"
-      }
-    } else {
-      # bool
-      $ConnParams.Encrypt = [bool]$encryptRaw
-    }
-  }
-
-  $tscParam = $invoke.Parameters['TrustServerCertificate']
-  if ($tscParam -and $null -ne $ServerCfg.trustServerCertificate) {
-    $ConnParams.TrustServerCertificate = [bool]$ServerCfg.trustServerCertificate
-  }
-}
-
-function New-ConnParamsFromConfig($ServerCfg,$RootCfg){
-  $p=@{
-    ServerInstance=[string]$ServerCfg.name
-    Database="master"
-    QueryTimeout=[int]$RootCfg.options.commandTimeoutSeconds
-    ErrorAction="Stop"
-  }
-
-  switch($RootCfg.auth.mode){
-    "Windows" { }
-    "SqlLogin" {
-      if(-not $RootCfg.auth.user -or -not $RootCfg.auth.password){
-        throw "auth.mode=SqlLogin wymaga auth.user i auth.password."
-      }
-      $sec = ConvertTo-SecureString $RootCfg.auth.password -AsPlainText -Force
-      $p.Username=[string]$RootCfg.auth.user
-      $p.Password=$sec
-    }
-    default { throw "Nieznany auth.mode: $($RootCfg.auth.mode). Użyj Windows albo SqlLogin." }
-  }
-
-  Add-EncryptParamsCompat -ConnParams $p -ServerCfg $ServerCfg
-  return $p
-}
+function New-ConnParamsFromConfig($ServerCfg,$RootCfg){ New-InvSqlConnParams -ServerCfg $ServerCfg -Config $RootCfg -Database 'master' }
 
 Ensure-SqlServerModule
 

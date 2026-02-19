@@ -1,36 +1,36 @@
 [CmdletBinding()]
-param([Parameter(Mandatory=$true)][string]$ConfigPath)
-
+param(
+  [Parameter(Mandatory=$true)]
+  [ValidateNotNullOrEmpty()]
+  [string]$ConfigPath
+)
+. "$PSScriptRoot\SqlInventory.Helpers.ps1"
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-function Ensure-Folder([string]$Path){ if(-not(Test-Path $Path)){ New-Item -ItemType Directory -Path $Path | Out-Null } }
-function Ensure-SqlServerModule(){ if(-not(Get-Module -ListAvailable -Name SqlServer)){ throw "Brak modułu SqlServer. Install-Module SqlServer -Scope CurrentUser" } }
+function Ensure-Folder([string]$Path){ Ensure-InvFolder -Path $Path }
 
-function New-ConnParamsFromConfig($ServerCfg,$RootCfg){
-  $p=@{ ServerInstance=[string]$ServerCfg.name; Database="master"; QueryTimeout=[int]$RootCfg.options.commandTimeoutSeconds; ErrorAction="Stop" }
-  if($null -ne $ServerCfg.encrypt){ $p.Encrypt=[bool]$ServerCfg.encrypt }
-  if($null -ne $ServerCfg.trustServerCertificate){ $p.TrustServerCertificate=[bool]$ServerCfg.trustServerCertificate }
-  switch($RootCfg.auth.mode){
-    "Windows" { }
-    "SqlLogin" {
-      $sec=ConvertTo-SecureString $RootCfg.auth.password -AsPlainText -Force
-      $p.Username=[string]$RootCfg.auth.user; $p.Password=$sec
-    }
-    default { throw "Nieznany auth.mode: $($RootCfg.auth.mode)" }
-  }
-  $p
+function Ensure-SqlServerModule(){ Ensure-InvSqlServerModule }
+
+function Add-EncryptParamsCompat([hashtable]$ConnParams,[pscustomobject]$ServerCfg){ Add-InvEncryptParamsCompat -ConnParams $ConnParams -ServerCfg $ServerCfg }
+
+function New-ConnParamsFromConfig($ServerCfg,$RootCfg){ New-InvSqlConnParams -ServerCfg $ServerCfg -Config $RootCfg -Database 'master' }
+
+# ---------------- MAIN ----------------
+Ensure-SqlServerModule
+
+if(-not (Test-Path -LiteralPath $ConfigPath)){
+  throw "Nie znaleziono configu: $ConfigPath"
 }
 
-Ensure-SqlServerModule
-$config=(Get-Content -Raw -LiteralPath $ConfigPath) | ConvertFrom-Json
-if(-not $config.options){ $config | Add-Member options ([pscustomobject]@{}) }
-if($null -eq $config.options.commandTimeoutSeconds){ $config.options | Add-Member commandTimeoutSeconds 60 }
-if(-not $config.output){ $config | Add-Member output ([pscustomobject]@{}) }
-if(-not $config.output.folder){ $config.output | Add-Member folder "C:\temp\SqlInventory" }
-Ensure-Folder $config.output.folder
+$config = (Get-Content -Raw -LiteralPath $ConfigPath) | ConvertFrom-Json
 
-$outPath = Join-Path $config.output.folder "sql-logins-serverroles.csv"
+# Defaults (bez dopisywania property, strict-friendly)
+$outFolder = "C:\temp\SqlInventory"
+if ($config.output -and $config.output.folder) { $outFolder = [string]$config.output.folder }
+Ensure-Folder $outFolder
+
+$outPath = Join-Path $outFolder "sql-logins-serverroles.csv"
 
 $query = @"
 SET NOCOUNT ON;
@@ -67,27 +67,48 @@ ORDER BY sp.name;
 $all = New-Object System.Collections.Generic.List[object]
 
 foreach($sv in $config.servers){
-  $endpoint=[string]$sv.name
-  $alias= if($sv.alias){[string]$sv.alias}else{$endpoint}
+  $endpoint = [string]$sv.name
+  $alias = if($sv.alias){[string]$sv.alias}else{$endpoint}
+
+  Write-Host ("==> [{0}] Logins+roles..." -f $endpoint)
+
   try{
-    $conn=New-ConnParamsFromConfig $sv $config
-    $rows=Invoke-Sqlcmd @conn -Query $query
+    $conn = New-ConnParamsFromConfig -ServerCfg $sv -RootCfg $config
+    $rows = Invoke-Sqlcmd @conn -Query $query
+
     foreach($r in $rows){
       $all.Add([pscustomobject]@{
-        ServerAlias=$alias; ServerEndpoint=$endpoint; SqlServerName=$r.SqlServerName
-        LoginName=$r.LoginName; LoginType=$r.LoginType; IsDisabled=$r.IsDisabled
-        DefaultDatabase=$r.DefaultDatabase; DefaultLanguage=$r.DefaultLanguage
-        CreateDate=$r.CreateDate; ModifyDate=$r.ModifyDate
-        ServerRoles=$r.ServerRoles; IsSysadmin=$r.IsSysadmin
-        IsPolicyChecked=$r.IsPolicyChecked; IsExpirationChecked=$r.IsExpirationChecked
+        ServerAlias=$alias
+        ServerEndpoint=$endpoint
+        SqlServerName=$r.SqlServerName
+
+        LoginName=$r.LoginName
+        LoginType=$r.LoginType
+        IsDisabled=$r.IsDisabled
+        DefaultDatabase=$r.DefaultDatabase
+        DefaultLanguage=$r.DefaultLanguage
+        CreateDate=$r.CreateDate
+        ModifyDate=$r.ModifyDate
+        ServerRoles=$r.ServerRoles
+        IsSysadmin=$r.IsSysadmin
+        IsPolicyChecked=$r.IsPolicyChecked
+        IsExpirationChecked=$r.IsExpirationChecked
       }) | Out-Null
     }
-  } catch {
-    Write-Warning "Błąd $endpoint: $($_.Exception.Message)"
+
+    Write-Host ("    OK: {0} loginów" -f ($rows.Count))
+  }
+  catch{
+    Write-Warning ("Błąd {0}: {1}" -f $endpoint, $_.Exception.Message)
   }
 }
 
-$all | Sort-Object IsSysadmin -Descending, ServerAlias, LoginName |
+# Sort: sysadmin na górze, potem serwer, potem login
+$all |
+  Sort-Object `
+    @{ Expression = 'IsSysadmin'; Descending = $true }, `
+    'ServerAlias', `
+    'LoginName' |
   Export-Csv -LiteralPath $outPath -NoTypeInformation -Encoding UTF8
 
-Write-Host "OK -> $outPath"
+Write-Host ("OK -> {0}" -f $outPath)

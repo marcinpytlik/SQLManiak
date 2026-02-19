@@ -3,23 +3,8 @@ param([Parameter(Mandatory=$true)][string]$ConfigPath)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference="Stop"
-
-function Ensure-Folder([string]$Path){ if(-not(Test-Path $Path)){ New-Item -ItemType Directory -Path $Path | Out-Null } }
-function Ensure-SqlServerModule(){ if(-not(Get-Module -ListAvailable -Name SqlServer)){ throw "Brak modułu SqlServer. Install-Module SqlServer -Scope CurrentUser" } }
-function New-ConnParamsFromConfig($ServerCfg,$RootCfg){
-  $p=@{ ServerInstance=[string]$ServerCfg.name; Database="msdb"; QueryTimeout=[int]$RootCfg.options.commandTimeoutSeconds; ErrorAction="Stop" }
-  if($null -ne $ServerCfg.encrypt){ $p.Encrypt=[bool]$ServerCfg.encrypt }
-  if($null -ne $ServerCfg.trustServerCertificate){ $p.TrustServerCertificate=[bool]$ServerCfg.trustServerCertificate }
-  switch($RootCfg.auth.mode){
-    "Windows" { }
-    "SqlLogin" {
-      $sec=ConvertTo-SecureString $RootCfg.auth.password -AsPlainText -Force
-      $p.Username=[string]$RootCfg.auth.user; $p.Password=$sec
-    }
-    default { throw "Nieznany auth.mode: $($RootCfg.auth.mode)" }
-  }
-  $p
-}
+. "$PSScriptRoot\SqlInventory.Helpers.ps1"
+function Ensure-Folder([string]$Path){ Ensure-InvFolder -Path $Path }
 
 Ensure-SqlServerModule
 $config=(Get-Content -Raw -LiteralPath $ConfigPath) | ConvertFrom-Json
@@ -101,7 +86,7 @@ foreach($sv in $config.servers){
     }
 
   } catch {
-    Write-Warning "Błąd $endpoint: $($_.Exception.Message)"
+    Write-Warning "Błąd ${endpoint}: $($_.Exception.Message)"
   }
 }
 

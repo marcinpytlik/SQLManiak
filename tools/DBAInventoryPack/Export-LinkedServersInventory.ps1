@@ -1,3 +1,4 @@
+
 <#
 .SYNOPSIS
   Eksportuje inventory Linked Servers do CSV na podstawie config.json.
@@ -19,51 +20,12 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+. "$PSScriptRoot\SqlInventory.Helpers.ps1"
+function Ensure-Folder([string]$Path){ Ensure-InvFolder -Path $Path }
 
-function Ensure-Folder {
-  param([Parameter(Mandatory=$true)][string]$Path)
-  if (-not (Test-Path -LiteralPath $Path)) {
-    New-Item -ItemType Directory -Path $Path | Out-Null
-  }
-}
+function Ensure-SqlServerModule(){ Ensure-InvSqlServerModule }
 
-function Ensure-SqlServerModule {
-  if (-not (Get-Module -ListAvailable -Name SqlServer)) {
-    throw "Brak modułu 'SqlServer'. Zainstaluj: Install-Module SqlServer -Scope CurrentUser"
-  }
-}
-
-function New-ConnParamsFromConfig {
-  param(
-    [Parameter(Mandatory=$true)][pscustomobject]$ServerCfg,
-    [Parameter(Mandatory=$true)][pscustomobject]$RootCfg
-  )
-
-  $p = @{
-    ServerInstance  = [string]$ServerCfg.name
-    Database        = "master"
-    QueryTimeout    = [int]$RootCfg.options.commandTimeoutSeconds
-    ErrorAction     = "Stop"
-  }
-
-  if ($null -ne $ServerCfg.encrypt) { $p.Encrypt = [bool]$ServerCfg.encrypt }
-  if ($null -ne $ServerCfg.trustServerCertificate) { $p.TrustServerCertificate = [bool]$ServerCfg.trustServerCertificate }
-
-  switch ($RootCfg.auth.mode) {
-    "Windows" { }
-    "SqlLogin" {
-      if (-not $RootCfg.auth.user -or -not $RootCfg.auth.password) {
-        throw "auth.mode=SqlLogin wymaga auth.user i auth.password."
-      }
-      $sec = ConvertTo-SecureString $RootCfg.auth.password -AsPlainText -Force
-      $p.Username = [string]$RootCfg.auth.user
-      $p.Password = $sec
-    }
-    default { throw "Nieznany auth.mode: $($RootCfg.auth.mode). Użyj: Windows albo SqlLogin." }
-  }
-
-  return $p
-}
+function New-ConnParamsFromConfig($ServerCfg,$RootCfg){ New-InvSqlConnParams -ServerCfg $ServerCfg -Config $RootCfg -Database 'master' }
 
 Ensure-SqlServerModule
 
