@@ -1,0 +1,21 @@
+{
+  "servers": [
+    { "name": "deweloper", "alias": "SQL1_FCI_1433", "encrypt": "Optional", "trustServerCertificate": true }
+    
+  ],
+  "auth": { "mode": "Windows" },
+  "output": {
+    "folder": "C:\\temp\\SqlInventory",
+    "fileName": "sql-db-inventory.csv",
+    "perServerCsv": false
+  },
+  "options": {
+    "includeSystemDbs": true,
+    "commandTimeoutSeconds": 60
+  },
+  "policy": {
+    "recommendedOwner": "sa",
+    "recommendedOwnerForUserDbs": "sa",
+    "recommendedJobOwner": "sa"
+  }
+}

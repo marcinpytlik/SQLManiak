@@ -1,0 +1,32 @@
+{
+  "source": "SQL1.domena.pl,1433",
+  "destination": "SQL2.domena.pl,1433",
+  "backuppath": "\\\\filesrv01\\sqlbackups\\migracje",
+  "databases": ["AdventureWorks2022", "BAZA2"],
+
+  "sourceCredential": { "type": "windows" },
+  "destinationCredential": { "type": "windows" },
+
+  "backupOptions": {
+    "copyOnly": true,
+    "compress": true,
+    "checksum": true,
+    "init": true,
+    "stats": 10
+  },
+
+  "restoreOptions": {
+    "replace": true,
+    "recover": true,
+    "moveFiles": true,
+    "dataDir": "D:\\SQLData",
+    "logDir": "E:\\SQLLog"
+  },
+
+  "logOptions": {
+    "logDir": "C:\\Scripts\\logs",
+    "alsoWriteToConsole": true
+  },
+
+  "throttleLimit": 3
+}
