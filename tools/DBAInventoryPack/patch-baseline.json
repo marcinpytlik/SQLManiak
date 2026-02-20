@@ -1,0 +1,22 @@
+{
+  "baseline": {
+    "13": {
+      "Name": "SQL Server 2016",
+      "RecommendedBuild": "13.0.6475.1",
+      "RecommendedLabel": "SP3 + GDR",
+      "Released": "2025-11-11"
+    },
+    "15": {
+      "Name": "SQL Server 2019",
+      "RecommendedBuild": "15.0.4455.2",
+      "RecommendedLabel": "CU+GDR",
+      "Released": "2025-11-11"
+    },
+    "16": {
+      "Name": "SQL Server 2022",
+      "RecommendedBuild": "16.0.4236.2",
+      "RecommendedLabel": "CU23 (re-release)",
+      "Released": "2026-01-29"
+    }
+  }
+}
