@@ -18,7 +18,7 @@ ValidateSettings(settings);
 var runId = Guid.NewGuid();
 
 Console.WriteLine("============================================================");
-Console.WriteLine("SQL Lock Simulator V3");
+Console.WriteLine("SQL Lock Simulator ");
 Console.WriteLine($"RunId                   : {runId}");
 Console.WriteLine($"Start                   : {DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}");
 Console.WriteLine($"Scenario                : {settings.Scenario}");
