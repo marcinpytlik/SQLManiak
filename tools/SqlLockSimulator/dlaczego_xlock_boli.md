@@ -1,4 +1,4 @@
-# Dlaczego `XLOCK` boli - wersja dla programistow
+# Dlaczego `XLOCK` boli 
 
 ## TL;DR
 
