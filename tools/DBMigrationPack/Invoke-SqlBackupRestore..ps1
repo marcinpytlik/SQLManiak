@@ -71,8 +71,12 @@ function New-ConnParams {
 function Get-DatabaseList {
   param($Cfg, $SourceConn)
 
-  if ($Cfg.databases -and $Cfg.databases.Count -gt 0) {
-    return $Cfg.databases
+  # Obsłuż databases jako: string, array, null
+  if ($Cfg.PSObject.Properties.Name -contains 'databases' -and $null -ne $Cfg.databases) {
+    $dbsFromCfg = @($Cfg.databases) | ForEach-Object { $_.ToString().Trim() } | Where-Object { $_ -ne "" }
+    if ($dbsFromCfg.Count -gt 0) {
+      return $dbsFromCfg
+    }
   }
 
   $q = @"
@@ -82,7 +86,7 @@ WHERE database_id > 4
   AND state_desc = 'ONLINE'
   AND is_read_only = 0;
 "@
-  (Invoke-Sqlcmd @SourceConn -Database master -Query $q).name
+  return @((Invoke-Sqlcmd @SourceConn -Database master -Query $q).name)
 }
 
 function Write-RunLog {
@@ -115,7 +119,7 @@ if (-not $logDir) { $logDir = Join-Path $scriptDir "logs" }
 Ensure-Dir -Path $logDir
 
 $alsoConsole = $true
-if ($null -ne $cfg.logOptions.alsoWriteToConsole) {
+if ($null -ne $cfg.logOptions -and $null -ne $cfg.logOptions.alsoWriteToConsole) {
   $alsoConsole = [bool]$cfg.logOptions.alsoWriteToConsole
 }
 
@@ -130,8 +134,8 @@ Ensure-Dir -Path $cfg.backuppath
 $sourceConn = New-ConnParams -ServerInstance $cfg.source -CredCfg $cfg.sourceCredential
 $destConn   = New-ConnParams -ServerInstance $cfg.destination -CredCfg $cfg.destinationCredential
 
-$dbs = Get-DatabaseList -Cfg $cfg -SourceConn $sourceConn
-if (-not $dbs -or $dbs.Count -eq 0) { throw "Brak baz do przetworzenia." }
+$dbs = @(Get-DatabaseList -Cfg $cfg -SourceConn $sourceConn)
+if ($dbs.Count -eq 0) { throw "Brak baz do przetworzenia." }
 
 $backupOptions  = $cfg.backupOptions
 if ($null -eq $backupOptions) {
@@ -143,7 +147,7 @@ if ($null -eq $restoreOptions) {
   $restoreOptions = [pscustomobject]@{ replace=$true; recover=$true; moveFiles=$true; dataDir="D:\SQLData"; logDir="E:\SQLLog" }
 }
 
-$throttle = [int]($cfg.throttleLimit ? $cfg.throttleLimit : 2)
+$throttle = [int]( if ($cfg.PSObject.Properties.Name -contains 'throttleLimit' -and $null -ne $cfg.throttleLimit) { $cfg.throttleLimit } else { 2 } )
 
 Write-RunLog -LogFile $runLog -Message ("INFO  | db_count={0} throttle={1} logDir={2}" -f $dbs.Count,$throttle,$logDir) -ToConsole:($alsoConsole)
 
@@ -179,9 +183,9 @@ foreach ($db in $dbs) {
       Write-DbLog -File $DbLog -Msg "INFO  | RESTORE HEADERONLY begin" -ToConsole:$ToConsole
 
       $q = "RESTORE HEADERONLY FROM DISK = N'$BackupFile';"
-      $hdr = Invoke-Sqlcmd @Conn -Database master -Query $q
+      $hdr = @(Invoke-Sqlcmd @Conn -Database master -Query $q)
 
-      if (-not $hdr -or $hdr.Count -eq 0) {
+      if ($hdr.Count -eq 0) {
         Write-DbLog -File $DbLog -Msg "INFO  | RESTORE HEADERONLY returned 0 rows" -ToConsole:$ToConsole
         return
       }
@@ -272,7 +276,7 @@ WITH $with;
       $moveClause = ""
       if ($RestoreOptions.moveFiles -eq $true) {
         $qFileList = "RESTORE FILELISTONLY FROM DISK = N'$backupFile';"
-        $files = Invoke-Sqlcmd @DestConn -Database master -Query $qFileList
+        $files = @(Invoke-Sqlcmd @DestConn -Database master -Query $qFileList)
 
         $dataDir = $RestoreOptions.dataDir
         $logDir2 = $RestoreOptions.logDir
@@ -326,7 +330,7 @@ WITH
   } -ArgumentList $db,$cfg,$sourceConn,$destConn,$backupOptions,$restoreOptions,$logDir,$alsoConsole
 }
 
-$results = Receive-Job -Job $jobs -Wait -AutoRemoveJob
+$results = @(Receive-Job -Job $jobs -Wait -AutoRemoveJob)
 
 # Summary to run log
 foreach ($r in ($results | Sort-Object Database)) {
@@ -339,8 +343,8 @@ foreach ($r in ($results | Sort-Object Database)) {
 
 $results | Sort-Object Database | Format-Table -AutoSize
 
-$failed = $results | Where-Object { -not $_.BackupOk -or -not $_.RestoreOk }
-if ($failed) {
+$failed = @($results | Where-Object { -not $_.BackupOk -or -not $_.RestoreOk })
+if ($failed.Count -gt 0) {
   Write-RunLog -LogFile $runLog -Message ("END   | FAILED | dbs={0}" -f (($failed.Database) -join ", ")) -ToConsole:($alsoConsole)
   Write-Error ("Niektóre bazy poległy: {0}" -f (($failed.Database) -join ", "))
   exit 2
