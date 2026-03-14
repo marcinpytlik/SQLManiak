@@ -1,0 +1,4 @@
+dotnet restore  
+dotnet ef migrations add InitialCreate
+dotnet ef migrations script -o .\Scripts\001_InitialCreate.sql
+Invoke-Sqlcmd -ServerInstance "localhost" -Database "StockFlowDb" -Username "stockflow_deploy" -Password "UseVeryStrongPassword_Deploy_Only!" -TrustServerCertificate -InputFile .\Scripts\001_InitialCreate.sql
