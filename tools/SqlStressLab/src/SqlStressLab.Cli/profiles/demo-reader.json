@@ -1,0 +1,32 @@
+{
+  "connection": {
+    "server": "localhost",
+    "database": "master",
+    "authentication": "SqlPassword",
+    "userName": "stress_user",
+    "password": "",
+    "encrypt": true,
+    "trustServerCertificate": true,
+    "applicationName": "SqlStressLab"
+  },
+  "execution": {
+    "commandText": "SELECT TOP (5) name, database_id, create_date FROM sys.databases ORDER BY database_id;",
+    "commandType": "Text",
+    "executionMode": "Reader",
+    "workers": 2,
+    "iterationsPerWorker": 5,
+    "commandTimeoutSeconds": 30,
+    "useTransaction": false,
+    "warmupEnabled": false,
+    "warmupIterationsPerWorker": 0,
+    "sessionSettingsFile": "profiles/session-settings.sql",
+    "delayBetweenIterationsMs": 100
+  },
+  "parameters": [],
+  "output": {
+    "writeJson": true,
+    "writeCsv": true,
+    "writeReaderPreview": true,
+    "directory": "outputs"
+  }
+}

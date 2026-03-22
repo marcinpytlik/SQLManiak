@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SqlStressLab.Cli/SqlStressLab.Cli.csproj" />
+    <Project Path="src/SqlStressLab.Core/SqlStressLab.Core.csproj" />
+  </Folder>
+</Solution>

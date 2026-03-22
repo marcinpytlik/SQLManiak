@@ -1,0 +1,32 @@
+{
+  "connection": {
+    "server": "syriusz",
+    "database": "master",
+    "authentication": "SqlPassword",
+    "userName": "sa",
+    "password": "",
+    "encrypt": true,
+    "trustServerCertificate": true,
+    "applicationName": "SqlStressLab"
+  },
+  "execution": {
+    "commandText": "SELECT COUNT(*) FROM sys.objects;",
+    "commandType": "Text",
+    "executionMode": "Scalar",
+    "workers": 5,
+    "iterationsPerWorker": 20,
+    "commandTimeoutSeconds": 30,
+    "useTransaction": false,
+    "warmupEnabled": true,
+    "warmupIterationsPerWorker": 2,
+    "sessionSettingsFile": "src\\SqlStressLab.Cli\\profiles\\session-settings.sql",
+    "delayBetweenIterationsMs": 50
+  },
+  "parameters": [],
+  "output": {
+    "writeJson": true,
+    "writeCsv": true,
+    "writeReaderPreview": false,
+    "directory": "outputs"
+  }
+}

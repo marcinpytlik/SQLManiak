@@ -1,0 +1,40 @@
+{
+  "connection": {
+    "server": "localhost",
+    "database": "WideWorldImporters",
+    "authentication": "SqlPassword",
+    "userName": "stress_user",
+    "password": "",
+    "encrypt": true,
+    "trustServerCertificate": true,
+    "applicationName": "SqlStressLab"
+  },
+  "execution": {
+    "commandText": "dbo.usp_TestWorkload",
+    "commandType": "StoredProcedure",
+    "executionMode": "NonQuery",
+    "workers": 10,
+    "iterationsPerWorker": 100,
+    "commandTimeoutSeconds": 60,
+    "useTransaction": false,
+    "warmupEnabled": true,
+    "warmupIterationsPerWorker": 3,
+    "sessionSettingsFile": "profiles/session-settings.sql",
+    "delayBetweenIterationsMs": 0
+  },
+  "parameters": [
+    {
+      "name": "@CustomerID",
+      "type": "INT",
+      "mode": "RandomIntRange",
+      "min": 1,
+      "max": 1000
+    }
+  ],
+  "output": {
+    "writeJson": true,
+    "writeCsv": true,
+    "writeReaderPreview": false,
+    "directory": "outputs"
+  }
+}

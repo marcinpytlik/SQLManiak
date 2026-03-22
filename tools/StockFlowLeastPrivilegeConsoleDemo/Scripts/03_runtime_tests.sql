@@ -76,10 +76,10 @@ GO
 PRINT 'Test 6: runtime NIE powinien móc utworzyć tabeli';
 BEGIN TRY
     EXEC('CREATE TABLE app.ShouldFail (Id int NOT NULL)');
-    PRINT 'UWAGA: To nie powinno przejść';
+    SELECT 'UWAGA: To nie powinno przejść';
 END TRY
 BEGIN CATCH
-    PRINT 'OK - oczekiwany błąd: ' + ERROR_MESSAGE();
+    SELECT 'OK - oczekiwany błąd: ' + ERROR_MESSAGE();
 END CATCH;
 GO
 
@@ -89,10 +89,10 @@ GO
 PRINT 'Test 7: runtime NIE powinien móc utworzyć procedury';
 BEGIN TRY
     EXEC('CREATE PROCEDURE api.ShouldAlsoFail AS BEGIN SELECT 1; END');
-    PRINT 'UWAGA: To nie powinno przejść';
+    SELECT 'UWAGA: To nie powinno przejść';
 END TRY
 BEGIN CATCH
-    PRINT 'OK - oczekiwany błąd: ' + ERROR_MESSAGE();
+    SELECT 'OK - oczekiwany błąd: ' + ERROR_MESSAGE();
 END CATCH;
 GO
 
