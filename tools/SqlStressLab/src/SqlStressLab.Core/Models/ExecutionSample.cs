@@ -7,6 +7,7 @@ public sealed class ExecutionSample
     public DateTime StartedAtUtc { get; set; }
     public long DurationMs { get; set; }
     public bool Success { get; set; }
+    public int RetryAttempt { get; set; }
     public string? ErrorCategory { get; set; }
     public string? ErrorMessage { get; set; }
     public int? SqlErrorNumber { get; set; }
