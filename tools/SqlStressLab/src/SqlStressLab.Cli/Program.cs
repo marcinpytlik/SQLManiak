@@ -12,9 +12,9 @@ Console.CancelKeyPress += (_, e) =>
 
 try
 {
-    // ------------------------------------------------------------
+    // ============================================================
     // 1. PROFILE PATH
-    // ------------------------------------------------------------
+    // ============================================================
     var profilePath = args.Length > 0
         ? args[0]
         : Path.Combine("profiles", "demo-select.json");
@@ -30,9 +30,9 @@ try
     var profileDirectory = Path.GetDirectoryName(fullProfilePath)
                            ?? Directory.GetCurrentDirectory();
 
-    // ------------------------------------------------------------
+    // ============================================================
     // 2. LOAD CONFIG
-    // ------------------------------------------------------------
+    // ============================================================
     var json = await File.ReadAllTextAsync(fullProfilePath, cts.Token);
 
     var config = JsonSerializer.Deserialize<RootConfig>(json, new JsonSerializerOptions
@@ -46,20 +46,10 @@ try
         return 2;
     }
 
-    // ------------------------------------------------------------
-    // 3. RESOLVE PASSWORD FROM ENV
-    // ------------------------------------------------------------
+    // ============================================================
+    // 3. RESOLVE SECRETS
+    // ============================================================
     ResolvePasswordFromEnvironment(config.Connection);
-
-    // ------------------------------------------------------------
-    // 4. RESOLVE RELATIVE PATHS
-    //    Wszystkie ścieżki względne liczymy względem katalogu profilu.
-    // ------------------------------------------------------------
-    config.Execution.SessionSettingsFile =
-        ResolvePath(config.Execution.SessionSettingsFile, profileDirectory);
-
-    config.Output.Directory =
-        ResolvePath(config.Output.Directory, profileDirectory) ?? "outputs";
 
     if (config.SqlOutput.Enabled &&
         string.Equals(config.SqlOutput.ConnectionMode, "Separate", StringComparison.OrdinalIgnoreCase) &&
@@ -68,9 +58,28 @@ try
         ResolvePasswordFromEnvironment(config.SqlOutput.Connection);
     }
 
-    // ------------------------------------------------------------
+    // ============================================================
+    // 4. RESOLVE RELATIVE PATHS
+    //    Wszystko względem katalogu pliku profilu
+    // ============================================================
+    config.Execution.SessionSettingsFile =
+        ResolvePath(config.Execution.SessionSettingsFile, profileDirectory);
+
+    config.Output.Directory =
+        ResolvePath(config.Output.Directory, profileDirectory) ?? Path.Combine(profileDirectory, "outputs");
+
+    config.Lifecycle.SetupScriptFile =
+        ResolvePath(config.Lifecycle.SetupScriptFile, profileDirectory);
+
+    config.Lifecycle.CleanupScriptFile =
+        ResolvePath(config.Lifecycle.CleanupScriptFile, profileDirectory);
+
+    config.MarkdownReport.Directory =
+        ResolvePath(config.MarkdownReport.Directory, profileDirectory) ?? config.Output.Directory;
+
+    // ============================================================
     // 5. BUILD STRESS OPTIONS
-    // ------------------------------------------------------------
+    // ============================================================
     var options = new StressOptions
     {
         Connection = config.Connection,
@@ -88,11 +97,31 @@ try
         Parameters = config.Parameters ?? new()
     };
 
-    // ------------------------------------------------------------
-    // 6. HEADER
-    // ------------------------------------------------------------
+    // ============================================================
+    // 6. CONNECTION STRINGS
+    // ============================================================
+    var targetConnectionString = ConnectionStringFactory.Build(config.Connection);
+
+    var sqlOutputConnectionString =
+        config.SqlOutput.Enabled &&
+        string.Equals(config.SqlOutput.ConnectionMode, "Separate", StringComparison.OrdinalIgnoreCase) &&
+        config.SqlOutput.Connection is not null
+            ? ConnectionStringFactory.Build(config.SqlOutput.Connection)
+            : targetConnectionString;
+
+    // ============================================================
+    // 7. ENVIRONMENT INFO
+    // ============================================================
+    var collectedEnvironment = EnvironmentCollector.Collect(config.Environment);
+
+    // ============================================================
+    // 8. HEADER
+    // ============================================================
     Console.WriteLine("=== SQL STRESS LAB ===");
     Console.WriteLine($"Profile        : {fullProfilePath}");
+    Console.WriteLine($"ProfileName    : {config.ProfileName}");
+    Console.WriteLine($"ScenarioName   : {config.ScenarioName}");
+    Console.WriteLine($"Environment    : {collectedEnvironment.EnvironmentName}");
     Console.WriteLine($"Server         : {config.Connection.Server}");
     Console.WriteLine($"Database       : {config.Connection.Database}");
     Console.WriteLine($"Authentication : {config.Connection.Authentication}");
@@ -102,11 +131,47 @@ try
     Console.WriteLine($"ExecutionMode  : {options.ExecutionMode}");
     Console.WriteLine($"Session SET    : {options.SessionSettingsFile}");
     Console.WriteLine($"Output Dir     : {config.Output.Directory}");
+    Console.WriteLine($"Markdown Dir   : {config.MarkdownReport.Directory}");
+    Console.WriteLine($"Setup Script   : {config.Lifecycle.SetupScriptFile}");
+    Console.WriteLine($"Cleanup Script : {config.Lifecycle.CleanupScriptFile}");
+    Console.WriteLine($"SQL Output     : {config.SqlOutput.Enabled}");
     Console.WriteLine();
 
-    // ------------------------------------------------------------
-    // 7. LIVE PROGRESS
-    // ------------------------------------------------------------
+    // ============================================================
+    // 9. SETUP LIFECYCLE
+    // ============================================================
+    if (config.Lifecycle.SetupEnabled && !string.IsNullOrWhiteSpace(config.Lifecycle.SetupScriptFile))
+    {
+        Console.WriteLine("=== SETUP ===");
+        Console.WriteLine($"Uruchamiam setup: {config.Lifecycle.SetupScriptFile}");
+
+        try
+        {
+            await LifecycleScriptRunner.RunFileAsync(
+                targetConnectionString,
+                config.Lifecycle.SetupScriptFile,
+                config.Execution.CommandTimeoutSeconds,
+                cts.Token);
+
+            Console.WriteLine("Setup zakończony powodzeniem.");
+            Console.WriteLine();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Błąd setup:");
+            Console.WriteLine(ex.Message);
+            Console.WriteLine();
+
+            if (config.Lifecycle.StopRunWhenSetupFails)
+            {
+                return 20;
+            }
+        }
+    }
+
+    // ============================================================
+    // 10. LIVE PROGRESS
+    // ============================================================
     var progress = new Progress<ProgressSnapshot>(snapshot =>
     {
         Console.WriteLine(
@@ -118,9 +183,9 @@ try
             $"Retries={snapshot.RetryCount}");
     });
 
-    // ------------------------------------------------------------
-    // 8. RUN
-    // ------------------------------------------------------------
+    // ============================================================
+    // 11. RUN
+    // ============================================================
     var runner = new StressRunner();
 
     var result = await runner.RunAsync(
@@ -140,9 +205,40 @@ try
     var wallClockSeconds = wallClock.TotalSeconds <= 0 ? 1 : wallClock.TotalSeconds;
     var realThroughput = summary.SuccessCount / wallClockSeconds;
 
-    // ------------------------------------------------------------
-    // 9. CONSOLE SUMMARY
-    // ------------------------------------------------------------
+    // ============================================================
+    // 12. CLEANUP LIFECYCLE
+    // ============================================================
+    if (config.Lifecycle.CleanupEnabled && !string.IsNullOrWhiteSpace(config.Lifecycle.CleanupScriptFile))
+    {
+        Console.WriteLine();
+        Console.WriteLine("=== CLEANUP ===");
+        Console.WriteLine($"Uruchamiam cleanup: {config.Lifecycle.CleanupScriptFile}");
+
+        try
+        {
+            await LifecycleScriptRunner.RunFileAsync(
+                targetConnectionString,
+                config.Lifecycle.CleanupScriptFile,
+                config.Execution.CommandTimeoutSeconds,
+                cts.Token);
+
+            Console.WriteLine("Cleanup zakończony powodzeniem.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Błąd cleanup:");
+            Console.WriteLine(ex.Message);
+
+            if (!config.Lifecycle.ContinueWhenCleanupFails)
+            {
+                return 21;
+            }
+        }
+    }
+
+    // ============================================================
+    // 13. CONSOLE SUMMARY
+    // ============================================================
     Console.WriteLine();
     Console.WriteLine("=== PODSUMOWANIE ===");
     Console.WriteLine($"RunId             : {runId}");
@@ -185,9 +281,9 @@ try
         Console.WriteLine();
     }
 
-    // ------------------------------------------------------------
-    // 10. WRITE FILE OUTPUTS
-    // ------------------------------------------------------------
+    // ============================================================
+    // 14. WRITE FILE OUTPUTS
+    // ============================================================
     if (config.Output.WriteJson)
     {
         await ReportWriter.WriteJsonAsync(config.Output.Directory, summary, samples);
@@ -203,45 +299,66 @@ try
         await ReportWriter.WriteReaderPreviewAsync(config.Output.Directory, samples);
     }
 
-    // ------------------------------------------------------------
-    // 11. OPTIONAL SQL OUTPUT
-    // ------------------------------------------------------------
+    // ============================================================
+    // 15. BUILD RUN RECORD
+    // ============================================================
+    var runRecord = new StressRunRecord
+    {
+        RunId = runId,
+        ProfileName = config.ProfileName,
+        ScenarioName = config.ScenarioName,
+        TagsCsv = string.Join(",", config.Tags.Tags),
+        EnvironmentName = collectedEnvironment.EnvironmentName,
+        MachineName = collectedEnvironment.MachineName,
+        OsVersion = collectedEnvironment.OsVersion,
+        DotNetVersion = collectedEnvironment.DotNetVersion,
+        ServerName = config.Connection.Server,
+        DatabaseName = config.Connection.Database,
+        CommandType = options.CommandType,
+        ExecutionMode = options.ExecutionMode,
+        Workers = options.Workers,
+        IterationsPerWorker = options.IterationsPerWorker,
+        TotalExecutions = summary.TotalExecutions,
+        SuccessCount = summary.SuccessCount,
+        ErrorCount = summary.ErrorCount,
+        RetryCount = retryCount,
+        AvgDurationMs = summary.AvgDurationMs,
+        MinDurationMs = summary.MinDurationMs,
+        P50DurationMs = summary.P50DurationMs,
+        P95DurationMs = summary.P95DurationMs,
+        P99DurationMs = summary.P99DurationMs,
+        MaxDurationMs = summary.MaxDurationMs,
+        ThroughputPerSecond = realThroughput,
+        StartedAtUtc = startedAtUtc,
+        FinishedAtUtc = finishedAtUtc,
+        WallClockMs = (long)wallClock.TotalMilliseconds
+    };
+
+    // ============================================================
+    // 16. WRITE MARKDOWN REPORT
+    // ============================================================
+    if (config.MarkdownReport.Enabled)
+    {
+        var markdownPath = Path.Combine(
+            config.MarkdownReport.Directory,
+            $"run_{runId}.md");
+
+        await MarkdownReportWriter.WriteAsync(
+            markdownPath,
+            runRecord,
+            samples,
+            config.MarkdownReport,
+            cts.Token);
+
+        Console.WriteLine($"Markdown report zapisany do: {markdownPath}");
+    }
+
+    // ============================================================
+    // 17. OPTIONAL SQL OUTPUT
+    // ============================================================
     if (config.SqlOutput.Enabled)
     {
-        var sqlOutputConnectionString =
-            string.Equals(config.SqlOutput.ConnectionMode, "Separate", StringComparison.OrdinalIgnoreCase)
-            && config.SqlOutput.Connection is not null
-                ? ConnectionStringFactory.Build(config.SqlOutput.Connection)
-                : ConnectionStringFactory.Build(config.Connection);
-
         var repository = new SqlResultRepository(sqlOutputConnectionString);
-
-        var runRecord = new StressRunRecord
-        {
-            RunId = runId,
-            ProfileName = config.ProfileName,
-            ScenarioName = config.ScenarioName,
-            ServerName = config.Connection.Server,
-            DatabaseName = config.Connection.Database,
-            CommandType = options.CommandType,
-            ExecutionMode = options.ExecutionMode,
-            Workers = options.Workers,
-            IterationsPerWorker = options.IterationsPerWorker,
-            TotalExecutions = summary.TotalExecutions,
-            SuccessCount = summary.SuccessCount,
-            ErrorCount = summary.ErrorCount,
-            RetryCount = retryCount,
-            AvgDurationMs = summary.AvgDurationMs,
-            MinDurationMs = summary.MinDurationMs,
-            P50DurationMs = summary.P50DurationMs,
-            P95DurationMs = summary.P95DurationMs,
-            P99DurationMs = summary.P99DurationMs,
-            MaxDurationMs = summary.MaxDurationMs,
-            ThroughputPerSecond = realThroughput,
-            StartedAtUtc = startedAtUtc,
-            FinishedAtUtc = finishedAtUtc,
-            WallClockMs = (long)wallClock.TotalMilliseconds
-        };
 
         await repository.InsertRunAsync(runRecord, cts.Token);
 
@@ -258,10 +375,16 @@ try
             SqlErrorNumber = s.SqlErrorNumber,
             ErrorMessage = s.ErrorMessage,
             ScalarValue = s.ScalarValue,
-            ReaderRowCount = s.ReaderRowCount
+            ReaderRowCount = s.ReaderRowCount,
+            Spid = s.Spid,
+            HostName = s.HostName,
+            AppName = s.AppName,
+            LoginName = s.LoginName,
+            DatabaseName = s.DatabaseName
         }).ToList();
 
-        await repository.InsertSamplesAsync(sampleRecords, cts.Token);
+        var bulkWriter = new BulkSampleWriter(sqlOutputConnectionString);
+        await bulkWriter.WriteAsync(sampleRecords, cts.Token);
 
         Console.WriteLine("Wyniki zapisane również do SQL Server.");
     }

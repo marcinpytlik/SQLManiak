@@ -14,4 +14,10 @@ public sealed class StressRunSampleRecord
     public string? ErrorMessage { get; set; }
     public string? ScalarValue { get; set; }
     public int? ReaderRowCount { get; set; }
+
+    public int? Spid { get; set; }
+    public string? HostName { get; set; }
+    public string? AppName { get; set; }
+    public string? LoginName { get; set; }
+    public string? DatabaseName { get; set; }
 }

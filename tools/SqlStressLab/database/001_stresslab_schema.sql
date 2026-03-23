@@ -85,3 +85,20 @@ BEGIN
     COMMIT TRAN;
 END
 GO
+ALTER TABLE dbo.StressRun
+ADD
+    TagsCsv         nvarchar(1000) NULL,
+    EnvironmentName nvarchar(200) NULL,
+    MachineName     nvarchar(200) NULL,
+    OsVersion       nvarchar(500) NULL,
+    DotNetVersion   nvarchar(100) NULL;
+GO
+
+ALTER TABLE dbo.StressRunSample
+ADD
+    Spid         int NULL,
+    HostName     nvarchar(256) NULL,
+    AppName      nvarchar(256) NULL,
+    LoginName    nvarchar(256) NULL,
+    DatabaseName nvarchar(256) NULL;
+GO

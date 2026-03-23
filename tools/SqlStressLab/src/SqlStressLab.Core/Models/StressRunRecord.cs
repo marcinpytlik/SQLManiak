@@ -5,6 +5,11 @@ public sealed class StressRunRecord
     public string RunId { get; set; } = "";
     public string ProfileName { get; set; } = "";
     public string ScenarioName { get; set; } = "General";
+    public string TagsCsv { get; set; } = "";
+    public string EnvironmentName { get; set; } = "";
+    public string MachineName { get; set; } = "";
+    public string OsVersion { get; set; } = "";
+    public string DotNetVersion { get; set; } = "";
     public string ServerName { get; set; } = "";
     public string DatabaseName { get; set; } = "";
     public string CommandType { get; set; } = "";

@@ -3,11 +3,12 @@ GO
 
 -- sprzątanie po poprzednich uruchomieniach, jeśli istnieją
 /*
+USE [master];
+GO
 ALTER DATABASE [StockFlowDb] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
 GO
 
-USE [master];
-GO
+
 
 DROP DATABASE [StockFlowDb];
 GO
