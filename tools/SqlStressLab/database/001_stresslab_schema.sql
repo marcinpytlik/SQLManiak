@@ -102,3 +102,17 @@ ADD
     LoginName    nvarchar(256) NULL,
     DatabaseName nvarchar(256) NULL;
 GO
+CREATE TABLE dbo.StressRunDmvSnapshot
+(
+    StressRunDmvSnapshotId bigint IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    RunId                  nvarchar(50)  NOT NULL,
+    SnapshotPhase          nvarchar(50)  NOT NULL,
+    SnapshotName           nvarchar(100) NOT NULL,
+    CollectedAtUtc         datetime2(3)  NOT NULL,
+    RowJson                nvarchar(max) NOT NULL
+);
+GO
+
+CREATE INDEX IX_StressRunDmvSnapshot_RunId
+ON dbo.StressRunDmvSnapshot(RunId);
+GO

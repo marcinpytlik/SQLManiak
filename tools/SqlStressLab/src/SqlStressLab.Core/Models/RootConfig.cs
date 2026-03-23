@@ -15,4 +15,5 @@ public sealed class RootConfig
     public EnvironmentInfo Environment { get; set; } = new();
     public MarkdownReportOptions MarkdownReport { get; set; } = new();
     public TagOptions Tags { get; set; } = new();
+    public HtmlReportOptions HtmlReport { get; set; } = new();
 }

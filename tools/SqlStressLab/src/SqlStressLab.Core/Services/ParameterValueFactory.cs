@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.Data.SqlClient;
 using SqlStressLab.Core.Models;
 
@@ -7,39 +8,68 @@ public static class ParameterValueFactory
 {
     public static SqlParameter Create(SqlParameterDefinition definition, int workerId, int iteration)
     {
-        object value = definition.Mode switch
-        {
-            "Fixed" => ParseValue(definition.Type, definition.Value),
-            "Sequence" => ParseSequence(definition.Type, iteration),
-            "RandomIntRange" => Random.Shared.Next(definition.Min ?? 1, (definition.Max ?? 100) + 1),
-            "RandomGuid" => Guid.NewGuid(),
-            _ => throw new InvalidOperationException($"Nieobsługiwany tryb parametru: {definition.Mode}")
-        };
+        var parameterName = definition.Name.StartsWith("@", StringComparison.Ordinal)
+            ? definition.Name
+            : "@" + definition.Name;
 
-        return new SqlParameter(definition.Name, value ?? DBNull.Value);
+        object? value = ResolveValue(definition, workerId, iteration);
+
+        return new SqlParameter(parameterName, value ?? DBNull.Value);
     }
 
-    private static object ParseSequence(string type, int iteration)
+    public static object? ResolveValue(SqlParameterDefinition definition, int workerId, int iteration)
     {
-        return type.ToUpperInvariant() switch
+        var mode = definition.Mode?.Trim().ToLowerInvariant() ?? "fixed";
+
+        return mode switch
         {
-            "INT" => iteration,
-            "BIGINT" => (long)iteration,
-            "STRING" => iteration.ToString(),
-            _ => iteration
+            "fixed" => ConvertValue(definition.Type, definition.Value),
+
+            "workerid" => ConvertValue(definition.Type, workerId.ToString(CultureInfo.InvariantCulture)),
+
+            "iteration" => ConvertValue(definition.Type, iteration.ToString(CultureInfo.InvariantCulture)),
+
+            "randomintrange" => Random.Shared.Next(
+                int.Parse(definition.Min ?? "1", CultureInfo.InvariantCulture),
+                int.Parse(definition.Max ?? "100", CultureInfo.InvariantCulture) + 1),
+
+            "sequence" => ConvertValue(
+                definition.Type,
+                (
+                    int.Parse(definition.Start ?? "1", CultureInfo.InvariantCulture) +
+                    ((iteration - 1) * int.Parse(definition.Increment ?? "1", CultureInfo.InvariantCulture))
+                ).ToString(CultureInfo.InvariantCulture)),
+
+            "randomguid" => Guid.NewGuid(),
+
+            _ => throw new InvalidOperationException($"Nieznany parameter mode: {definition.Mode}")
         };
     }
 
-    private static object ParseValue(string type, string? value)
+    private static object? ConvertValue(string type, string? value)
     {
-        return type.ToUpperInvariant() switch
+        if (value is null)
+            return null;
+
+        return type.Trim().ToUpperInvariant() switch
         {
-            "INT" => int.Parse(value ?? "0"),
-            "BIGINT" => long.Parse(value ?? "0"),
-            "UNIQUEIDENTIFIER" => Guid.Parse(value ?? Guid.Empty.ToString()),
-            "BIT" => bool.Parse(value ?? "false"),
-            "DATETIME" => DateTime.Parse(value ?? DateTime.UtcNow.ToString("O")),
-            _ => value ?? string.Empty
+            "INT" => int.Parse(value, CultureInfo.InvariantCulture),
+            "BIGINT" => long.Parse(value, CultureInfo.InvariantCulture),
+            "BIT" => bool.Parse(value),
+            "DECIMAL" => decimal.Parse(value, CultureInfo.InvariantCulture),
+            "NUMERIC" => decimal.Parse(value, CultureInfo.InvariantCulture),
+            "FLOAT" => double.Parse(value, CultureInfo.InvariantCulture),
+            "UNIQUEIDENTIFIER" => Guid.Parse(value),
+            "DATETIME" => DateTime.Parse(value, CultureInfo.InvariantCulture),
+            "DATETIME2" => DateTime.Parse(value, CultureInfo.InvariantCulture),
+            "NVARCHAR" => value,
+            "VARCHAR" => value,
+            "NCHAR" => value,
+            "CHAR" => value,
+            "TEXT" => value,
+            "NTEXT" => value,
+            "STRING" => value,
+            _ => value
         };
     }
 }

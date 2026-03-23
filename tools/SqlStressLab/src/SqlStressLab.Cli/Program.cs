@@ -60,7 +60,6 @@ try
 
     // ============================================================
     // 4. RESOLVE RELATIVE PATHS
-    //    Wszystko względem katalogu pliku profilu
     // ============================================================
     config.Execution.SessionSettingsFile =
         ResolvePath(config.Execution.SessionSettingsFile, profileDirectory);
@@ -76,6 +75,9 @@ try
 
     config.MarkdownReport.Directory =
         ResolvePath(config.MarkdownReport.Directory, profileDirectory) ?? config.Output.Directory;
+
+    config.HtmlReport.Directory =
+        ResolvePath(config.HtmlReport.Directory, profileDirectory) ?? config.Output.Directory;
 
     // ============================================================
     // 5. BUILD STRESS OPTIONS
@@ -115,41 +117,62 @@ try
     var collectedEnvironment = EnvironmentCollector.Collect(config.Environment);
 
     // ============================================================
-    // 8. HEADER
+    // 8. SCENARIO PLAN
+    // ============================================================
+    var scenarioPlan = ScenarioPlanner.Build(config);
+
+scenarioPlan.EffectiveSetupScriptFile =
+    ResolvePath(scenarioPlan.EffectiveSetupScriptFile, profileDirectory);
+
+scenarioPlan.EffectiveCleanupScriptFile =
+    ResolvePath(scenarioPlan.EffectiveCleanupScriptFile, profileDirectory);
+    // ============================================================
+    // 9. SQL SERVER ENVIRONMENT INFO
+    // ============================================================
+    var sqlEnvironmentCollector = new SqlServerEnvironmentCollector(targetConnectionString);
+    var sqlEnvironment = await sqlEnvironmentCollector.CollectAsync(cts.Token);
+
+    // ============================================================
+    // 10. HEADER
     // ============================================================
     Console.WriteLine("=== SQL STRESS LAB ===");
-    Console.WriteLine($"Profile        : {fullProfilePath}");
-    Console.WriteLine($"ProfileName    : {config.ProfileName}");
-    Console.WriteLine($"ScenarioName   : {config.ScenarioName}");
-    Console.WriteLine($"Environment    : {collectedEnvironment.EnvironmentName}");
-    Console.WriteLine($"Server         : {config.Connection.Server}");
-    Console.WriteLine($"Database       : {config.Connection.Database}");
-    Console.WriteLine($"Authentication : {config.Connection.Authentication}");
-    Console.WriteLine($"Workers        : {options.Workers}");
-    Console.WriteLine($"Iterations     : {options.IterationsPerWorker}");
-    Console.WriteLine($"CommandType    : {options.CommandType}");
-    Console.WriteLine($"ExecutionMode  : {options.ExecutionMode}");
-    Console.WriteLine($"Session SET    : {options.SessionSettingsFile}");
-    Console.WriteLine($"Output Dir     : {config.Output.Directory}");
-    Console.WriteLine($"Markdown Dir   : {config.MarkdownReport.Directory}");
-    Console.WriteLine($"Setup Script   : {config.Lifecycle.SetupScriptFile}");
-    Console.WriteLine($"Cleanup Script : {config.Lifecycle.CleanupScriptFile}");
-    Console.WriteLine($"SQL Output     : {config.SqlOutput.Enabled}");
+    Console.WriteLine($"Profile         : {fullProfilePath}");
+    Console.WriteLine($"ProfileName     : {config.ProfileName}");
+    Console.WriteLine($"ScenarioName    : {config.ScenarioName}");
+    Console.WriteLine($"ScenarioType    : {scenarioPlan.Scenario.ScenarioType}");
+    Console.WriteLine($"Environment     : {collectedEnvironment.EnvironmentName}");
+    Console.WriteLine($"Server          : {config.Connection.Server}");
+    Console.WriteLine($"Database        : {config.Connection.Database}");
+    Console.WriteLine($"Authentication  : {config.Connection.Authentication}");
+    Console.WriteLine($"Workers         : {options.Workers}");
+    Console.WriteLine($"Iterations      : {options.IterationsPerWorker}");
+    Console.WriteLine($"CommandType     : {options.CommandType}");
+    Console.WriteLine($"ExecutionMode   : {options.ExecutionMode}");
+    Console.WriteLine($"Session SET     : {options.SessionSettingsFile}");
+    Console.WriteLine($"Output Dir      : {config.Output.Directory}");
+    Console.WriteLine($"Markdown Dir    : {config.MarkdownReport.Directory}");
+    Console.WriteLine($"Html Dir        : {config.HtmlReport.Directory}");
+    Console.WriteLine($"Setup Script    : {scenarioPlan.EffectiveSetupScriptFile}");
+    Console.WriteLine($"Cleanup Script  : {scenarioPlan.EffectiveCleanupScriptFile}");
+    Console.WriteLine($"SQL Output      : {config.SqlOutput.Enabled}");
+    Console.WriteLine($"SQL Version     : {sqlEnvironment.ProductVersion}");
+    Console.WriteLine($"SQL Edition     : {sqlEnvironment.Edition}");
+    Console.WriteLine($"Compat Level    : {sqlEnvironment.CompatibilityLevel}");
     Console.WriteLine();
 
     // ============================================================
-    // 9. SETUP LIFECYCLE
+    // 11. SETUP LIFECYCLE
     // ============================================================
-    if (config.Lifecycle.SetupEnabled && !string.IsNullOrWhiteSpace(config.Lifecycle.SetupScriptFile))
+    if (config.Lifecycle.SetupEnabled && !string.IsNullOrWhiteSpace(scenarioPlan.EffectiveSetupScriptFile))
     {
         Console.WriteLine("=== SETUP ===");
-        Console.WriteLine($"Uruchamiam setup: {config.Lifecycle.SetupScriptFile}");
+        Console.WriteLine($"Uruchamiam setup: {scenarioPlan.EffectiveSetupScriptFile}");
 
         try
         {
             await LifecycleScriptRunner.RunFileAsync(
                 targetConnectionString,
-                config.Lifecycle.SetupScriptFile,
+                scenarioPlan.EffectiveSetupScriptFile,
                 config.Execution.CommandTimeoutSeconds,
                 cts.Token);
 
@@ -170,7 +193,22 @@ try
     }
 
     // ============================================================
-    // 10. LIVE PROGRESS
+    // 12. PRE-RUN DMV SNAPSHOT
+    // ============================================================
+    var dmvCollector = new DmvSnapshotCollector(targetConnectionString);
+    var dmvSnapshots = new List<DmvSnapshot>();
+
+    if (scenarioPlan.Scenario.RequiresDmvSnapshotBefore)
+    {
+        Console.WriteLine("=== DMV SNAPSHOT BEFORE ===");
+        var beforeSnapshots = await dmvCollector.CollectAllAsync("PENDING", "Before", cts.Token);
+        dmvSnapshots.AddRange(beforeSnapshots);
+        Console.WriteLine($"Zebrano snapshotów before: {beforeSnapshots.Count}");
+        Console.WriteLine();
+    }
+
+    // ============================================================
+    // 13. LIVE PROGRESS
     // ============================================================
     var progress = new Progress<ProgressSnapshot>(snapshot =>
     {
@@ -184,13 +222,14 @@ try
     });
 
     // ============================================================
-    // 11. RUN
+    // 14. RUN
     // ============================================================
     var runner = new StressRunner();
 
     var result = await runner.RunAsync(
         options,
         config.Retry,
+        scenarioPlan.WorkerAssignments,
         progress,
         cts.Token);
 
@@ -206,19 +245,41 @@ try
     var realThroughput = summary.SuccessCount / wallClockSeconds;
 
     // ============================================================
-    // 12. CLEANUP LIFECYCLE
+    // 15. POST-RUN DMV SNAPSHOT
     // ============================================================
-    if (config.Lifecycle.CleanupEnabled && !string.IsNullOrWhiteSpace(config.Lifecycle.CleanupScriptFile))
+    if (scenarioPlan.Scenario.RequiresDmvSnapshotAfter)
     {
         Console.WriteLine();
+        Console.WriteLine("=== DMV SNAPSHOT AFTER ===");
+        var afterSnapshots = await dmvCollector.CollectAllAsync(runId, "After", cts.Token);
+        dmvSnapshots.AddRange(afterSnapshots);
+        Console.WriteLine($"Zebrano snapshotów after: {afterSnapshots.Count}");
+        Console.WriteLine();
+    }
+
+    // Uzupełniamy RunId w snapshotach before
+    foreach (var snap in dmvSnapshots.Where(x => x.RunId == "PENDING"))
+    {
+        snap.RunId = runId;
+        foreach (var row in snap.Rows)
+        {
+            row.RunId = runId;
+        }
+    }
+
+    // ============================================================
+    // 16. CLEANUP LIFECYCLE
+    // ============================================================
+    if (config.Lifecycle.CleanupEnabled && !string.IsNullOrWhiteSpace(scenarioPlan.EffectiveCleanupScriptFile))
+    {
         Console.WriteLine("=== CLEANUP ===");
-        Console.WriteLine($"Uruchamiam cleanup: {config.Lifecycle.CleanupScriptFile}");
+        Console.WriteLine($"Uruchamiam cleanup: {scenarioPlan.EffectiveCleanupScriptFile}");
 
         try
         {
             await LifecycleScriptRunner.RunFileAsync(
                 targetConnectionString,
-                config.Lifecycle.CleanupScriptFile,
+                scenarioPlan.EffectiveCleanupScriptFile,
                 config.Execution.CommandTimeoutSeconds,
                 cts.Token);
 
@@ -237,7 +298,7 @@ try
     }
 
     // ============================================================
-    // 13. CONSOLE SUMMARY
+    // 17. CONSOLE SUMMARY
     // ============================================================
     Console.WriteLine();
     Console.WriteLine("=== PODSUMOWANIE ===");
@@ -282,7 +343,7 @@ try
     }
 
     // ============================================================
-    // 14. WRITE FILE OUTPUTS
+    // 18. WRITE FILE OUTPUTS
     // ============================================================
     if (config.Output.WriteJson)
     {
@@ -300,7 +361,7 @@ try
     }
 
     // ============================================================
-    // 15. BUILD RUN RECORD
+    // 19. BUILD RUN RECORD
     // ============================================================
     var runRecord = new StressRunRecord
     {
@@ -331,11 +392,17 @@ try
         ThroughputPerSecond = realThroughput,
         StartedAtUtc = startedAtUtc,
         FinishedAtUtc = finishedAtUtc,
-        WallClockMs = (long)wallClock.TotalMilliseconds
+        WallClockMs = (long)wallClock.TotalMilliseconds,
+        SqlProductVersion = sqlEnvironment.ProductVersion,
+        SqlProductLevel = sqlEnvironment.ProductLevel,
+        SqlEdition = sqlEnvironment.Edition,
+        SqlEngineEdition = sqlEnvironment.EngineEdition,
+        SqlInstanceName = sqlEnvironment.InstanceName,
+        SqlCompatibilityLevel = sqlEnvironment.CompatibilityLevel
     };
 
     // ============================================================
-    // 16. WRITE MARKDOWN REPORT
+    // 20. WRITE MARKDOWN REPORT
     // ============================================================
     if (config.MarkdownReport.Enabled)
     {
@@ -354,7 +421,28 @@ try
     }
 
     // ============================================================
-    // 17. OPTIONAL SQL OUTPUT
+    // 21. WRITE HTML REPORT
+    // ============================================================
+    if (config.HtmlReport.Enabled)
+    {
+        var htmlPath = Path.Combine(
+            config.HtmlReport.Directory,
+            $"run_{runId}.html");
+
+        await HtmlReportWriter.WriteAsync(
+            htmlPath,
+            runRecord,
+            sqlEnvironment,
+            samples,
+            dmvSnapshots,
+            config.HtmlReport,
+            cts.Token);
+
+        Console.WriteLine($"HTML report zapisany do: {htmlPath}");
+    }
+
+    // ============================================================
+    // 22. OPTIONAL SQL OUTPUT
     // ============================================================
     if (config.SqlOutput.Enabled)
     {
@@ -386,7 +474,10 @@ try
         var bulkWriter = new BulkSampleWriter(sqlOutputConnectionString);
         await bulkWriter.WriteAsync(sampleRecords, cts.Token);
 
-        Console.WriteLine("Wyniki zapisane również do SQL Server.");
+        var dmvRows = dmvSnapshots.SelectMany(x => x.Rows).ToList();
+        await repository.InsertDmvSnapshotsAsync(dmvRows, cts.Token);
+
+        Console.WriteLine("Wyniki i snapshoty DMV zapisane również do SQL Server.");
     }
 
     Console.WriteLine($"Raport zapisany do: {config.Output.Directory}");
