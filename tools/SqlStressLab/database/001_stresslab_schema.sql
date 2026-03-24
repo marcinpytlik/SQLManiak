@@ -140,3 +140,29 @@ CREATE TABLE dbo.StressRunComparison
     ComparisonJson        nvarchar(max) NOT NULL
 );
 GO
+CREATE TABLE dbo.StressRunPerfCounterSample
+(
+    StressRunPerfCounterSampleId bigint IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    RunId            nvarchar(50) NOT NULL,
+    CollectedAtUtc   datetime2(3) NOT NULL,
+    CounterPath      nvarchar(500) NOT NULL,
+    CounterValue     float NOT NULL
+);
+GO
+
+CREATE INDEX IX_StressRunPerfCounterSample_RunId
+ON dbo.StressRunPerfCounterSample(RunId);
+GO
+
+CREATE TABLE dbo.StressRunXeSessionInfo
+(
+    StressRunXeSessionInfoId bigint IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    RunId            nvarchar(50) NOT NULL,
+    SessionName      nvarchar(256) NOT NULL,
+    ExistsFlag       bit NOT NULL,
+    IsRunning        bit NOT NULL,
+    TargetType       nvarchar(256) NULL,
+    TargetFile       nvarchar(1000) NULL,
+    CollectedAtUtc   datetime2(3) NOT NULL
+);
+GO

@@ -11,6 +11,7 @@ public static class MarkdownReportWriter
         List<ExecutionSample> samples,
         MarkdownReportOptions options,
         RunComparisonResult? comparisonResult,
+        TrendAnalysisResult? trendResult,
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
@@ -102,6 +103,36 @@ public static class MarkdownReportWriter
             sb.AppendLine();
             sb.AppendLine("> " + comparisonResult.SummaryText);
             sb.AppendLine();
+        }
+
+        if (trendResult is not null)
+        {
+            sb.AppendLine("## Trend");
+            sb.AppendLine();
+            sb.AppendLine($"- **ProfileName:** `{trendResult.ProfileName}`");
+            sb.AppendLine($"- **RequestedTop:** `{trendResult.RequestedTop}`");
+            sb.AppendLine($"- **AvgDurationTrendDirection:** `{trendResult.AvgDurationTrendDirection}`");
+            sb.AppendLine($"- **P95DurationTrendDirection:** `{trendResult.P95DurationTrendDirection}`");
+            sb.AppendLine($"- **ThroughputTrendDirection:** `{trendResult.ThroughputTrendDirection}`");
+            sb.AppendLine($"- **ErrorTrendDirection:** `{trendResult.ErrorTrendDirection}`");
+            sb.AppendLine($"- **SummaryVerdict:** `{trendResult.SummaryVerdict}`");
+            sb.AppendLine();
+
+            if (trendResult.Points.Count > 0)
+            {
+                sb.AppendLine("### Trend Points");
+                sb.AppendLine();
+                sb.AppendLine("| RunId | StartedAtUtc | AvgDurationMs | P95DurationMs | ThroughputPerSecond | ErrorCount |");
+                sb.AppendLine("|---|---|---:|---:|---:|---:|");
+
+                foreach (var point in trendResult.Points)
+                {
+                    sb.AppendLine(
+                        $"| {point.RunId} | {point.StartedAtUtc:O} | {point.AvgDurationMs:F2} | {point.P95DurationMs} | {point.ThroughputPerSecond:F2} | {point.ErrorCount} |");
+                }
+
+                sb.AppendLine();
+            }
         }
 
         if (options.IncludeErrorSummary)

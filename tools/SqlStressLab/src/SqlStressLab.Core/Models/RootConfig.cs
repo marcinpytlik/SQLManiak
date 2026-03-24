@@ -17,6 +17,9 @@ public sealed class RootConfig
     public TagOptions Tags { get; set; } = new();
     public HtmlReportOptions HtmlReport { get; set; } = new();
     public CompareOptions Compare { get; set; } = new();
+     public TrendOptions Trend { get; set; } = new();
 public BundleOptions Bundle { get; set; } = new();
 public ConsoleReportOptions ConsoleReport { get; set; } = new();
+public PerfCounterOptions PerfCounters { get; set; } = new();
+public XeCaptureOptions XeCapture { get; set; } = new();
 }

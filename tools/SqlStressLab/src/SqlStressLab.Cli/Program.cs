@@ -158,6 +158,8 @@ try
     Console.WriteLine($"SQL Output      : {config.SqlOutput.Enabled}");
     Console.WriteLine($"Compare Enabled : {config.Compare.Enabled}");
     Console.WriteLine($"Compare Mode    : {config.Compare.Mode}");
+    Console.WriteLine($"Trend Enabled   : {config.Trend.Enabled}");
+    Console.WriteLine($"Trend Top N     : {config.Trend.Top}");
     Console.WriteLine($"SQL Version     : {sqlEnvironment.ProductVersion}");
     Console.WriteLine($"SQL Edition     : {sqlEnvironment.Edition}");
     Console.WriteLine($"Compat Level    : {sqlEnvironment.CompatibilityLevel}");
@@ -340,16 +342,19 @@ try
         SqlCompatibilityLevel = sqlEnvironment.CompatibilityLevel
     };
 
+    var repository = config.SqlOutput.Enabled
+        ? new SqlResultRepository(sqlOutputConnectionString)
+        : null;
+
     // ============================================================
     // 18. OPTIONAL COMPARE
     // ============================================================
     RunComparisonResult? comparisonResult = null;
 
-    if (config.Compare.Enabled)
+    if (config.Compare.Enabled && repository is not null)
     {
         Console.WriteLine("=== COMPARE ===");
 
-        var repository = new SqlResultRepository(sqlOutputConnectionString);
         StressRunRecord? baselineRun = null;
 
         switch ((config.Compare.Mode ?? "None").Trim().ToLowerInvariant())
@@ -384,9 +389,10 @@ try
         else
         {
             comparisonResult = RunComparisonService.Compare(
-    runRecord,
-    baselineRun,
-    config.Compare.IncludeSampleLevelDiff);
+                runRecord,
+                baselineRun,
+                config.Compare.IncludeSampleLevelDiff);
+
             Console.WriteLine($"Baseline RunId   : {baselineRun.RunId}");
             Console.WriteLine($"Delta AvgMs      : {comparisonResult.AvgDurationDeltaMs:F2}");
             Console.WriteLine($"Delta P95Ms      : {comparisonResult.P95DurationDeltaMs}");
@@ -398,7 +404,41 @@ try
     }
 
     // ============================================================
-    // 19. CONSOLE SUMMARY
+    // 19. OPTIONAL TREND
+    // ============================================================
+    TrendAnalysisResult? trendResult = null;
+
+    if (config.Trend.Enabled && repository is not null)
+    {
+        Console.WriteLine("=== TREND ===");
+
+        var trendRuns = await repository.GetLatestRunsByProfileAsync(
+            config.ProfileName,
+            config.Trend.Top,
+            cts.Token);
+
+        // Dodaj bieżący run do analizy trendu, jeśli jeszcze nie jest w repo
+        var trendSourceRuns = new List<StressRunRecord> { runRecord };
+        trendSourceRuns.AddRange(
+            trendRuns.Where(x => !string.Equals(x.RunId, runRecord.RunId, StringComparison.OrdinalIgnoreCase)));
+
+        var trendService = new TrendAnalysisService();
+        trendResult = trendService.Analyze(
+            config.ProfileName,
+            trendSourceRuns,
+            config.Trend.Top);
+
+        Console.WriteLine($"Trend points     : {trendResult.Points.Count}");
+        Console.WriteLine($"Avg direction    : {trendResult.AvgDurationTrendDirection}");
+        Console.WriteLine($"P95 direction    : {trendResult.P95DurationTrendDirection}");
+        Console.WriteLine($"Thr direction    : {trendResult.ThroughputTrendDirection}");
+        Console.WriteLine($"Error direction  : {trendResult.ErrorTrendDirection}");
+        Console.WriteLine($"Trend verdict    : {trendResult.SummaryVerdict}");
+        Console.WriteLine();
+    }
+
+    // ============================================================
+    // 20. CONSOLE SUMMARY
     // ============================================================
     Console.WriteLine("=== PODSUMOWANIE ===");
     Console.WriteLine($"RunId             : {runId}");
@@ -442,7 +482,7 @@ try
     }
 
     // ============================================================
-    // 20. WRITE FILE OUTPUTS
+    // 21. WRITE FILE OUTPUTS
     // ============================================================
     if (config.Output.WriteJson)
     {
@@ -471,8 +511,20 @@ try
         Console.WriteLine($"Comparison JSON zapisany do: {comparisonJsonPath}");
     }
 
+    if (trendResult is not null)
+    {
+        var trendJsonPath = Path.Combine(config.Output.Directory, $"trend_{runId}.json");
+        var trendJson = JsonSerializer.Serialize(trendResult, new JsonSerializerOptions
+        {
+            WriteIndented = true
+        });
+
+        await File.WriteAllTextAsync(trendJsonPath, trendJson, cts.Token);
+        Console.WriteLine($"Trend JSON zapisany do: {trendJsonPath}");
+    }
+
     // ============================================================
-    // 21. WRITE MARKDOWN REPORT
+    // 22. WRITE MARKDOWN REPORT
     // ============================================================
     if (config.MarkdownReport.Enabled)
     {
@@ -486,13 +538,14 @@ try
             samples,
             config.MarkdownReport,
             comparisonResult,
+            trendResult,
             cts.Token);
 
         Console.WriteLine($"Markdown report zapisany do: {markdownPath}");
     }
 
     // ============================================================
-    // 22. WRITE HTML REPORT
+    // 23. WRITE HTML REPORT
     // ============================================================
     if (config.HtmlReport.Enabled)
     {
@@ -508,18 +561,17 @@ try
             dmvSnapshots,
             config.HtmlReport,
             comparisonResult,
+            trendResult,
             cts.Token);
 
         Console.WriteLine($"HTML report zapisany do: {htmlPath}");
     }
 
     // ============================================================
-    // 23. OPTIONAL SQL OUTPUT
+    // 24. OPTIONAL SQL OUTPUT
     // ============================================================
-    if (config.SqlOutput.Enabled)
+    if (config.SqlOutput.Enabled && repository is not null)
     {
-        var repository = new SqlResultRepository(sqlOutputConnectionString);
-
         await repository.InsertRunAsync(runRecord, cts.Token);
 
         var sampleRecords = samples.Select(s => new StressRunSampleRecord
@@ -559,6 +611,7 @@ try
                 P95DurationDeltaMs = comparisonResult.P95DurationDeltaMs,
                 ThroughputDelta = comparisonResult.ThroughputDelta,
                 ErrorCountDelta = comparisonResult.ErrorCountDelta,
+                RetryCountDelta = comparisonResult.RetryCountDelta,
                 IsRegression = comparisonResult.IsRegression,
                 ComparedAtUtc = DateTime.UtcNow
             };

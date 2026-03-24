@@ -15,6 +15,7 @@ public static class HtmlReportWriter
         List<DmvSnapshot> dmvSnapshots,
         HtmlReportOptions options,
         RunComparisonResult? comparisonResult,
+        TrendAnalysisResult? trendResult,
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
@@ -77,82 +78,115 @@ public static class HtmlReportWriter
         sb.AppendLine($"<h1>SqlStressLab Report - {Html(run.RunId)}</h1>");
         sb.AppendLine($"<p class=\"muted\">Wygenerowano: {Html(DateTime.UtcNow.ToString("O"))}</p>");
 
-        // Run summary
         sb.AppendLine("<div class=\"card\">");
         sb.AppendLine("<h2>Run</h2>");
         sb.AppendLine("<table>");
-        sb.AppendLine("<tr><th>RunId</th><td>" + Html(run.RunId) + "</td></tr>");
-        sb.AppendLine("<tr><th>Profile</th><td>" + Html(run.ProfileName) + "</td></tr>");
-        sb.AppendLine("<tr><th>Scenario</th><td>" + Html(run.ScenarioName) + "</td></tr>");
-        sb.AppendLine("<tr><th>Environment</th><td>" + Html(run.EnvironmentName) + "</td></tr>");
-        sb.AppendLine("<tr><th>Tags</th><td>" + Html(run.TagsCsv) + "</td></tr>");
-        sb.AppendLine("<tr><th>Server</th><td>" + Html(run.ServerName) + "</td></tr>");
-        sb.AppendLine("<tr><th>Database</th><td>" + Html(run.DatabaseName) + "</td></tr>");
-        sb.AppendLine("<tr><th>CommandType</th><td>" + Html(run.CommandType) + "</td></tr>");
-        sb.AppendLine("<tr><th>ExecutionMode</th><td>" + Html(run.ExecutionMode) + "</td></tr>");
-        sb.AppendLine("<tr><th>Workers</th><td>" + run.Workers + "</td></tr>");
-        sb.AppendLine("<tr><th>IterationsPerWorker</th><td>" + run.IterationsPerWorker + "</td></tr>");
-        sb.AppendLine("<tr><th>StartedAtUtc</th><td>" + Html(run.StartedAtUtc.ToString("O")) + "</td></tr>");
-        sb.AppendLine("<tr><th>FinishedAtUtc</th><td>" + Html(run.FinishedAtUtc.ToString("O")) + "</td></tr>");
-        sb.AppendLine("<tr><th>WallClockMs</th><td>" + run.WallClockMs + "</td></tr>");
+        AppendRow(sb, "RunId", run.RunId);
+        AppendRow(sb, "Profile", run.ProfileName);
+        AppendRow(sb, "Scenario", run.ScenarioName);
+        AppendRow(sb, "Environment", run.EnvironmentName);
+        AppendRow(sb, "Tags", run.TagsCsv);
+        AppendRow(sb, "Server", run.ServerName);
+        AppendRow(sb, "Database", run.DatabaseName);
+        AppendRow(sb, "CommandType", run.CommandType);
+        AppendRow(sb, "ExecutionMode", run.ExecutionMode);
+        AppendRow(sb, "Workers", run.Workers.ToString());
+        AppendRow(sb, "IterationsPerWorker", run.IterationsPerWorker.ToString());
+        AppendRow(sb, "StartedAtUtc", run.StartedAtUtc.ToString("O"));
+        AppendRow(sb, "FinishedAtUtc", run.FinishedAtUtc.ToString("O"));
+        AppendRow(sb, "WallClockMs", run.WallClockMs.ToString());
         sb.AppendLine("</table>");
         sb.AppendLine("</div>");
 
-        // Metrics
         sb.AppendLine("<div class=\"card\">");
         sb.AppendLine("<h2>Summary</h2>");
         sb.AppendLine("<table>");
-        sb.AppendLine("<tr><th>TotalExecutions</th><td>" + run.TotalExecutions + "</td></tr>");
-        sb.AppendLine("<tr><th>SuccessCount</th><td class=\"ok\">" + run.SuccessCount + "</td></tr>");
-        sb.AppendLine("<tr><th>ErrorCount</th><td class=\"" + (run.ErrorCount > 0 ? "bad" : "ok") + "\">" + run.ErrorCount + "</td></tr>");
-        sb.AppendLine("<tr><th>RetryCount</th><td>" + run.RetryCount + "</td></tr>");
-        sb.AppendLine("<tr><th>AvgDurationMs</th><td>" + run.AvgDurationMs.ToString("F2") + "</td></tr>");
-        sb.AppendLine("<tr><th>MinDurationMs</th><td>" + run.MinDurationMs + "</td></tr>");
-        sb.AppendLine("<tr><th>P50DurationMs</th><td>" + run.P50DurationMs + "</td></tr>");
-        sb.AppendLine("<tr><th>P95DurationMs</th><td>" + run.P95DurationMs + "</td></tr>");
-        sb.AppendLine("<tr><th>P99DurationMs</th><td>" + run.P99DurationMs + "</td></tr>");
-        sb.AppendLine("<tr><th>MaxDurationMs</th><td>" + run.MaxDurationMs + "</td></tr>");
-        sb.AppendLine("<tr><th>ThroughputPerSecond</th><td>" + run.ThroughputPerSecond.ToString("F2") + "</td></tr>");
+        AppendRow(sb, "TotalExecutions", run.TotalExecutions.ToString());
+        AppendRow(sb, "SuccessCount", run.SuccessCount.ToString());
+        AppendRow(sb, "ErrorCount", run.ErrorCount.ToString());
+        AppendRow(sb, "RetryCount", run.RetryCount.ToString());
+        AppendRow(sb, "AvgDurationMs", run.AvgDurationMs.ToString("F2"));
+        AppendRow(sb, "MinDurationMs", run.MinDurationMs.ToString());
+        AppendRow(sb, "P50DurationMs", run.P50DurationMs.ToString());
+        AppendRow(sb, "P95DurationMs", run.P95DurationMs.ToString());
+        AppendRow(sb, "P99DurationMs", run.P99DurationMs.ToString());
+        AppendRow(sb, "MaxDurationMs", run.MaxDurationMs.ToString());
+        AppendRow(sb, "ThroughputPerSecond", run.ThroughputPerSecond.ToString("F2"));
         sb.AppendLine("</table>");
         sb.AppendLine("</div>");
 
-        // Comparison
         if (comparisonResult is not null)
         {
             sb.AppendLine("<div class=\"card\">");
             sb.AppendLine("<h2>Comparison</h2>");
             sb.AppendLine("<table>");
-            sb.AppendLine("<tr><th>BaselineRunId</th><td>" + Html(comparisonResult.BaselineRunId) + "</td></tr>");
-            sb.AppendLine("<tr><th>CurrentProfile</th><td>" + Html(comparisonResult.CurrentProfileName) + "</td></tr>");
-            sb.AppendLine("<tr><th>BaselineProfile</th><td>" + Html(comparisonResult.BaselineProfileName) + "</td></tr>");
-            sb.AppendLine("<tr><th>CurrentScenario</th><td>" + Html(comparisonResult.CurrentScenarioName) + "</td></tr>");
-            sb.AppendLine("<tr><th>BaselineScenario</th><td>" + Html(comparisonResult.BaselineScenarioName) + "</td></tr>");
-            sb.AppendLine("<tr><th>AvgDurationDeltaMs</th><td>" + comparisonResult.AvgDurationDeltaMs.ToString("F2") + "</td></tr>");
-            sb.AppendLine("<tr><th>P95DurationDeltaMs</th><td>" + comparisonResult.P95DurationDeltaMs + "</td></tr>");
-            sb.AppendLine("<tr><th>ThroughputDelta</th><td>" + comparisonResult.ThroughputDelta.ToString("F2") + "</td></tr>");
-            sb.AppendLine("<tr><th>ErrorCountDelta</th><td>" + comparisonResult.ErrorCountDelta + "</td></tr>");
-            sb.AppendLine("<tr><th>RetryCountDelta</th><td>" + comparisonResult.RetryCountDelta + "</td></tr>");
-            sb.AppendLine("<tr><th>IsRegression</th><td class=\"" + (comparisonResult.IsRegression ? "bad" : "ok") + "\">" + comparisonResult.IsRegression + "</td></tr>");
-            sb.AppendLine("<tr><th>ComparedAtUtc</th><td>" + Html(comparisonResult.ComparedAtUtc.ToString("O")) + "</td></tr>");
+            AppendRow(sb, "BaselineRunId", comparisonResult.BaselineRunId);
+            AppendRow(sb, "CurrentProfile", comparisonResult.CurrentProfileName);
+            AppendRow(sb, "BaselineProfile", comparisonResult.BaselineProfileName);
+            AppendRow(sb, "CurrentScenario", comparisonResult.CurrentScenarioName);
+            AppendRow(sb, "BaselineScenario", comparisonResult.BaselineScenarioName);
+            AppendRow(sb, "AvgDurationDeltaMs", comparisonResult.AvgDurationDeltaMs.ToString("F2"));
+            AppendRow(sb, "P95DurationDeltaMs", comparisonResult.P95DurationDeltaMs.ToString());
+            AppendRow(sb, "ThroughputDelta", comparisonResult.ThroughputDelta.ToString("F2"));
+            AppendRow(sb, "ErrorCountDelta", comparisonResult.ErrorCountDelta.ToString());
+            AppendRow(sb, "RetryCountDelta", comparisonResult.RetryCountDelta.ToString());
+            AppendRow(sb, "IsRegression", comparisonResult.IsRegression.ToString());
+            AppendRow(sb, "ComparedAtUtc", comparisonResult.ComparedAtUtc.ToString("O"));
             sb.AppendLine("</table>");
             sb.AppendLine("<p><strong>Summary:</strong> " + Html(comparisonResult.SummaryText) + "</p>");
             sb.AppendLine("</div>");
         }
 
-        // SQL environment
+        if (trendResult is not null)
+        {
+            sb.AppendLine("<div class=\"card\">");
+            sb.AppendLine("<h2>Trend</h2>");
+            sb.AppendLine("<table>");
+            AppendRow(sb, "ProfileName", trendResult.ProfileName);
+            AppendRow(sb, "RequestedTop", trendResult.RequestedTop.ToString());
+            AppendRow(sb, "AvgDurationTrendDirection", trendResult.AvgDurationTrendDirection);
+            AppendRow(sb, "P95DurationTrendDirection", trendResult.P95DurationTrendDirection);
+            AppendRow(sb, "ThroughputTrendDirection", trendResult.ThroughputTrendDirection);
+            AppendRow(sb, "ErrorTrendDirection", trendResult.ErrorTrendDirection);
+            AppendRow(sb, "SummaryVerdict", trendResult.SummaryVerdict);
+            sb.AppendLine("</table>");
+
+            if (trendResult.Points.Count > 0)
+            {
+                sb.AppendLine("<h3>Trend Points</h3>");
+                sb.AppendLine("<table>");
+                sb.AppendLine("<tr><th>RunId</th><th>StartedAtUtc</th><th>AvgDurationMs</th><th>P95DurationMs</th><th>ThroughputPerSecond</th><th>ErrorCount</th></tr>");
+
+                foreach (var point in trendResult.Points)
+                {
+                    sb.AppendLine("<tr>");
+                    sb.AppendLine($"<td>{Html(point.RunId)}</td>");
+                    sb.AppendLine($"<td>{Html(point.StartedAtUtc.ToString("O"))}</td>");
+                    sb.AppendLine($"<td>{point.AvgDurationMs:F2}</td>");
+                    sb.AppendLine($"<td>{point.P95DurationMs}</td>");
+                    sb.AppendLine($"<td>{point.ThroughputPerSecond:F2}</td>");
+                    sb.AppendLine($"<td>{point.ErrorCount}</td>");
+                    sb.AppendLine("</tr>");
+                }
+
+                sb.AppendLine("</table>");
+            }
+
+            sb.AppendLine("</div>");
+        }
+
         sb.AppendLine("<div class=\"card\">");
         sb.AppendLine("<h2>SQL Server Environment</h2>");
         sb.AppendLine("<table>");
-        sb.AppendLine("<tr><th>ProductVersion</th><td>" + Html(sqlEnvironment.ProductVersion) + "</td></tr>");
-        sb.AppendLine("<tr><th>ProductLevel</th><td>" + Html(sqlEnvironment.ProductLevel) + "</td></tr>");
-        sb.AppendLine("<tr><th>Edition</th><td>" + Html(sqlEnvironment.Edition) + "</td></tr>");
-        sb.AppendLine("<tr><th>EngineEdition</th><td>" + Html(sqlEnvironment.EngineEdition) + "</td></tr>");
-        sb.AppendLine("<tr><th>InstanceName</th><td>" + Html(sqlEnvironment.InstanceName) + "</td></tr>");
-        sb.AppendLine("<tr><th>CompatibilityLevel</th><td>" + sqlEnvironment.CompatibilityLevel + "</td></tr>");
+        AppendRow(sb, "ProductVersion", sqlEnvironment.ProductVersion);
+        AppendRow(sb, "ProductLevel", sqlEnvironment.ProductLevel);
+        AppendRow(sb, "Edition", sqlEnvironment.Edition);
+        AppendRow(sb, "EngineEdition", sqlEnvironment.EngineEdition);
+        AppendRow(sb, "InstanceName", sqlEnvironment.InstanceName);
+        AppendRow(sb, "CompatibilityLevel", sqlEnvironment.CompatibilityLevel.ToString());
         sb.AppendLine("</table>");
         sb.AppendLine("</div>");
 
-        // Errors
         sb.AppendLine("<div class=\"card\">");
         sb.AppendLine("<h2>Error Summary</h2>");
 
@@ -179,7 +213,6 @@ public static class HtmlReportWriter
 
         sb.AppendLine("</div>");
 
-        // Slow samples
         if (options.IncludeSlowSamples)
         {
             sb.AppendLine("<div class=\"card\">");
@@ -190,13 +223,13 @@ public static class HtmlReportWriter
             foreach (var sample in slowSamples)
             {
                 sb.AppendLine("<tr>");
-                sb.AppendLine("<td>" + sample.WorkerId + "</td>");
-                sb.AppendLine("<td>" + sample.Iteration + "</td>");
-                sb.AppendLine("<td>" + sample.DurationMs + "</td>");
-                sb.AppendLine("<td>" + sample.Success + "</td>");
-                sb.AppendLine("<td>" + sample.RetryAttempt + "</td>");
-                sb.AppendLine("<td>" + Html(sample.ErrorCategory ?? "") + "</td>");
-                sb.AppendLine("<td>" + Html(sample.SqlErrorNumber?.ToString() ?? "") + "</td>");
+                sb.AppendLine($"<td>{sample.WorkerId}</td>");
+                sb.AppendLine($"<td>{sample.Iteration}</td>");
+                sb.AppendLine($"<td>{sample.DurationMs}</td>");
+                sb.AppendLine($"<td>{sample.Success}</td>");
+                sb.AppendLine($"<td>{sample.RetryAttempt}</td>");
+                sb.AppendLine($"<td>{Html(sample.ErrorCategory ?? "")}</td>");
+                sb.AppendLine($"<td>{Html(sample.SqlErrorNumber?.ToString() ?? "")}</td>");
                 sb.AppendLine("</tr>");
             }
 
@@ -204,7 +237,6 @@ public static class HtmlReportWriter
             sb.AppendLine("</div>");
         }
 
-        // DMV
         if (options.IncludeDmvSection)
         {
             sb.AppendLine("<div class=\"card\">");
@@ -240,6 +272,11 @@ public static class HtmlReportWriter
         sb.AppendLine("</html>");
 
         await File.WriteAllTextAsync(outputPath, sb.ToString(), cancellationToken);
+    }
+
+    private static void AppendRow(StringBuilder sb, string name, string value)
+    {
+        sb.AppendLine("<tr><th>" + Html(name) + "</th><td>" + Html(value) + "</td></tr>");
     }
 
     private static string Html(string? value)
