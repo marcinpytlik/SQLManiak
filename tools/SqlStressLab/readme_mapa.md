@@ -1,13 +1,13 @@
-# SqlStressLab — mapa zależności klas na finał Sprintu 4
+# SqlStressLab — mapa zależności klas na finał Sprintu 6
 
-Ten dokument pokazuje, jak klasy w `SqlStressLab` są ze sobą powiązane na koniec Sprintu 4.
+Ten dokument pokazuje, jak klasy w `SqlStressLab` są ze sobą powiązane na koniec Sprintu 6.
 
 Nie jest to diagram UML 1:1, tylko praktyczna mapa zależności:
 - kto jest punktem wejścia,
 - kto kogo wywołuje,
 - które klasy są modelami,
 - które klasy są usługami wykonawczymi,
-- które klasy odpowiadają za raportowanie i zapis do SQL Server.
+- które klasy odpowiadają za raportowanie, compare, trend i zapis do SQL Server.
 
 ---
 
@@ -29,11 +29,18 @@ Program
  │   ├─ SessionContextLoader
  │   ├─ ParameterValueFactory
  │   └─ Session settings SQL
+ ├─ RunComparisonService
+ ├─ TrendAnalysisService
  ├─ ReportWriter
  ├─ MarkdownReportWriter
  ├─ HtmlReportWriter
  ├─ SqlResultRepository
  └─ BulkSampleWriter
+
+CommandDispatcher
+ ├─ RunCommandService
+ ├─ CompareCommandService
+ └─ TrendCommandService
 ```
 
 ---
@@ -52,6 +59,8 @@ Program
 - `LifecycleScriptRunner`
 - `DmvSnapshotCollector`
 - `StressRunner`
+- `RunComparisonService`
+- `TrendAnalysisService`
 - `ReportWriter`
 - `MarkdownReportWriter`
 - `HtmlReportWriter`
@@ -62,8 +71,25 @@ Program
 - `StressOptions`
 - `StressRunRecord`
 - `StressRunSampleRecord`
+- `StressRunComparisonRecord`
 - raportów
 - zapisu do SQL Server
+
+---
+
+## CommandDispatcher
+**Rola:** prosty router komend CLI.
+
+### Zależy od
+- `RunCommandService`
+- `CompareCommandService`
+- `TrendCommandService`
+- `CliArguments`
+
+### Używany do
+- delegowania komendy `run`
+- delegowania komendy `compare`
+- delegowania komendy `trend`
 
 ---
 
@@ -79,16 +105,38 @@ Program
 - `OutputOptions`
 - `SqlOutputOptions`
 - `RunLifecycleOptions`
-- `EnvironmentInfo` / opcje środowiskowe
+- `EnvironmentInfo`
 - `MarkdownReportOptions`
 - `HtmlReportOptions`
 - `TagOptions`
 - `List<SqlParameterDefinition>`
+- `CompareOptions`
+- `TrendOptions`
 
 ### Używany przez
 - `Program`
 - pośrednio przez `ScenarioPlanner`
 - pośrednio przez `StressOptions`
+
+---
+
+## CliArguments
+**Rola:** model argumentów przekazywanych do warstwy CLI.
+
+### Zawiera
+- `Command`
+- `ProfilePath`
+- `CurrentRunId`
+- `BaselineRunId`
+- `ProfileName`
+- `Top`
+- `IncludeSampleLevelDiff`
+
+### Używany przez
+- `CommandDispatcher`
+- `RunCommandService`
+- `CompareCommandService`
+- `TrendCommandService`
 
 ---
 
@@ -185,6 +233,32 @@ Program
 ### Używany przez
 - `Program`
 - `StressRunRecord`
+
+---
+
+## CompareOptions
+**Rola:** konfiguracja porównania current vs baseline.
+
+### Zawiera
+- `Enabled`
+- `Mode`
+- `BaselineRunId`
+- `IncludeSampleLevelDiff`
+
+### Używany przez
+- `Program`
+
+---
+
+## TrendOptions
+**Rola:** konfiguracja analizy trendu.
+
+### Zawiera
+- `Enabled`
+- `Top`
+
+### Używany przez
+- `Program`
 
 ---
 
@@ -523,7 +597,89 @@ Program
 
 ---
 
-# 8. Raportowanie plikowe
+# 8. Compare i trend
+
+## RunComparisonService
+**Rola:** wykonuje porównanie current run vs baseline.
+
+### Zależy od
+- `StressRunRecord`
+- `RunComparisonResult`
+
+### Zwraca
+- `RunComparisonResult`
+
+### Używany przez
+- `Program`
+
+---
+
+## RunComparisonResult
+**Rola:** wynik porównania dwóch runów.
+
+### Zawiera
+- `RunId`
+- `BaselineRunId`
+- profile i scenariusze current/baseline
+- delty AVG, P95, throughput, errors, retries
+- `IsRegression`
+- `SummaryText`
+
+### Używany przez
+- `Program`
+- `MarkdownReportWriter`
+- `HtmlReportWriter`
+
+---
+
+## TrendAnalysisService
+**Rola:** analizuje trend ostatnich N runów.
+
+### Zależy od
+- `List<StressRunRecord>`
+- `TrendPoint`
+- `TrendAnalysisResult`
+
+### Zwraca
+- `TrendAnalysisResult`
+
+### Używany przez
+- `Program`
+
+---
+
+## TrendAnalysisResult
+**Rola:** wynik analizy trendu.
+
+### Zawiera
+- `ProfileName`
+- `RequestedTop`
+- `List<TrendPoint>`
+- kierunki zmian:
+  - `AvgDurationTrendDirection`
+  - `P95DurationTrendDirection`
+  - `ThroughputTrendDirection`
+  - `ErrorTrendDirection`
+- `SummaryVerdict`
+
+### Używany przez
+- `Program`
+- `MarkdownReportWriter`
+- `HtmlReportWriter`
+
+---
+
+## TrendPoint
+**Rola:** pojedynczy punkt trendu.
+
+### Używany przez
+- `TrendAnalysisResult`
+- `TrendAnalysisService`
+- raporty
+
+---
+
+# 9. Raportowanie plikowe
 
 ## ReportWriter
 **Rola:** zapis podstawowych artefaktów plikowych.
@@ -549,6 +705,8 @@ Program
 - `StressRunRecord`
 - `List<ExecutionSample>`
 - `MarkdownReportOptions`
+- `RunComparisonResult`
+- `TrendAnalysisResult`
 
 ### Używany przez
 - `Program`
@@ -564,20 +722,23 @@ Program
 - `List<ExecutionSample>`
 - `List<DmvSnapshot>`
 - `HtmlReportOptions`
+- `RunComparisonResult`
+- `TrendAnalysisResult`
 
 ### Używany przez
 - `Program`
 
 ---
 
-# 9. Zapis do SQL Server
+# 10. Zapis do SQL Server
 
 ## SqlResultRepository
-**Rola:** zapis i odczyt nagłówków runów oraz snapshotów DMV.
+**Rola:** zapis i odczyt nagłówków runów, compare oraz snapshotów DMV.
 
 ### Zależy od
 - `StressRunRecord`
 - `StressRunSampleRecord`
+- `StressRunComparisonRecord`
 - `DmvSnapshotRow`
 
 ### Używany przez
@@ -587,6 +748,7 @@ Program
 - `InsertRunAsync`
 - `InsertSamplesAsync`
 - `InsertDmvSnapshotsAsync`
+- `InsertComparisonAsync`
 - `GetRunByIdAsync`
 - `GetLatestRunByProfileAsync`
 - `GetLatestRunsByProfileAsync`
@@ -612,6 +774,8 @@ Program
 
 ### Używany przez
 - `SqlResultRepository`
+- `RunComparisonService`
+- `TrendAnalysisService`
 - `MarkdownReportWriter`
 - `HtmlReportWriter`
 
@@ -629,10 +793,49 @@ Program
 
 ---
 
-# 10. Widok zależności w układzie warstw
+## StressRunComparisonRecord
+**Rola:** model compare do SQL.
+
+### Budowany przez
+- `Program` na podstawie `RunComparisonResult`
+
+### Używany przez
+- `SqlResultRepository`
+
+---
+
+# 11. Warstwa CLI command services
+
+## RunCommandService
+**Rola:** obsługuje komendę `run`.
+
+### Używany przez
+- `CommandDispatcher`
+
+---
+
+## CompareCommandService
+**Rola:** obsługuje komendę `compare`.
+
+### Używany przez
+- `CommandDispatcher`
+
+---
+
+## TrendCommandService
+**Rola:** obsługuje komendę `trend`.
+
+### Używany przez
+- `CommandDispatcher`
+
+---
+
+# 12. Widok zależności w układzie warstw
 
 ## Warstwa wejściowa
 - `Program`
+- `CommandDispatcher`
+- `CliArguments`
 - `RootConfig`
 - `ExecutionConfig`
 - `SqlAuthOptions`
@@ -643,6 +846,8 @@ Program
 - `MarkdownReportOptions`
 - `HtmlReportOptions`
 - `TagOptions`
+- `CompareOptions`
+- `TrendOptions`
 - `SqlParameterDefinition`
 
 ## Warstwa planowania
@@ -677,6 +882,13 @@ Program
 ## Warstwa lifecycle
 - `LifecycleScriptRunner`
 
+## Warstwa compare i trend
+- `RunComparisonService`
+- `RunComparisonResult`
+- `TrendAnalysisService`
+- `TrendAnalysisResult`
+- `TrendPoint`
+
 ## Warstwa raportowania
 - `ReportWriter`
 - `MarkdownReportWriter`
@@ -687,10 +899,16 @@ Program
 - `BulkSampleWriter`
 - `StressRunRecord`
 - `StressRunSampleRecord`
+- `StressRunComparisonRecord`
+
+## Warstwa CLI service
+- `RunCommandService`
+- `CompareCommandService`
+- `TrendCommandService`
 
 ---
 
-# 11. Najważniejsze relacje „kto woła kogo”
+# 13. Najważniejsze relacje „kto woła kogo”
 
 ## Główny łańcuch
 ```text
@@ -705,6 +923,8 @@ Program
  ├─ LifecycleScriptRunner
  ├─ DmvSnapshotCollector
  ├─ StressRunner
+ ├─ RunComparisonService
+ ├─ TrendAnalysisService
  ├─ ReportWriter
  ├─ MarkdownReportWriter
  ├─ HtmlReportWriter
@@ -723,11 +943,24 @@ StressRunner
  └─ StressRunResult
 ```
 
+## Compare i trend
+```text
+Program
+ ├─ RunComparisonService
+ │   ├─ StressRunRecord
+ │   └─ RunComparisonResult
+ └─ TrendAnalysisService
+     ├─ StressRunRecord
+     ├─ TrendPoint
+     └─ TrendAnalysisResult
+```
+
 ## Zapis do SQL
 ```text
 Program
  ├─ StressRunRecord
  ├─ StressRunSampleRecord
+ ├─ StressRunComparisonRecord
  ├─ SqlResultRepository
  └─ BulkSampleWriter
 ```
@@ -738,19 +971,31 @@ Program
  ├─ ReportWriter
  ├─ MarkdownReportWriter
  │   ├─ StressRunRecord
- │   └─ ExecutionSample
+ │   ├─ ExecutionSample
+ │   ├─ RunComparisonResult
+ │   └─ TrendAnalysisResult
  └─ HtmlReportWriter
      ├─ StressRunRecord
      ├─ SqlServerEnvironmentInfo
      ├─ ExecutionSample
-     └─ DmvSnapshot
+     ├─ DmvSnapshot
+     ├─ RunComparisonResult
+     └─ TrendAnalysisResult
+```
+
+## CLI dispatcher
+```text
+CommandDispatcher
+ ├─ RunCommandService
+ ├─ CompareCommandService
+ └─ TrendCommandService
 ```
 
 ---
 
-# 12. Klasy centralne architektury Sprintu 4
+# 14. Klasy centralne architektury Sprintu 6
 
-Jeśli patrzeć tylko na klasy-klucze, to rdzeń Sprintu 4 stanowią:
+Jeśli patrzeć tylko na klasy-klucze, to rdzeń Sprintu 6 stanowią:
 
 - `Program`
 - `RootConfig`
@@ -765,22 +1010,30 @@ Jeśli patrzeć tylko na klasy-klucze, to rdzeń Sprintu 4 stanowią:
 - `StressRunRecord`
 - `SqlResultRepository`
 - `BulkSampleWriter`
+- `RunComparisonService`
+- `RunComparisonResult`
+- `TrendAnalysisService`
+- `TrendAnalysisResult`
 - `MarkdownReportWriter`
 - `HtmlReportWriter`
+- `CommandDispatcher`
 
 ---
 
-# 13. Podsumowanie
+# 15. Podsumowanie
 
-Na koniec Sprintu 4 projekt ma już czytelny podział:
+Na koniec Sprintu 6 projekt ma czytelny podział:
 
-- **Program** — orkiestracja
+- **Program** — orkiestracja pełnego runu
+- **CommandDispatcher** — routing komend CLI
 - **Modele** — dane wejściowe, pośrednie i wynikowe
 - **Services** — logika działania
 - **Runner** — wykonywanie workloadu
 - **Scenario system** — planowanie scenariuszy
+- **Compare** — porównanie current vs baseline
+- **Trend** — analiza zmian między runami
 - **Reporting** — pliki i HTML/Markdown
 - **Persistence** — zapis do SQL Server
 - **DMV & SQL metadata** — diagnostyka i analiza środowiska
 
-
+Na tym etapie `SqlStressLab` jest już nie tylko generatorem obciążenia, ale też narzędziem do porównywania wyników i śledzenia trendów kolejnych uruchomień.

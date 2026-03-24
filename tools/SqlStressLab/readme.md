@@ -1,30 +1,67 @@
 # SqlStressLab
 
-SqlStressLab to lekkie narzędzie CLI w C# do generowania równoległego obciążenia SQL Server.
+SqlStressLab to lekkie narzędzie CLI w C# do generowania równoległego obciążenia SQL Server, analizy wyników oraz porównywania i śledzenia trendów kolejnych uruchomień.
 
 ## Funkcje
+
+### Core workload
 - wielu workerów
 - wiele iteracji
 - mixed authentication
-- ustawienia sesji SET z pliku .sql
-- Text / StoredProcedure
-- NonQuery / Scalar / Reader
-- raport JSON / CSV
+- ustawienia sesji `SET` z pliku `.sql`
+- `Text` / `StoredProcedure`
+- `NonQuery` / `Scalar` / `Reader`
+- retry dla wybranych błędów SQL
+- warmup przed właściwym runem
+- worker assignments dla scenariuszy specjalnych
+
+### Raportowanie
+- raport JSON
+- raport CSV
+- reader preview
+- raport Markdown
+- raport HTML
+
+### Diagnostyka i analiza
+- snapshoty DMV before / after
+- zapis wyników do SQL Server
+- porównanie bieżącego runu do baseline
+- analiza trendu ostatnich N runów
+
+### Scenariusze
+- `General`
+- `BlockingHotRow`
+- `DeadlockPair`
+- `ReadStorm`
+- `WriteStorm`
+
+---
 
 ## Uruchomienie
+
 ```powershell
 $env:SQLSTRESSLAB_PASSWORD="BardzoMocneHaslo!123"
 dotnet run --project .\src\SqlStressLab.Cli\SqlStressLab.Cli.csproj -- .\src\SqlStressLab.Cli\profiles\demo-select.json
-# SqlStressLab — spis klas na finał Sprintu 4
+```
 
-Ten dokument opisuje klasy obecne w projekcie `SqlStressLab` na koniec Sprintu 4 oraz ich rolę w rozwiązaniu.
+Po publish:
+
+```powershell
+.\SqlStressLab.Cli.exe .\profiles\demo-select.json
+```
+
+---
+
+# SqlStressLab — spis klas na finał Sprintu 6
+
+Ten dokument opisuje klasy obecne w projekcie `SqlStressLab` na koniec Sprintu 6 oraz ich rolę w rozwiązaniu.
 
 ## Struktura rozwiązania
 
 Projekt składa się z dwóch głównych części:
 
 - `SqlStressLab.Cli` — aplikacja konsolowa uruchamiająca workload i spinająca cały przepływ
-- `SqlStressLab.Core` — biblioteka z modelami, usługami, scenariuszami, raportowaniem i integracją z SQL Server
+- `SqlStressLab.Core` — biblioteka z modelami, usługami, scenariuszami, raportowaniem, compare/trend i integracją z SQL Server
 
 ---
 
@@ -46,10 +83,115 @@ Główny punkt wejścia aplikacji konsolowej.
 - zebranie snapshotów DMV
 - wygenerowanie raportów JSON/CSV/Markdown/HTML
 - zapis wyników do SQL Server
+- wykonanie compare do baseline
+- wykonanie analizy trendu
 
 ---
 
 # 2. Modele domenowe (`Models`)
+
+## CliArguments
+**Plik:** `Models/CliArguments.cs`
+
+Model argumentów CLI.
+
+### Odpowiedzialność
+- przechowuje komendę CLI
+- przechowuje ścieżkę do profilu
+- obsługuje dane do compare/trend, np.:
+  - `CurrentRunId`
+  - `BaselineRunId`
+  - `ProfileName`
+  - `Top`
+
+---
+
+## CompareOptions
+**Plik:** `Models/CompareOptions.cs`
+
+Konfiguracja compare.
+
+### Odpowiedzialność
+- włączenie/wyłączenie compare
+- tryb compare:
+  - `None`
+  - `PreviousRun`
+  - `ExplicitRunId`
+- opcjonalny `BaselineRunId`
+- flaga `IncludeSampleLevelDiff`
+
+---
+
+## TrendOptions
+**Plik:** `Models/TrendOptions.cs`
+
+Konfiguracja analizy trendu.
+
+### Odpowiedzialność
+- włączenie/wyłączenie trend analysis
+- liczba ostatnich runów (`Top`) do analizy
+
+---
+
+## TrendPoint
+**Plik:** `Models/TrendPoint.cs`
+
+Pojedynczy punkt trendu.
+
+### Odpowiedzialność
+- `RunId`
+- `StartedAtUtc`
+- `AvgDurationMs`
+- `P95DurationMs`
+- `ThroughputPerSecond`
+- `ErrorCount`
+
+---
+
+## TrendAnalysisResult
+**Plik:** `Models/TrendAnalysisResult.cs`
+
+Wynik analizy trendu.
+
+### Odpowiedzialność
+- przechowuje listę punktów trendu
+- przechowuje kierunek zmian:
+  - `AvgDurationTrendDirection`
+  - `P95DurationTrendDirection`
+  - `ThroughputTrendDirection`
+  - `ErrorTrendDirection`
+- przechowuje końcowy `SummaryVerdict`
+
+---
+
+## RunComparisonResult
+**Plik:** `Models/RunComparisonResult.cs`
+
+Wynik porównania bieżącego runu do baseline.
+
+### Odpowiedzialność
+- `RunId`
+- `BaselineRunId`
+- delta AVG
+- delta P95
+- delta throughput
+- delta error count
+- delta retry count
+- `IsRegression`
+- `SummaryText`
+
+---
+
+## StressRunComparisonRecord
+**Plik:** `Models/StressRunComparisonRecord.cs`
+
+Model przygotowany do zapisu compare do SQL Server.
+
+### Odpowiedzialność
+- zapisuje najważniejsze różnice między current a baseline
+- trafia do tabeli `dbo.StressRunComparison`
+
+---
 
 ## DmvSnapshot
 **Plik:** `Models/DmvSnapshot.cs`
@@ -134,6 +276,11 @@ Opcje generowania raportu HTML.
 ### Odpowiedzialność
 - steruje generowaniem sekcji HTML
 - określa katalog docelowy i zakres raportu
+- kontroluje sekcje:
+  - DMV
+  - slow samples
+  - comparison
+  - trend
 
 ---
 
@@ -145,6 +292,7 @@ Opcje generowania raportu Markdown.
 ### Odpowiedzialność
 - steruje generowaniem raportu `.md`
 - określa liczbę najwolniejszych próbek i sekcje błędów
+- wspiera sekcje compare/trend
 
 ---
 
@@ -227,6 +375,8 @@ Główny model konfiguracji odczytywany z pliku JSON.
   - markdown/html report
   - tags
   - parameters
+  - compare
+  - trend
 
 ---
 
@@ -467,6 +617,69 @@ Model pomocniczy opisujący kontekst pojedynczego workera.
 
 # 3. Usługi (`Services`)
 
+## RunCommandService
+**Plik:** `Services/RunCommandService.cs`
+
+Serwis obsługujący komendę `run`.
+
+### Odpowiedzialność
+- uruchamianie runu na podstawie argumentów CLI
+- delegowanie do głównego przepływu wykonania
+
+---
+
+## CompareCommandService
+**Plik:** `Services/CompareCommandService.cs`
+
+Serwis obsługujący komendę `compare`.
+
+### Odpowiedzialność
+- uruchamianie porównania current vs baseline
+- budowa wyniku compare
+
+---
+
+## TrendCommandService
+**Plik:** `Services/TrendCommandService.cs`
+
+Serwis obsługujący komendę `trend`.
+
+### Odpowiedzialność
+- analiza trendu dla ostatnich N runów
+- budowa wyniku trend analysis
+
+---
+
+## RunComparisonService
+**Plik:** `Services/RunComparisonService.cs`
+
+Serwis compare.
+
+### Odpowiedzialność
+- porównuje `StressRunRecord` current i baseline
+- wylicza delty:
+  - AVG
+  - P95
+  - throughput
+  - error count
+  - retry count
+- wyznacza `IsRegression`
+
+---
+
+## TrendAnalysisService
+**Plik:** `Services/TrendAnalysisService.cs`
+
+Serwis analizy trendu.
+
+### Odpowiedzialność
+- analizuje listę ostatnich runów
+- buduje `TrendPoint`
+- wyznacza kierunki zmian
+- zwraca `TrendAnalysisResult`
+
+---
+
 ## BuiltInScenarioCatalog
 **Plik:** `Services/BuiltInScenarioCatalog.cs`
 
@@ -543,6 +756,8 @@ Generuje raport HTML dla runu.
   - próbki
   - sekcję środowiska SQL
   - sekcję DMV
+  - sekcję compare
+  - sekcję trend
 
 ---
 
@@ -566,6 +781,7 @@ Generuje raport Markdown.
 ### Odpowiedzialność
 - tworzy raport `.md`
 - przydatny do Obsidiana, dokumentacji i historii runów
+- wspiera sekcje compare/trend
 
 ---
 
@@ -675,6 +891,7 @@ Repozytorium zapisu i odczytu wyników runów w SQL Server.
 - zapis `StressRun`
 - zapis `StressRunSample`
 - zapis snapshotów DMV
+- zapis compare
 - odczyt runu po `RunId`
 - pobranie ostatnich runów po profilu
 
@@ -766,9 +983,9 @@ Typ roli workera w scenariuszu.
 
 ---
 
-# 5. Najważniejsze klasy z punktu widzenia przepływu Sprintu 4
+# 5. Najważniejsze klasy z punktu widzenia przepływu Sprintu 6
 
-Jeżeli patrzeć na projekt operacyjnie, to najważniejsze klasy na koniec Sprintu 4 to:
+Jeżeli patrzeć na projekt operacyjnie, to najważniejsze klasy na koniec Sprintu 6 to:
 
 - `Program`
 - `RootConfig`
@@ -785,12 +1002,17 @@ Jeżeli patrzeć na projekt operacyjnie, to najważniejsze klasy na koniec Sprin
 - `ReportWriter`
 - `MarkdownReportWriter`
 - `HtmlReportWriter`
+- `RunComparisonService`
+- `TrendAnalysisService`
+- `RunCommandService`
+- `CompareCommandService`
+- `TrendCommandService`
 
 ---
 
 # 6. Skrócony przepływ działania
 
-Na koniec Sprintu 4 przepływ wygląda tak:
+Na koniec Sprintu 6 przepływ wygląda tak:
 
 1. `Program` wczytuje `RootConfig`
 2. `ConnectionStringFactory` buduje connection string
@@ -801,12 +1023,14 @@ Na koniec Sprintu 4 przepływ wygląda tak:
 7. `StressRunner` wykonuje workload
 8. `DmvSnapshotCollector` zbiera snapshoty after
 9. `LifecycleScriptRunner` uruchamia cleanup
-10. `ReportWriter`, `MarkdownReportWriter`, `HtmlReportWriter` tworzą raporty
-11. `SqlResultRepository` i `BulkSampleWriter` zapisują wyniki do SQL Server
+10. `RunComparisonService` porównuje current run do baseline
+11. `TrendAnalysisService` analizuje trend ostatnich runów
+12. `ReportWriter`, `MarkdownReportWriter`, `HtmlReportWriter` tworzą raporty
+13. `SqlResultRepository` i `BulkSampleWriter` zapisują wyniki do SQL Server
 
 ---
 
-# 7. Status architektury na finał Sprintu 4
+# 7. Status architektury na finał Sprintu 6
 
 Na tym etapie projekt ma już:
 
@@ -820,7 +1044,23 @@ Na tym etapie projekt ma już:
 - DMV snapshots
 - SQL metadata
 - raporty JSON/CSV/Markdown/HTML
-- zapis do SQL Server
+- compare current vs baseline
+- trend analysis ostatnich runów
+- zapis compare do SQL Server
+- bazę pod rozbudowę CLI o osobne komendy `run`, `compare`, `trend`
+
+---
+
+# 8. Podsumowanie
+
+Na koniec Sprintu 6 `SqlStressLab` jest już nie tylko generatorem obciążenia, ale także małym frameworkiem do:
+
+- wykonywania laboratoryjnych testów SQL Server,
+- zbierania wyników,
+- porównywania uruchomień,
+- śledzenia trendów wydajności,
+- generowania raportów technicznych.
+
 dotnet publish .\src\SqlStressLab.Cli\SqlStressLab.Cli.csproj `
   -c Release `
   -r win-x64 `
