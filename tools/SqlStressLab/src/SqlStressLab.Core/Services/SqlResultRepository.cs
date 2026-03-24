@@ -11,6 +11,54 @@ public sealed class SqlResultRepository
     {
         _connectionString = connectionString;
     }
+public async Task InsertComparisonAsync(
+    StressRunComparisonRecord record,
+    CancellationToken cancellationToken = default)
+{
+    const string sql = """
+    INSERT INTO dbo.StressRunComparison
+    (
+        RunId,
+        BaselineRunId,
+        AvgDurationDeltaMs,
+        P95DurationDeltaMs,
+        ThroughputDelta,
+        ErrorCountDelta,
+        RetryCountDelta,
+        IsRegression,
+        ComparedAtUtc
+    )
+    VALUES
+    (
+        @RunId,
+        @BaselineRunId,
+        @AvgDurationDeltaMs,
+        @P95DurationDeltaMs,
+        @ThroughputDelta,
+        @ErrorCountDelta,
+        @RetryCountDelta,
+        @IsRegression,
+        @ComparedAtUtc
+    );
+    """;
+
+    await using var conn = new SqlConnection(_connectionString);
+    await conn.OpenAsync(cancellationToken);
+
+    await using var cmd = new SqlCommand(sql, conn);
+
+    cmd.Parameters.AddWithValue("@RunId", record.RunId);
+    cmd.Parameters.AddWithValue("@BaselineRunId", record.BaselineRunId);
+    cmd.Parameters.AddWithValue("@AvgDurationDeltaMs", record.AvgDurationDeltaMs);
+    cmd.Parameters.AddWithValue("@P95DurationDeltaMs", record.P95DurationDeltaMs);
+    cmd.Parameters.AddWithValue("@ThroughputDelta", record.ThroughputDelta);
+    cmd.Parameters.AddWithValue("@ErrorCountDelta", record.ErrorCountDelta);
+    cmd.Parameters.AddWithValue("@RetryCountDelta", record.RetryCountDelta);
+    cmd.Parameters.AddWithValue("@IsRegression", record.IsRegression);
+    cmd.Parameters.AddWithValue("@ComparedAtUtc", record.ComparedAtUtc);
+
+    await cmd.ExecuteNonQueryAsync(cancellationToken);
+}
 
     public async Task InsertRunAsync(StressRunRecord run, CancellationToken cancellationToken = default)
     {
@@ -472,4 +520,5 @@ public sealed class SqlResultRepository
                 : Convert.ToInt32(reader["SqlCompatibilityLevel"])
         };
     }
+
 }

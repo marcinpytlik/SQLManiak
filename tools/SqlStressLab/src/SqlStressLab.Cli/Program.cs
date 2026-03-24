@@ -121,11 +121,12 @@ try
     // ============================================================
     var scenarioPlan = ScenarioPlanner.Build(config);
 
-scenarioPlan.EffectiveSetupScriptFile =
-    ResolvePath(scenarioPlan.EffectiveSetupScriptFile, profileDirectory);
+    scenarioPlan.EffectiveSetupScriptFile =
+        ResolvePath(scenarioPlan.EffectiveSetupScriptFile, profileDirectory);
 
-scenarioPlan.EffectiveCleanupScriptFile =
-    ResolvePath(scenarioPlan.EffectiveCleanupScriptFile, profileDirectory);
+    scenarioPlan.EffectiveCleanupScriptFile =
+        ResolvePath(scenarioPlan.EffectiveCleanupScriptFile, profileDirectory);
+
     // ============================================================
     // 9. SQL SERVER ENVIRONMENT INFO
     // ============================================================
@@ -155,6 +156,8 @@ scenarioPlan.EffectiveCleanupScriptFile =
     Console.WriteLine($"Setup Script    : {scenarioPlan.EffectiveSetupScriptFile}");
     Console.WriteLine($"Cleanup Script  : {scenarioPlan.EffectiveCleanupScriptFile}");
     Console.WriteLine($"SQL Output      : {config.SqlOutput.Enabled}");
+    Console.WriteLine($"Compare Enabled : {config.Compare.Enabled}");
+    Console.WriteLine($"Compare Mode    : {config.Compare.Mode}");
     Console.WriteLine($"SQL Version     : {sqlEnvironment.ProductVersion}");
     Console.WriteLine($"SQL Edition     : {sqlEnvironment.Edition}");
     Console.WriteLine($"Compat Level    : {sqlEnvironment.CompatibilityLevel}");
@@ -257,7 +260,6 @@ scenarioPlan.EffectiveCleanupScriptFile =
         Console.WriteLine();
     }
 
-    // Uzupełniamy RunId w snapshotach before
     foreach (var snap in dmvSnapshots.Where(x => x.RunId == "PENDING"))
     {
         snap.RunId = runId;
@@ -298,9 +300,106 @@ scenarioPlan.EffectiveCleanupScriptFile =
     }
 
     // ============================================================
-    // 17. CONSOLE SUMMARY
+    // 17. BUILD RUN RECORD
     // ============================================================
-    Console.WriteLine();
+    var runRecord = new StressRunRecord
+    {
+        RunId = runId,
+        ProfileName = config.ProfileName,
+        ScenarioName = config.ScenarioName,
+        TagsCsv = string.Join(",", config.Tags.Tags),
+        EnvironmentName = collectedEnvironment.EnvironmentName,
+        MachineName = collectedEnvironment.MachineName,
+        OsVersion = collectedEnvironment.OsVersion,
+        DotNetVersion = collectedEnvironment.DotNetVersion,
+        ServerName = config.Connection.Server,
+        DatabaseName = config.Connection.Database,
+        CommandType = options.CommandType,
+        ExecutionMode = options.ExecutionMode,
+        Workers = options.Workers,
+        IterationsPerWorker = options.IterationsPerWorker,
+        TotalExecutions = summary.TotalExecutions,
+        SuccessCount = summary.SuccessCount,
+        ErrorCount = summary.ErrorCount,
+        RetryCount = retryCount,
+        AvgDurationMs = summary.AvgDurationMs,
+        MinDurationMs = summary.MinDurationMs,
+        P50DurationMs = summary.P50DurationMs,
+        P95DurationMs = summary.P95DurationMs,
+        P99DurationMs = summary.P99DurationMs,
+        MaxDurationMs = summary.MaxDurationMs,
+        ThroughputPerSecond = realThroughput,
+        StartedAtUtc = startedAtUtc,
+        FinishedAtUtc = finishedAtUtc,
+        WallClockMs = (long)wallClock.TotalMilliseconds,
+        SqlProductVersion = sqlEnvironment.ProductVersion,
+        SqlProductLevel = sqlEnvironment.ProductLevel,
+        SqlEdition = sqlEnvironment.Edition,
+        SqlEngineEdition = sqlEnvironment.EngineEdition,
+        SqlInstanceName = sqlEnvironment.InstanceName,
+        SqlCompatibilityLevel = sqlEnvironment.CompatibilityLevel
+    };
+
+    // ============================================================
+    // 18. OPTIONAL COMPARE
+    // ============================================================
+    RunComparisonResult? comparisonResult = null;
+
+    if (config.Compare.Enabled)
+    {
+        Console.WriteLine("=== COMPARE ===");
+
+        var repository = new SqlResultRepository(sqlOutputConnectionString);
+        StressRunRecord? baselineRun = null;
+
+        switch ((config.Compare.Mode ?? "None").Trim().ToLowerInvariant())
+        {
+            case "previousrun":
+                baselineRun = await repository.GetLatestRunByProfileAsync(
+                    config.ProfileName,
+                    runId,
+                    cts.Token);
+                break;
+
+            case "explicitrunid":
+                if (!string.IsNullOrWhiteSpace(config.Compare.BaselineRunId))
+                {
+                    baselineRun = await repository.GetRunByIdAsync(
+                        config.Compare.BaselineRunId,
+                        cts.Token);
+                }
+                break;
+
+            case "none":
+            default:
+                baselineRun = null;
+                break;
+        }
+
+        if (baselineRun is null)
+        {
+            Console.WriteLine("Brak baseline do porównania.");
+            Console.WriteLine();
+        }
+        else
+        {
+            comparisonResult = RunComparisonService.Compare(
+    runRecord,
+    baselineRun,
+    config.Compare.IncludeSampleLevelDiff);
+            Console.WriteLine($"Baseline RunId   : {baselineRun.RunId}");
+            Console.WriteLine($"Delta AvgMs      : {comparisonResult.AvgDurationDeltaMs:F2}");
+            Console.WriteLine($"Delta P95Ms      : {comparisonResult.P95DurationDeltaMs}");
+            Console.WriteLine($"Delta Throughput : {comparisonResult.ThroughputDelta:F2}");
+            Console.WriteLine($"Delta Errors     : {comparisonResult.ErrorCountDelta}");
+            Console.WriteLine($"Regression       : {comparisonResult.IsRegression}");
+            Console.WriteLine();
+        }
+    }
+
+    // ============================================================
+    // 19. CONSOLE SUMMARY
+    // ============================================================
     Console.WriteLine("=== PODSUMOWANIE ===");
     Console.WriteLine($"RunId             : {runId}");
     Console.WriteLine($"TotalExecutions   : {summary.TotalExecutions}");
@@ -343,7 +442,7 @@ scenarioPlan.EffectiveCleanupScriptFile =
     }
 
     // ============================================================
-    // 18. WRITE FILE OUTPUTS
+    // 20. WRITE FILE OUTPUTS
     // ============================================================
     if (config.Output.WriteJson)
     {
@@ -360,49 +459,20 @@ scenarioPlan.EffectiveCleanupScriptFile =
         await ReportWriter.WriteReaderPreviewAsync(config.Output.Directory, samples);
     }
 
-    // ============================================================
-    // 19. BUILD RUN RECORD
-    // ============================================================
-    var runRecord = new StressRunRecord
+    if (comparisonResult is not null)
     {
-        RunId = runId,
-        ProfileName = config.ProfileName,
-        ScenarioName = config.ScenarioName,
-        TagsCsv = string.Join(",", config.Tags.Tags),
-        EnvironmentName = collectedEnvironment.EnvironmentName,
-        MachineName = collectedEnvironment.MachineName,
-        OsVersion = collectedEnvironment.OsVersion,
-        DotNetVersion = collectedEnvironment.DotNetVersion,
-        ServerName = config.Connection.Server,
-        DatabaseName = config.Connection.Database,
-        CommandType = options.CommandType,
-        ExecutionMode = options.ExecutionMode,
-        Workers = options.Workers,
-        IterationsPerWorker = options.IterationsPerWorker,
-        TotalExecutions = summary.TotalExecutions,
-        SuccessCount = summary.SuccessCount,
-        ErrorCount = summary.ErrorCount,
-        RetryCount = retryCount,
-        AvgDurationMs = summary.AvgDurationMs,
-        MinDurationMs = summary.MinDurationMs,
-        P50DurationMs = summary.P50DurationMs,
-        P95DurationMs = summary.P95DurationMs,
-        P99DurationMs = summary.P99DurationMs,
-        MaxDurationMs = summary.MaxDurationMs,
-        ThroughputPerSecond = realThroughput,
-        StartedAtUtc = startedAtUtc,
-        FinishedAtUtc = finishedAtUtc,
-        WallClockMs = (long)wallClock.TotalMilliseconds,
-        SqlProductVersion = sqlEnvironment.ProductVersion,
-        SqlProductLevel = sqlEnvironment.ProductLevel,
-        SqlEdition = sqlEnvironment.Edition,
-        SqlEngineEdition = sqlEnvironment.EngineEdition,
-        SqlInstanceName = sqlEnvironment.InstanceName,
-        SqlCompatibilityLevel = sqlEnvironment.CompatibilityLevel
-    };
+        var comparisonJsonPath = Path.Combine(config.Output.Directory, $"comparison_{runId}.json");
+        var comparisonJson = JsonSerializer.Serialize(comparisonResult, new JsonSerializerOptions
+        {
+            WriteIndented = true
+        });
+
+        await File.WriteAllTextAsync(comparisonJsonPath, comparisonJson, cts.Token);
+        Console.WriteLine($"Comparison JSON zapisany do: {comparisonJsonPath}");
+    }
 
     // ============================================================
-    // 20. WRITE MARKDOWN REPORT
+    // 21. WRITE MARKDOWN REPORT
     // ============================================================
     if (config.MarkdownReport.Enabled)
     {
@@ -415,13 +485,14 @@ scenarioPlan.EffectiveCleanupScriptFile =
             runRecord,
             samples,
             config.MarkdownReport,
+            comparisonResult,
             cts.Token);
 
         Console.WriteLine($"Markdown report zapisany do: {markdownPath}");
     }
 
     // ============================================================
-    // 21. WRITE HTML REPORT
+    // 22. WRITE HTML REPORT
     // ============================================================
     if (config.HtmlReport.Enabled)
     {
@@ -436,13 +507,14 @@ scenarioPlan.EffectiveCleanupScriptFile =
             samples,
             dmvSnapshots,
             config.HtmlReport,
+            comparisonResult,
             cts.Token);
 
         Console.WriteLine($"HTML report zapisany do: {htmlPath}");
     }
 
     // ============================================================
-    // 22. OPTIONAL SQL OUTPUT
+    // 23. OPTIONAL SQL OUTPUT
     // ============================================================
     if (config.SqlOutput.Enabled)
     {
@@ -477,7 +549,24 @@ scenarioPlan.EffectiveCleanupScriptFile =
         var dmvRows = dmvSnapshots.SelectMany(x => x.Rows).ToList();
         await repository.InsertDmvSnapshotsAsync(dmvRows, cts.Token);
 
-        Console.WriteLine("Wyniki i snapshoty DMV zapisane również do SQL Server.");
+        if (comparisonResult is not null)
+        {
+            var comparisonRecord = new StressRunComparisonRecord
+            {
+                RunId = runId,
+                BaselineRunId = comparisonResult.BaselineRunId,
+                AvgDurationDeltaMs = comparisonResult.AvgDurationDeltaMs,
+                P95DurationDeltaMs = comparisonResult.P95DurationDeltaMs,
+                ThroughputDelta = comparisonResult.ThroughputDelta,
+                ErrorCountDelta = comparisonResult.ErrorCountDelta,
+                IsRegression = comparisonResult.IsRegression,
+                ComparedAtUtc = DateTime.UtcNow
+            };
+
+            await repository.InsertComparisonAsync(comparisonRecord, cts.Token);
+        }
+
+        Console.WriteLine("Wyniki, snapshoty DMV i comparison zapisane również do SQL Server.");
     }
 
     Console.WriteLine($"Raport zapisany do: {config.Output.Directory}");
@@ -494,10 +583,6 @@ catch (Exception ex)
     Console.WriteLine(ex.Message);
     return 99;
 }
-
-// ============================================================================
-// HELPERS
-// ============================================================================
 
 static void ResolvePasswordFromEnvironment(SqlAuthOptions connection)
 {
