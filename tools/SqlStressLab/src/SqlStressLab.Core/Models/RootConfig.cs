@@ -16,4 +16,7 @@ public sealed class RootConfig
     public MarkdownReportOptions MarkdownReport { get; set; } = new();
     public TagOptions Tags { get; set; } = new();
     public HtmlReportOptions HtmlReport { get; set; } = new();
+    public CompareOptions Compare { get; set; } = new();
+public BundleOptions Bundle { get; set; } = new();
+public ConsoleReportOptions ConsoleReport { get; set; } = new();
 }

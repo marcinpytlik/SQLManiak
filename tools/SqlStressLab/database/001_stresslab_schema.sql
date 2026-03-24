@@ -116,3 +116,27 @@ GO
 CREATE INDEX IX_StressRunDmvSnapshot_RunId
 ON dbo.StressRunDmvSnapshot(RunId);
 GO
+CREATE TABLE dbo.StressRunExtendedSnapshot
+(
+    StressRunExtendedSnapshotId bigint IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    RunId                nvarchar(50)  NOT NULL,
+    SnapshotPhase        nvarchar(50)  NOT NULL,
+    SnapshotName         nvarchar(100) NOT NULL,
+    CollectedAtUtc       datetime2(3)  NOT NULL,
+    RowJson              nvarchar(max) NOT NULL
+);
+GO
+
+CREATE INDEX IX_StressRunExtendedSnapshot_RunId
+ON dbo.StressRunExtendedSnapshot(RunId);
+GO
+
+CREATE TABLE dbo.StressRunComparison
+(
+    StressRunComparisonId bigint IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    CurrentRunId          nvarchar(50) NOT NULL,
+    BaselineRunId         nvarchar(50) NOT NULL,
+    ComparedAtUtc         datetime2(3) NOT NULL,
+    ComparisonJson        nvarchar(max) NOT NULL
+);
+GO

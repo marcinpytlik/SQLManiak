@@ -821,4 +821,12 @@ Na tym etapie projekt ma już:
 - SQL metadata
 - raporty JSON/CSV/Markdown/HTML
 - zapis do SQL Server
-
+dotnet publish .\src\SqlStressLab.Cli\SqlStressLab.Cli.csproj `
+  -c Release `
+  -r win-x64 `
+  --self-contained true `
+  -o .\publish\SqlStressLab-win-x64
+  New-Item -ItemType Directory -Force .\publish\SqlStressLab-win-x64\outputs
+New-Item -ItemType Directory -Force .\publish\SqlStressLab-win-x64\logs
+New-Item -ItemType Directory -Force .\publish\SqlStressLab-win-x64\sessions
+New-Item -ItemType Directory -Force .\publish\SqlStressLab-win-x64\exports
