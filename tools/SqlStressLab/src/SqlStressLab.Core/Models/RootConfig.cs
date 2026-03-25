@@ -24,6 +24,7 @@ public sealed class RootConfig
     public RunbookConfig Runbook { get; set; } = new();
     public BundleOptions Bundle { get; set; } = new();
     public PublishBundleOptions PublishBundle { get; set; } = new();
-
+public List<EnvironmentProfile> Environments { get; set; } = new();
+public List<ScenarioPackDefinition> ScenarioPacks { get; set; } = new();
     public PerfCountersOptions PerfCounters { get; set; } = new();
 }

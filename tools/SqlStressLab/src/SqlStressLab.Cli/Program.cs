@@ -32,10 +32,15 @@ try
         return await ExecuteValidateAsync(cliArgs, cts.Token);
     }
 
-    var dispatcher = new CommandDispatcher(
-        new RunCommandService(),
-        new CompareCommandService(),
-        new TrendCommandService());
+   var dispatcher = new CommandDispatcher(
+    new RunCommandService(),
+    new CompareCommandService(),
+    new TrendCommandService(),
+    new ListRunsCommandService(),
+    new DiagnosticsCommandService(),
+    new SelfCheckCommandService(),
+    new ListEnvironmentsCommandService(),
+    new ListScenarioPacksCommandService());
 
     return await dispatcher.DispatchAsync(cliArgs, cts.Token);
 }
