@@ -1,36 +1,96 @@
 {
+  "profileName": "demo-proc-sqloutput-separate",
+  "scenarioName": "General",
   "connection": {
-    "server": "localhost",
-    "database": "WideWorldImporters",
+    "server": "syriusz",
+    "database": "StressLabDb",
     "authentication": "SqlPassword",
-    "userName": "stress_user",
+    "userName": "sa",
     "password": "",
     "encrypt": true,
     "trustServerCertificate": true,
     "applicationName": "SqlStressLab"
   },
   "execution": {
-    "commandText": "dbo.usp_TestWorkload",
+    "commandText": "dbo.usp_DemoProc",
     "commandType": "StoredProcedure",
     "executionMode": "NonQuery",
-    "workers": 10,
-    "iterationsPerWorker": 100,
-    "commandTimeoutSeconds": 60,
+    "workers": 4,
+    "iterationsPerWorker": 25,
+    "commandTimeoutSeconds": 30,
     "useTransaction": false,
-    "warmupEnabled": true,
-    "warmupIterationsPerWorker": 3,
-    "sessionSettingsFile": "profiles/session-settings.sql",
+    "warmupEnabled": false,
+    "warmupIterationsPerWorker": 0,
+    "sessionSettingsFile": "session.sql",
     "delayBetweenIterationsMs": 0
   },
   "parameters": [
     {
-      "name": "@CustomerID",
+      "name": "@Id",
       "type": "INT",
       "mode": "RandomIntRange",
-      "min": 1,
-      "max": 1000
+      "min": "1",
+      "max": "100"
     }
   ],
+  "retry": {
+    "enabled": true,
+    "maxRetries": 2,
+    "delayMs": 300,
+    "retryableSqlErrorNumbers": [1205, -2]
+  },
+  "sqlOutput": {
+    "enabled": true,
+    "connectionMode": "Separate",
+    "connection": {
+      "server": "syriusz",
+      "database": "StressLabDb",
+      "authentication": "SqlPassword",
+      "userName": "sa",
+      "password": "",
+      "encrypt": true,
+      "trustServerCertificate": true,
+      "applicationName": "SqlStressLab.Repository"
+    }
+  },
+  "lifecycle": {
+    "setupEnabled": false,
+    "cleanupEnabled": false,
+    "setupScriptFile": "",
+    "cleanupScriptFile": "",
+    "stopRunWhenSetupFails": true,
+    "continueWhenCleanupFails": true
+  },
+  "environment": {
+    "environmentName": "Lab"
+  },
+  "compare": {
+    "enabled": true,
+    "mode": "PreviousRun",
+    "baselineRunId": "",
+    "includeSampleLevelDiff": false
+  },
+  "trend": {
+    "enabled": true,
+    "top": 10
+  },
+  "markdownReport": {
+    "enabled": true,
+    "directory": "outputs",
+    "includeTopSlowestSamples": true,
+    "topSlowestSamplesCount": 20,
+    "includeErrorSummary": true
+  },
+  "htmlReport": {
+    "enabled": true,
+    "directory": "outputs",
+    "includeDmvSection": true,
+    "includeSlowSamples": true,
+    "topSlowSamplesCount": 20
+  },
+  "tags": {
+    "tags": ["demo", "proc", "sqloutput", "separate", "sprint6"]
+  },
   "output": {
     "writeJson": true,
     "writeCsv": true,

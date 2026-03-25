@@ -1,6 +1,6 @@
 {
-  "profileName": "demo-proc-sqloutput-separate",
-  "scenarioName": "General",
+  "profileName": "demo-deadlock-sqloutput-separate",
+  "scenarioName": "DeadlockPair",
   "connection": {
     "server": "syriusz",
     "database": "StressLabDb",
@@ -12,27 +12,19 @@
     "applicationName": "SqlStressLab"
   },
   "execution": {
-    "commandText": "dbo.usp_DemoProc",
+    "commandText": "dbo.usp_DeadlockDemo_A",
     "commandType": "StoredProcedure",
     "executionMode": "NonQuery",
     "workers": 4,
-    "iterationsPerWorker": 25,
-    "commandTimeoutSeconds": 30,
+    "iterationsPerWorker": 20,
+    "commandTimeoutSeconds": 15,
     "useTransaction": false,
     "warmupEnabled": false,
     "warmupIterationsPerWorker": 0,
     "sessionSettingsFile": "session.sql",
     "delayBetweenIterationsMs": 0
   },
-  "parameters": [
-    {
-      "name": "@Id",
-      "type": "INT",
-      "mode": "RandomIntRange",
-      "min": "1",
-      "max": "100"
-    }
-  ],
+  "parameters": [],
   "retry": {
     "enabled": true,
     "maxRetries": 2,
@@ -89,7 +81,7 @@
     "topSlowSamplesCount": 20
   },
   "tags": {
-    "tags": ["demo", "proc", "sqloutput", "separate", "sprint6"]
+    "tags": ["demo", "deadlock", "sqloutput", "separate", "sprint6"]
   },
   "output": {
     "writeJson": true,

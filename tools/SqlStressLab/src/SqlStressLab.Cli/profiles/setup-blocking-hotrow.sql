@@ -1,6 +1,6 @@
 {
-  "profileName": "demo-proc-sqloutput-separate",
-  "scenarioName": "General",
+  "profileName": "demo-blocking-sqloutput-separate",
+  "scenarioName": "BlockingHotRow",
   "connection": {
     "server": "syriusz",
     "database": "StressLabDb",
@@ -12,12 +12,12 @@
     "applicationName": "SqlStressLab"
   },
   "execution": {
-    "commandText": "dbo.usp_DemoProc",
+    "commandText": "dbo.usp_BlockingDemo",
     "commandType": "StoredProcedure",
     "executionMode": "NonQuery",
-    "workers": 4,
-    "iterationsPerWorker": 25,
-    "commandTimeoutSeconds": 30,
+    "workers": 8,
+    "iterationsPerWorker": 30,
+    "commandTimeoutSeconds": 15,
     "useTransaction": false,
     "warmupEnabled": false,
     "warmupIterationsPerWorker": 0,
@@ -28,9 +28,8 @@
     {
       "name": "@Id",
       "type": "INT",
-      "mode": "RandomIntRange",
-      "min": "1",
-      "max": "100"
+      "mode": "Fixed",
+      "value": "1"
     }
   ],
   "retry": {
@@ -89,7 +88,7 @@
     "topSlowSamplesCount": 20
   },
   "tags": {
-    "tags": ["demo", "proc", "sqloutput", "separate", "sprint6"]
+    "tags": ["demo", "blocking", "sqloutput", "separate", "sprint6"]
   },
   "output": {
     "writeJson": true,

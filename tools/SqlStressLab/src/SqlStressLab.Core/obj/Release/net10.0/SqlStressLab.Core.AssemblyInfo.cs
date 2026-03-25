@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SqlStressLab.Core")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+24352e5e6a0157d10097a5a4ffe79bbff6bd1d54")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fddfb0c94e87e130c72009ec33447109a3f33a56")]
 [assembly: System.Reflection.AssemblyProductAttribute("SqlStressLab.Core")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SqlStressLab.Core")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

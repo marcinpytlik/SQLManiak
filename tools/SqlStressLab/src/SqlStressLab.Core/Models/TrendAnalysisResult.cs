@@ -11,6 +11,6 @@ public sealed class TrendAnalysisResult
     public string P95DurationTrendDirection { get; set; } = "";
     public string ThroughputTrendDirection { get; set; } = "";
     public string ErrorTrendDirection { get; set; } = "";
-
+public string SummaryText { get; set; } = "";
     public string SummaryVerdict { get; set; } = "";
 }
