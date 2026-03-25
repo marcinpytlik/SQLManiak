@@ -13,6 +13,9 @@ public sealed class CommandDispatcher
     private readonly SelfCheckCommandService _selfCheckCommandService;
     private readonly ListEnvironmentsCommandService _listEnvironmentsCommandService;
     private readonly ListScenarioPacksCommandService _listScenarioPacksCommandService;
+    private readonly RenderCommandService _renderCommandService;
+    private readonly RunTemplateCommandService _runTemplateCommandService;
+    private readonly RunMatrixCommandService _runMatrixCommandService;
 
     public CommandDispatcher(
         RunCommandService runCommandService,
@@ -22,7 +25,10 @@ public sealed class CommandDispatcher
         DiagnosticsCommandService diagnosticsCommandService,
         SelfCheckCommandService selfCheckCommandService,
         ListEnvironmentsCommandService listEnvironmentsCommandService,
-        ListScenarioPacksCommandService listScenarioPacksCommandService)
+        ListScenarioPacksCommandService listScenarioPacksCommandService,
+        RenderCommandService renderCommandService,
+        RunTemplateCommandService runTemplateCommandService,
+        RunMatrixCommandService runMatrixCommandService)
     {
         _runCommandService = runCommandService ?? throw new ArgumentNullException(nameof(runCommandService));
         _compareCommandService = compareCommandService ?? throw new ArgumentNullException(nameof(compareCommandService));
@@ -32,6 +38,9 @@ public sealed class CommandDispatcher
         _selfCheckCommandService = selfCheckCommandService ?? throw new ArgumentNullException(nameof(selfCheckCommandService));
         _listEnvironmentsCommandService = listEnvironmentsCommandService ?? throw new ArgumentNullException(nameof(listEnvironmentsCommandService));
         _listScenarioPacksCommandService = listScenarioPacksCommandService ?? throw new ArgumentNullException(nameof(listScenarioPacksCommandService));
+        _renderCommandService = renderCommandService ?? throw new ArgumentNullException(nameof(renderCommandService));
+        _runTemplateCommandService = runTemplateCommandService ?? throw new ArgumentNullException(nameof(runTemplateCommandService));
+        _runMatrixCommandService = runMatrixCommandService ?? throw new ArgumentNullException(nameof(runMatrixCommandService));
     }
 
     public async Task<int> DispatchAsync(
@@ -54,13 +63,14 @@ public sealed class CommandDispatcher
             CommandNames.ListEnvironments => await _listEnvironmentsCommandService.ExecuteAsync(args, cancellationToken),
             CommandNames.ListScenarioPacks => await _listScenarioPacksCommandService.ExecuteAsync(args, cancellationToken),
 
+            CommandNames.Render => await _renderCommandService.ExecuteAsync(args, cancellationToken),
+            CommandNames.RunTemplate => await _runTemplateCommandService.ExecuteAsync(args, cancellationToken),
+            CommandNames.RunMatrix => await _runMatrixCommandService.ExecuteAsync(args, cancellationToken),
+
             CommandNames.Batch => NotImplemented(CommandNames.Batch),
             CommandNames.Runbook => NotImplemented(CommandNames.Runbook),
             CommandNames.Bundle => NotImplemented(CommandNames.Bundle),
             CommandNames.PublishBundle => NotImplemented(CommandNames.PublishBundle),
-            CommandNames.RunTemplate => NotImplemented(CommandNames.RunTemplate),
-            CommandNames.RunMatrix => NotImplemented(CommandNames.RunMatrix),
-            CommandNames.Render => NotImplemented(CommandNames.Render),
 
             _ => throw new InvalidOperationException($"Nieznana komenda: {args.Command}")
         };

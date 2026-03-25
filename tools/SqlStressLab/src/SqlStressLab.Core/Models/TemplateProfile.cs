@@ -2,6 +2,7 @@ namespace SqlStressLab.Core.Models;
 
 public sealed class TemplateProfile
 {
-    public string TemplateName { get; set; } = "";
-    public string TemplateContentJson { get; set; } = "";
+    public string Name { get; set; } = "";
+    public string BaseProfilePath { get; set; } = "";
+    public Dictionary<string, string> Variables { get; set; } = new();
 }

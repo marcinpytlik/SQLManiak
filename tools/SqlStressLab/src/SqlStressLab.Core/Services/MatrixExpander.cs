@@ -1,6 +1,6 @@
 using SqlStressLab.Core.Models;
 
-namespace SqlStressLab.Core.Templates;
+namespace SqlStressLab.Core.Services;
 
 public sealed class MatrixExpander
 {
@@ -10,40 +10,39 @@ public sealed class MatrixExpander
 
         var result = new List<Dictionary<string, string>>();
 
-        if (matrix.Axes is null || matrix.Axes.Count == 0)
+        if (matrix.Dimensions is null || matrix.Dimensions.Count == 0)
         {
             result.Add(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase));
             return result;
         }
 
+        var dimensions = matrix.Dimensions.ToList();
+
         void Recurse(int index, Dictionary<string, string> current)
         {
-            if (index >= matrix.Axes.Count)
+            if (index >= dimensions.Count)
             {
                 result.Add(new Dictionary<string, string>(current, StringComparer.OrdinalIgnoreCase));
                 return;
             }
 
-            var axis = matrix.Axes[index];
+            var (key, values) = (dimensions[index].Key, dimensions[index].Value);
 
-            if (string.IsNullOrWhiteSpace(axis.Name))
-                throw new InvalidOperationException("Matrix axis must have a name.");
-
-            if (axis.Values is null || axis.Values.Count == 0)
+            if (values is null || values.Count == 0)
             {
-                current[axis.Name] = string.Empty;
+                current[key] = string.Empty;
                 Recurse(index + 1, current);
-                current.Remove(axis.Name);
+                current.Remove(key);
                 return;
             }
 
-            foreach (var value in axis.Values)
+            foreach (var value in values)
             {
-                current[axis.Name] = value;
+                current[key] = value;
                 Recurse(index + 1, current);
             }
 
-            current.Remove(axis.Name);
+            current.Remove(key);
         }
 
         Recurse(0, new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase));

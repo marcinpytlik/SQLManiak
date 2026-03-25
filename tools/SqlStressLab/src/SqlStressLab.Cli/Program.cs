@@ -32,7 +32,7 @@ try
         return await ExecuteValidateAsync(cliArgs, cts.Token);
     }
 
-   var dispatcher = new CommandDispatcher(
+  var dispatcher = new CommandDispatcher(
     new RunCommandService(),
     new CompareCommandService(),
     new TrendCommandService(),
@@ -40,7 +40,10 @@ try
     new DiagnosticsCommandService(),
     new SelfCheckCommandService(),
     new ListEnvironmentsCommandService(),
-    new ListScenarioPacksCommandService());
+    new ListScenarioPacksCommandService(),
+    new RenderCommandService(),
+    new RunTemplateCommandService(),
+    new RunMatrixCommandService());
 
     return await dispatcher.DispatchAsync(cliArgs, cts.Token);
 }

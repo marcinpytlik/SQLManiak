@@ -27,4 +27,6 @@ public sealed class RootConfig
 public List<EnvironmentProfile> Environments { get; set; } = new();
 public List<ScenarioPackDefinition> ScenarioPacks { get; set; } = new();
     public PerfCountersOptions PerfCounters { get; set; } = new();
+    public List<TemplateProfile> Templates { get; set; } = new();
+public List<MatrixDefinition> Matrices { get; set; } = new();
 }
