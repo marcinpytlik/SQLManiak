@@ -62,6 +62,35 @@ public sealed class RunCommandService
             ResolvePath(config.HtmlReport.Directory, profileDirectory)
             ?? config.Output.Directory;
 
+        // Sprint 8: override output dir z CLI
+        if (!string.IsNullOrWhiteSpace(args.OutputDirectoryOverride))
+        {
+            var overrideDir = ResolvePath(args.OutputDirectoryOverride, Directory.GetCurrentDirectory())
+                              ?? args.OutputDirectoryOverride;
+
+            config.Output.Directory = overrideDir;
+            config.MarkdownReport.Directory = overrideDir;
+            config.HtmlReport.Directory = overrideDir;
+        }
+
+        // Sprint 8: wyłączenie SQL output z CLI
+        if (args.DisableSqlOutput)
+        {
+            config.SqlOutput.Enabled = false;
+            config.Compare.Enabled = false;
+            config.Trend.Enabled = false;
+        }
+
+        // Sprint 8: wyłączenie raportów plikowych z CLI
+        if (args.DisableReports)
+        {
+            config.Output.WriteJson = false;
+            config.Output.WriteCsv = false;
+            config.Output.WriteReaderPreview = false;
+            config.MarkdownReport.Enabled = false;
+            config.HtmlReport.Enabled = false;
+        }
+
         var options = new StressOptions
         {
             Connection = config.Connection,
@@ -102,7 +131,7 @@ public sealed class RunCommandService
         var sqlEnvironment = await sqlEnvironmentCollector.CollectAsync(cancellationToken);
 
         Console.WriteLine("=== SQL STRESS LAB ===");
-        Console.WriteLine($"Command         : run");
+        Console.WriteLine("Command         : run");
         Console.WriteLine($"Profile         : {fullProfilePath}");
         Console.WriteLine($"ProfileName     : {config.ProfileName}");
         Console.WriteLine($"ScenarioName    : {config.ScenarioName}");

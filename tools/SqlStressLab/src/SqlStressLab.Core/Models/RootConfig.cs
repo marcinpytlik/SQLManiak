@@ -22,4 +22,7 @@ public BundleOptions Bundle { get; set; } = new();
 public ConsoleReportOptions ConsoleReport { get; set; } = new();
 public PerfCounterOptions PerfCounters { get; set; } = new();
 public XeCaptureOptions XeCapture { get; set; } = new();
+public DryRunOptions DryRun { get; set; } = new();
+public PublishBundleOptions PublishBundle { get; set; } = new();
+public SqlStressLab.Core.Hooks.HookOptions Hooks { get; set; } = new();
 }

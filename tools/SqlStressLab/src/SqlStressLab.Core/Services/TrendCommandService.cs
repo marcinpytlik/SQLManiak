@@ -13,7 +13,7 @@ public sealed class TrendCommandService
 
         if (string.IsNullOrWhiteSpace(args.ProfilePath))
             throw new InvalidOperationException(
-                "Dla komendy 'trend' w tej wersji wymagany jest profil JSON, aby pobrać konfigurację repozytorium wyników.");
+                "Dla komendy 'trend' wymagany jest profil JSON, aby pobrać konfigurację repozytorium wyników.");
 
         var fullProfilePath = Path.GetFullPath(args.ProfilePath);
 
@@ -48,6 +48,25 @@ public sealed class TrendCommandService
 
         config.HtmlReport.Directory =
             ResolvePath(config.HtmlReport.Directory, profileDirectory) ?? config.Output.Directory;
+
+        if (!string.IsNullOrWhiteSpace(args.OutputDirectoryOverride))
+        {
+            var overrideDir = ResolvePath(args.OutputDirectoryOverride, Directory.GetCurrentDirectory())
+                              ?? args.OutputDirectoryOverride;
+
+            config.Output.Directory = overrideDir;
+            config.MarkdownReport.Directory = overrideDir;
+            config.HtmlReport.Directory = overrideDir;
+        }
+
+        if (args.DisableReports)
+        {
+            config.Output.WriteJson = false;
+            config.Output.WriteCsv = false;
+            config.Output.WriteReaderPreview = false;
+            config.MarkdownReport.Enabled = false;
+            config.HtmlReport.Enabled = false;
+        }
 
         if (!config.SqlOutput.Enabled)
             throw new InvalidOperationException("Komenda 'trend' wymaga 'sqlOutput.enabled = true'.");
@@ -87,17 +106,20 @@ public sealed class TrendCommandService
         Console.WriteLine($"SummaryVerdict   : {trendResult.SummaryVerdict}");
         Console.WriteLine();
 
-        var trendJsonPath = Path.Combine(
-            config.Output.Directory,
-            $"trend_only_{profileName}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.json");
-
-        var trendJson = JsonSerializer.Serialize(trendResult, new JsonSerializerOptions
+        if (config.Output.WriteJson)
         {
-            WriteIndented = true
-        });
+            var trendJsonPath = Path.Combine(
+                config.Output.Directory,
+                $"trend_only_{profileName}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.json");
 
-        await File.WriteAllTextAsync(trendJsonPath, trendJson, cancellationToken);
-        Console.WriteLine($"Trend JSON zapisany do: {trendJsonPath}");
+            var trendJson = JsonSerializer.Serialize(trendResult, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+
+            await File.WriteAllTextAsync(trendJsonPath, trendJson, cancellationToken);
+            Console.WriteLine($"Trend JSON zapisany do: {trendJsonPath}");
+        }
 
         if (config.MarkdownReport.Enabled)
         {

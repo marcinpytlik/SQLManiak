@@ -14,4 +14,9 @@ public sealed class CliArguments
     public int Top { get; set; } = 10;
 
     public bool IncludeSampleLevelDiff { get; set; } = false;
+
+    public bool DisableSqlOutput { get; set; } = false;
+    public bool DisableReports { get; set; } = false;
+
+    public string? OutputDirectoryOverride { get; set; }
 }

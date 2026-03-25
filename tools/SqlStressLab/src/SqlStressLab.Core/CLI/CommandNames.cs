@@ -14,4 +14,9 @@ public const string RunMatrix = "run-matrix";
 public const string Trend = "trend";
 public const string ListEnvironments = "list-environments";
 public const string ListScenarioPacks = "list-scenario-packs";
+public const string Validate = "validate";
+public const string Render = "render";
+public const string SelfCheck = "self-check";
+public const string Diagnostics = "diagnostics";
+public const string PublishBundle = "publish-bundle";
 }
