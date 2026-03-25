@@ -7,47 +7,44 @@ public sealed class TrendAnalysisService
     public TrendAnalysisResult Analyze(
         string profileName,
         List<StressRunRecord> runs,
-        int top)
+        int requestedTop)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(profileName);
         ArgumentNullException.ThrowIfNull(runs);
 
-        var orderedRuns = runs
+        var ordered = runs
             .OrderBy(x => x.StartedAtUtc)
-            .TakeLast(Math.Max(1, top))
+            .TakeLast(requestedTop)
             .ToList();
 
-        var points = orderedRuns
-            .Select(x => new TrendPoint
-            {
-                RunId = x.RunId,
-                StartedAtUtc = x.StartedAtUtc,
-                AvgDurationMs = x.AvgDurationMs,
-                P95DurationMs = x.P95DurationMs,
-                ThroughputPerSecond = x.ThroughputPerSecond,
-                ErrorCount = x.ErrorCount
-            })
-            .ToList();
+        var points = ordered.Select(x => new TrendPoint
+        {
+            RunId = x.RunId,
+            StartedAtUtc = x.StartedAtUtc,
+            AvgDurationMs = x.AvgDurationMs,
+            P95DurationMs = x.P95DurationMs,
+            ThroughputPerSecond = x.ThroughputPerSecond,
+            ErrorCount = x.ErrorCount,
+            RetryCount = x.RetryCount
+        }).ToList();
 
-        var result = new TrendAnalysisResult
+        return new TrendAnalysisResult
         {
             ProfileName = profileName,
-            RequestedTop = top,
+            RequestedTop = requestedTop,
             Points = points,
-            AvgDurationTrendDirection = DetectTrend(points.Select(x => x.AvgDurationMs).ToList(), lowerIsBetter: true),
-            P95DurationTrendDirection = DetectTrend(points.Select(x => (double)x.P95DurationMs).ToList(), lowerIsBetter: true),
-            ThroughputTrendDirection = DetectTrend(points.Select(x => x.ThroughputPerSecond).ToList(), lowerIsBetter: false),
-            ErrorTrendDirection = DetectTrend(points.Select(x => (double)x.ErrorCount).ToList(), lowerIsBetter: true)
+            AvgDurationTrendDirection = CalculateDirection(points.Select(x => x.AvgDurationMs).ToList(), lowerIsBetter: true),
+            P95DurationTrendDirection = CalculateDirection(points.Select(x => (double)x.P95DurationMs).ToList(), lowerIsBetter: true),
+            ThroughputTrendDirection = CalculateDirection(points.Select(x => x.ThroughputPerSecond).ToList(), lowerIsBetter: false),
+            ErrorTrendDirection = CalculateDirection(points.Select(x => (double)x.ErrorCount).ToList(), lowerIsBetter: true),
+            SummaryVerdict = BuildVerdict(points)
         };
-
-        result.SummaryVerdict = BuildSummaryVerdict(result);
-
-        return result;
     }
 
-    private static string DetectTrend(List<double> values, bool lowerIsBetter)
+    private static string CalculateDirection(List<double> values, bool lowerIsBetter)
     {
         if (values.Count < 2)
-            return "InsufficientData";
+            return "Stable";
 
         var first = values.First();
         var last = values.Last();
@@ -55,39 +52,34 @@ public sealed class TrendAnalysisService
         if (Math.Abs(last - first) < 0.0001)
             return "Stable";
 
-        if (lowerIsBetter)
-        {
-            return last < first ? "Improving" : "Worsening";
-        }
-
-        return last > first ? "Improving" : "Worsening";
+        var improved = lowerIsBetter ? last < first : last > first;
+        return improved ? "Improving" : "Regressing";
     }
 
-    private static string BuildSummaryVerdict(TrendAnalysisResult result)
+    private static string BuildVerdict(List<TrendPoint> points)
     {
-        var improving = 0;
-        var worsening = 0;
+        if (points.Count < 2)
+            return "Neutral";
 
-        Count(result.AvgDurationTrendDirection, ref improving, ref worsening);
-        Count(result.P95DurationTrendDirection, ref improving, ref worsening);
-        Count(result.ThroughputTrendDirection, ref improving, ref worsening);
-        Count(result.ErrorTrendDirection, ref improving, ref worsening);
+        var first = points.First();
+        var last = points.Last();
 
-        if (worsening > improving)
-            return "Worsening";
+        var improved =
+            last.AvgDurationMs <= first.AvgDurationMs &&
+            last.P95DurationMs <= first.P95DurationMs &&
+            last.ErrorCount <= first.ErrorCount;
 
-        if (improving > worsening)
+        var regressed =
+            last.AvgDurationMs > first.AvgDurationMs ||
+            last.P95DurationMs > first.P95DurationMs ||
+            last.ErrorCount > first.ErrorCount;
+
+        if (improved)
             return "Improving";
 
-        return "MixedOrStable";
-    }
+        if (regressed)
+            return "Regressing";
 
-    private static void Count(string direction, ref int improving, ref int worsening)
-    {
-        if (string.Equals(direction, "Improving", StringComparison.OrdinalIgnoreCase))
-            improving++;
-
-        if (string.Equals(direction, "Worsening", StringComparison.OrdinalIgnoreCase))
-            worsening++;
+        return "Neutral";
     }
 }

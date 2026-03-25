@@ -12,13 +12,7 @@ Console.CancelKeyPress += (_, e) =>
 
 try
 {
-    if (args.Length == 0)
-    {
-        PrintHelp();
-        return 0;
-    }
-
-    if (IsHelpCommand(args))
+    if (args.Length == 0 || IsHelpCommand(args))
     {
         PrintHelp();
         return 0;
@@ -31,6 +25,12 @@ try
     }
 
     var cliArgs = ParseArguments(args);
+    ValidateCliArguments(cliArgs);
+
+    if (string.Equals(cliArgs.Command, CommandNames.Validate, StringComparison.OrdinalIgnoreCase))
+    {
+        return await ExecuteValidateAsync(cliArgs, cts.Token);
+    }
 
     var dispatcher = new CommandDispatcher(
         new RunCommandService(),
@@ -70,13 +70,11 @@ static CliArguments ParseArguments(string[] args)
     if (args is null || args.Length == 0)
         throw new ArgumentException("Nie podano argumentów.");
 
-    // tryb zgodności wstecznej:
-    //   SqlStressLab.Cli.exe .\profiles\demo-select.json
     if (args.Length == 1 && LooksLikeProfilePath(args[0]))
     {
         return new CliArguments
         {
-            Command = "run",
+            Command = CommandNames.Run,
             ProfilePath = args[0]
         };
     }
@@ -85,9 +83,25 @@ static CliArguments ParseArguments(string[] args)
 
     return command switch
     {
-        "run" => ParseRunArguments(args),
-        "compare" => ParseCompareArguments(args),
-        "trend" => ParseTrendArguments(args),
+        CommandNames.Run => ParseRunArguments(args),
+        CommandNames.Compare => ParseCompareArguments(args),
+        CommandNames.Trend => ParseTrendArguments(args),
+        CommandNames.Validate => ParseValidateArguments(args),
+
+        CommandNames.Batch => ParseProfileBasedCommand(args, CommandNames.Batch),
+        CommandNames.Runbook => ParseProfileBasedCommand(args, CommandNames.Runbook),
+        CommandNames.Bundle => ParseProfileBasedCommand(args, CommandNames.Bundle),
+        CommandNames.PublishBundle => ParseProfileBasedCommand(args, CommandNames.PublishBundle),
+        CommandNames.RunTemplate => ParseProfileBasedCommand(args, CommandNames.RunTemplate),
+        CommandNames.RunMatrix => ParseProfileBasedCommand(args, CommandNames.RunMatrix),
+        CommandNames.Render => ParseProfileBasedCommand(args, CommandNames.Render),
+        CommandNames.Diagnostics => ParseProfileBasedCommand(args, CommandNames.Diagnostics),
+        CommandNames.SelfCheck => ParseProfileBasedCommand(args, CommandNames.SelfCheck),
+
+        CommandNames.ListRuns => ParseListRunsArguments(args),
+        CommandNames.ListEnvironments => new CliArguments { Command = CommandNames.ListEnvironments },
+        CommandNames.ListScenarioPacks => new CliArguments { Command = CommandNames.ListScenarioPacks },
+
         "help" => new CliArguments { Command = "help" },
         "version" => new CliArguments { Command = "version" },
         _ => throw new ArgumentException($"Nieznana komenda: {args[0]}")
@@ -96,10 +110,7 @@ static CliArguments ParseArguments(string[] args)
 
 static CliArguments ParseRunArguments(string[] args)
 {
-    var result = new CliArguments
-    {
-        Command = "run"
-    };
+    var result = new CliArguments { Command = CommandNames.Run };
 
     if (args.Length == 2 && !args[1].StartsWith('-') && LooksLikeProfilePath(args[1]))
     {
@@ -117,25 +128,16 @@ static CliArguments ParseRunArguments(string[] args)
 
 static CliArguments ParseCompareArguments(string[] args)
 {
-    var result = new CliArguments
-    {
-        Command = "compare"
-    };
+    var result = new CliArguments { Command = CommandNames.Compare };
 
-    // wariant 1:
-    //   compare .\profiles\demo.json
     if (args.Length == 2 && !args[1].StartsWith('-') && LooksLikeProfilePath(args[1]))
     {
         result.ProfilePath = args[1];
         return result;
     }
 
-    // wariant 2:
-    //   compare --profile .\profiles\demo.json
     if (HasAnyOption(args, "--profile", "-p"))
-    {
         result.ProfilePath = RequireOption(args, "--profile", "-p");
-    }
 
     result.CurrentRunId = GetOption(args, "--current");
     result.BaselineRunId = GetOption(args, "--baseline");
@@ -144,13 +146,6 @@ static CliArguments ParseCompareArguments(string[] args)
     result.OutputDirectoryOverride = GetOption(args, "--output-dir");
     result.DisableReports = HasFlag(args, "--no-reports");
 
-    if (string.IsNullOrWhiteSpace(result.ProfilePath) &&
-        (string.IsNullOrWhiteSpace(result.CurrentRunId) || string.IsNullOrWhiteSpace(result.BaselineRunId)))
-    {
-        throw new ArgumentException(
-            "Komenda 'compare' wymaga albo ścieżki do profilu, albo pary --current i --baseline.");
-    }
-
     return result;
 }
 
@@ -158,24 +153,18 @@ static CliArguments ParseTrendArguments(string[] args)
 {
     var result = new CliArguments
     {
-        Command = "trend",
+        Command = CommandNames.Trend,
         Top = 10
     };
 
-    // wariant 1:
-    //   trend .\profiles\demo.json
     if (args.Length == 2 && !args[1].StartsWith('-') && LooksLikeProfilePath(args[1]))
     {
         result.ProfilePath = args[1];
         return result;
     }
 
-    // wariant 2:
-    //   trend --profile .\profiles\demo.json --top 15
     if (HasAnyOption(args, "--profile", "-p"))
-    {
         result.ProfilePath = RequireOption(args, "--profile", "-p");
-    }
 
     result.ProfileName = GetOption(args, "--profile-name");
     result.OutputDirectoryOverride = GetOption(args, "--output-dir");
@@ -190,22 +179,173 @@ static CliArguments ParseTrendArguments(string[] args)
         result.Top = top;
     }
 
-    if (string.IsNullOrWhiteSpace(result.ProfilePath) && string.IsNullOrWhiteSpace(result.ProfileName))
+    return result;
+}
+
+static CliArguments ParseValidateArguments(string[] args)
+{
+    var result = new CliArguments { Command = CommandNames.Validate };
+
+    if (args.Length == 2 && !args[1].StartsWith('-') && LooksLikeProfilePath(args[1]))
     {
-        throw new ArgumentException(
-            "Komenda 'trend' wymaga albo ścieżki do profilu, albo --profile-name.");
+        result.ProfilePath = args[1];
+        return result;
     }
 
+    result.ProfilePath = RequireOption(args, "--profile", "-p");
     return result;
+}
+
+static CliArguments ParseProfileBasedCommand(string[] args, string commandName)
+{
+    var result = new CliArguments { Command = commandName };
+
+    if (args.Length == 2 && !args[1].StartsWith('-') && LooksLikeProfilePath(args[1]))
+    {
+        result.ProfilePath = args[1];
+        return result;
+    }
+
+    if (HasAnyOption(args, "--profile", "-p"))
+        result.ProfilePath = RequireOption(args, "--profile", "-p");
+
+    result.OutputDirectoryOverride = GetOption(args, "--output-dir");
+    result.DisableReports = HasFlag(args, "--no-reports");
+
+    return result;
+}
+
+static CliArguments ParseListRunsArguments(string[] args)
+{
+    var result = new CliArguments { Command = CommandNames.ListRuns };
+
+    if (HasAnyOption(args, "--profile", "-p"))
+        result.ProfilePath = RequireOption(args, "--profile", "-p");
+
+    result.ProfileName = GetOption(args, "--profile-name");
+
+    var topRaw = GetOption(args, "--top");
+    if (!string.IsNullOrWhiteSpace(topRaw) && int.TryParse(topRaw, out var top) && top > 0)
+        result.Top = top;
+    else
+        result.Top = 20;
+
+    return result;
+}
+
+static void ValidateCliArguments(CliArguments args)
+{
+    ArgumentNullException.ThrowIfNull(args);
+
+    var command = (args.Command ?? CommandNames.Run).Trim().ToLowerInvariant();
+
+    switch (command)
+    {
+        case CommandNames.Run:
+        case CommandNames.Validate:
+        case CommandNames.Batch:
+        case CommandNames.Runbook:
+        case CommandNames.Bundle:
+        case CommandNames.PublishBundle:
+        case CommandNames.RunTemplate:
+        case CommandNames.RunMatrix:
+        case CommandNames.Render:
+        case CommandNames.Diagnostics:
+        case CommandNames.SelfCheck:
+            if (string.IsNullOrWhiteSpace(args.ProfilePath))
+                throw new ArgumentException($"Komenda '{command}' wymaga ProfilePath.");
+            break;
+
+        case CommandNames.Compare:
+            if (string.IsNullOrWhiteSpace(args.ProfilePath) &&
+                (string.IsNullOrWhiteSpace(args.CurrentRunId) || string.IsNullOrWhiteSpace(args.BaselineRunId)))
+            {
+                throw new ArgumentException(
+                    "Komenda 'compare' wymaga albo ProfilePath, albo CurrentRunId + BaselineRunId.");
+            }
+            break;
+
+        case CommandNames.Trend:
+            if (string.IsNullOrWhiteSpace(args.ProfilePath) &&
+                string.IsNullOrWhiteSpace(args.ProfileName))
+            {
+                throw new ArgumentException(
+                    "Komenda 'trend' wymaga albo ProfilePath, albo ProfileName.");
+            }
+
+            if (args.Top <= 0)
+                throw new ArgumentException("Parametr Top musi być większy od 0.");
+            break;
+
+        case CommandNames.ListRuns:
+            if (args.Top <= 0)
+                args.Top = 20;
+            break;
+    }
+}
+
+static async Task<int> ExecuteValidateAsync(CliArguments cliArgs, CancellationToken cancellationToken)
+{
+    if (string.IsNullOrWhiteSpace(cliArgs.ProfilePath))
+        throw new ArgumentException("Komenda 'validate' wymaga ścieżki do profilu.");
+
+    var fullProfilePath = Path.GetFullPath(cliArgs.ProfilePath);
+
+    if (!File.Exists(fullProfilePath))
+        throw new FileNotFoundException($"Brak pliku profilu: {fullProfilePath}");
+
+    var json = await File.ReadAllTextAsync(fullProfilePath, cancellationToken);
+
+    var config = System.Text.Json.JsonSerializer.Deserialize<RootConfig>(
+        json,
+        new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+    if (config is null)
+        throw new InvalidOperationException("Nie udało się zdeserializować konfiguracji.");
+
+    Console.WriteLine("=== SQL STRESS LAB / VALIDATE ===");
+    Console.WriteLine($"Profile file     : {fullProfilePath}");
+    Console.WriteLine($"ProfileName      : {config.ProfileName}");
+    Console.WriteLine($"ScenarioName     : {config.ScenarioName}");
+    Console.WriteLine($"Server           : {config.Connection.Server}");
+    Console.WriteLine($"Database         : {config.Connection.Database}");
+    Console.WriteLine($"Authentication   : {config.Connection.Authentication}");
+    Console.WriteLine($"CommandType      : {config.Execution.CommandType}");
+    Console.WriteLine($"ExecutionMode    : {config.Execution.ExecutionMode}");
+    Console.WriteLine($"Workers          : {config.Execution.Workers}");
+    Console.WriteLine($"Iterations       : {config.Execution.IterationsPerWorker}");
+    Console.WriteLine($"Session file     : {config.Execution.SessionSettingsFile}");
+    Console.WriteLine($"SQL Output       : {config.SqlOutput.Enabled}");
+    Console.WriteLine($"Compare Enabled  : {config.Compare.Enabled}");
+    Console.WriteLine($"Trend Enabled    : {config.Trend.Enabled}");
+    Console.WriteLine($"Bundle Enabled   : {config.Bundle.Enabled}");
+    Console.WriteLine($"PublishBundle    : {config.PublishBundle.Enabled}");
+    Console.WriteLine();
+    Console.WriteLine("Walidacja profilu zakończona powodzeniem.");
+
+    return 0;
 }
 
 static string NormalizeCommand(string command)
 {
     return command.Trim().ToLowerInvariant() switch
     {
-        "run" => "run",
-        "compare" => "compare",
-        "trend" => "trend",
+        "run" => CommandNames.Run,
+        "compare" => CommandNames.Compare,
+        "trend" => CommandNames.Trend,
+        "validate" => CommandNames.Validate,
+        "batch" => CommandNames.Batch,
+        "runbook" => CommandNames.Runbook,
+        "bundle" => CommandNames.Bundle,
+        "publish-bundle" => CommandNames.PublishBundle,
+        "run-template" => CommandNames.RunTemplate,
+        "run-matrix" => CommandNames.RunMatrix,
+        "render" => CommandNames.Render,
+        "diagnostics" => CommandNames.Diagnostics,
+        "self-check" => CommandNames.SelfCheck,
+        "list-runs" => CommandNames.ListRuns,
+        "list-environments" => CommandNames.ListEnvironments,
+        "list-scenario-packs" => CommandNames.ListScenarioPacks,
         "help" or "--help" or "-h" or "/?" => "help",
         "version" or "--version" or "-v" => "version",
         _ => command.Trim().ToLowerInvariant()
@@ -214,28 +354,22 @@ static string NormalizeCommand(string command)
 
 static bool IsHelpCommand(string[] args)
 {
-    if (args.Length == 0)
-        return true;
-
+    if (args.Length == 0) return true;
     var first = args[0].Trim().ToLowerInvariant();
     return first is "help" or "--help" or "-h" or "/?";
 }
 
 static bool IsVersionCommand(string[] args)
 {
-    if (args.Length == 0)
-        return false;
-
+    if (args.Length == 0) return false;
     var first = args[0].Trim().ToLowerInvariant();
     return first is "version" or "--version" or "-v";
 }
 
 static bool LooksLikeProfilePath(string value)
 {
-    if (string.IsNullOrWhiteSpace(value))
-        return false;
-
-    return value.EndsWith(".json", StringComparison.OrdinalIgnoreCase);
+    return !string.IsNullOrWhiteSpace(value) &&
+           value.EndsWith(".json", StringComparison.OrdinalIgnoreCase);
 }
 
 static string? GetOption(string[] args, params string[] names)
@@ -245,9 +379,7 @@ static string? GetOption(string[] args, params string[] names)
         foreach (var name in names)
         {
             if (string.Equals(args[i], name, StringComparison.OrdinalIgnoreCase))
-            {
                 return args[i + 1];
-            }
         }
     }
 
@@ -258,10 +390,7 @@ static string RequireOption(string[] args, params string[] names)
 {
     var value = GetOption(args, names);
     if (string.IsNullOrWhiteSpace(value))
-    {
-        var joined = string.Join(" / ", names);
-        throw new ArgumentException($"Brak wymaganego parametru {joined}.");
-    }
+        throw new ArgumentException($"Brak wymaganego parametru {string.Join(" / ", names)}.");
 
     return value;
 }
@@ -279,62 +408,39 @@ static bool HasAnyOption(string[] args, params string[] names)
 static void PrintVersion()
 {
     Console.WriteLine("SqlStressLab");
-    Console.WriteLine("Version: 0.8.0");
-    Console.WriteLine(".NET CLI shell for SQL Server stress, compare and trend analysis");
+    Console.WriteLine("Version: 1.0.0-sprint10");
+    Console.WriteLine(".NET CLI shell for SQL Server stress, compare, trend, validation and advanced orchestration");
 }
 
 static void PrintHelp()
 {
     Console.WriteLine("=== SQL STRESS LAB ===");
     Console.WriteLine();
-    Console.WriteLine("Użycie:");
-    Console.WriteLine("  SqlStressLab.Cli.exe <profil.json>");
-    Console.WriteLine("  SqlStressLab.Cli.exe run <profil.json>");
-    Console.WriteLine("  SqlStressLab.Cli.exe compare <profil.json>");
-    Console.WriteLine("  SqlStressLab.Cli.exe trend <profil.json>");
+    Console.WriteLine("Komendy podstawowe:");
+    Console.WriteLine("  run");
+    Console.WriteLine("  compare");
+    Console.WriteLine("  trend");
+    Console.WriteLine("  validate");
     Console.WriteLine();
-    Console.WriteLine("Komendy:");
-    Console.WriteLine("  run       - uruchamia workload");
-    Console.WriteLine("  compare   - porównuje current run z baseline");
-    Console.WriteLine("  trend     - liczy trend ostatnich runów");
-    Console.WriteLine("  help      - pokazuje pomoc");
-    Console.WriteLine("  version   - pokazuje wersję");
+    Console.WriteLine("Komendy Sprint 10:");
+    Console.WriteLine("  batch");
+    Console.WriteLine("  runbook");
+    Console.WriteLine("  bundle");
+    Console.WriteLine("  publish-bundle");
+    Console.WriteLine("  run-template");
+    Console.WriteLine("  run-matrix");
+    Console.WriteLine("  render");
+    Console.WriteLine("  diagnostics");
+    Console.WriteLine("  self-check");
+    Console.WriteLine("  list-runs");
+    Console.WriteLine("  list-environments");
+    Console.WriteLine("  list-scenario-packs");
     Console.WriteLine();
-    Console.WriteLine("Run:");
     Console.WriteLine(@"  .\SqlStressLab.Cli.exe run .\profiles\demo-select.json");
-    Console.WriteLine(@"  .\SqlStressLab.Cli.exe run --profile .\profiles\demo-proc.json");
-    Console.WriteLine(@"  .\SqlStressLab.Cli.exe run --profile .\profiles\demo-blocking.json --output-dir .\outputs");
-    Console.WriteLine(@"  .\SqlStressLab.Cli.exe run --profile .\profiles\demo-select.json --no-sql-output");
-    Console.WriteLine();
-    Console.WriteLine("Compare:");
-    Console.WriteLine(@"  .\SqlStressLab.Cli.exe compare .\profiles\demo-select-sqloutput-separate.json");
-    Console.WriteLine(@"  .\SqlStressLab.Cli.exe compare --profile .\profiles\demo-select-sqloutput-separate.json --sample-diff");
-    Console.WriteLine(@"  .\SqlStressLab.Cli.exe compare --profile .\profiles\demo-select-sqloutput-separate.json --current RUN_1 --baseline RUN_0");
-    Console.WriteLine();
-    Console.WriteLine("Trend:");
-    Console.WriteLine(@"  .\SqlStressLab.Cli.exe trend .\profiles\demo-select-sqloutput-separate.json");
-    Console.WriteLine(@"  .\SqlStressLab.Cli.exe trend --profile .\profiles\demo-select-sqloutput-separate.json --top 15");
-    Console.WriteLine(@"  .\SqlStressLab.Cli.exe trend --profile-name demo-select --profile .\profiles\demo-select-sqloutput-separate.json --top 20");
-    Console.WriteLine();
-    Console.WriteLine("Flagi dodatkowe:");
-    Console.WriteLine("  --profile / -p      ścieżka do profilu JSON");
-    Console.WriteLine("  --current           RunId bieżącego runu");
-    Console.WriteLine("  --baseline          RunId baseline");
-    Console.WriteLine("  --profile-name      nazwa profilu do repo");
-    Console.WriteLine("  --top               liczba runów do trendu");
-    Console.WriteLine("  --sample-diff       włącza sample level diff");
-    Console.WriteLine("  --output-dir        nadpisuje katalog wyjściowy");
-    Console.WriteLine("  --no-sql-output     wyłącza zapis do SQL Server");
-    Console.WriteLine("  --no-reports        wyłącza raporty plikowe");
-    Console.WriteLine();
-    Console.WriteLine("Zmienne środowiskowe:");
-    Console.WriteLine("  SQLSTRESSLAB_PASSWORD   - hasło dla SqlPassword auth");
-    Console.WriteLine();
-    Console.WriteLine("Katalogi:");
-    Console.WriteLine(@"  profiles\   - profile JSON, session.sql, setup/cleanup");
-    Console.WriteLine(@"  outputs\    - JSON/CSV/MD/HTML");
-    Console.WriteLine();
-    Console.WriteLine("Przykład ustawienia hasła:");
-    Console.WriteLine(@"  $env:SQLSTRESSLAB_PASSWORD = ""TwojeHaslo""");
+    Console.WriteLine(@"  .\SqlStressLab.Cli.exe compare .\profiles\demo-select.json");
+    Console.WriteLine(@"  .\SqlStressLab.Cli.exe trend .\profiles\demo-select.json --top 15");
+    Console.WriteLine(@"  .\SqlStressLab.Cli.exe validate .\profiles\demo-select.json");
+    Console.WriteLine(@"  .\SqlStressLab.Cli.exe batch --profile .\profiles\batch.json");
+    Console.WriteLine(@"  .\SqlStressLab.Cli.exe runbook --profile .\profiles\runbook.json");
     Console.WriteLine();
 }

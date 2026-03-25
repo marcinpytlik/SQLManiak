@@ -9,4 +9,5 @@ public sealed class TrendPoint
     public long P95DurationMs { get; set; }
     public double ThroughputPerSecond { get; set; }
     public int ErrorCount { get; set; }
+    public int RetryCount { get; set; }
 }

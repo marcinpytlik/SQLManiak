@@ -5,75 +5,41 @@ namespace SqlStressLab.Core.Services;
 public static class RunComparisonService
 {
     public static RunComparisonResult Compare(
-        StressRunRecord current,
-        StressRunRecord baseline,
-        bool includeSampleLevelDiff = false)
+        StressRunRecord currentRun,
+        StressRunRecord baselineRun,
+        bool includeSampleLevelDiff)
     {
-        ArgumentNullException.ThrowIfNull(current);
-        ArgumentNullException.ThrowIfNull(baseline);
+        ArgumentNullException.ThrowIfNull(currentRun);
+        ArgumentNullException.ThrowIfNull(baselineRun);
 
-        var result = new RunComparisonResult
+        var avgDelta = currentRun.AvgDurationMs - baselineRun.AvgDurationMs;
+        var p95Delta = currentRun.P95DurationMs - baselineRun.P95DurationMs;
+        var throughputDelta = currentRun.ThroughputPerSecond - baselineRun.ThroughputPerSecond;
+        var errorDelta = currentRun.ErrorCount - baselineRun.ErrorCount;
+        var retryDelta = currentRun.RetryCount - baselineRun.RetryCount;
+
+        var isRegression =
+            avgDelta > 0 ||
+            p95Delta > 0 ||
+            throughputDelta < 0 ||
+            errorDelta > 0 ||
+            retryDelta > 0;
+
+        return new RunComparisonResult
         {
-            RunId = current.RunId,
-            BaselineRunId = baseline.RunId,
-
-            CurrentProfileName = current.ProfileName,
-            BaselineProfileName = baseline.ProfileName,
-
-            CurrentScenarioName = current.ScenarioName,
-            BaselineScenarioName = baseline.ScenarioName,
-
-            CurrentAvgDurationMs = current.AvgDurationMs,
-            BaselineAvgDurationMs = baseline.AvgDurationMs,
-            AvgDurationDeltaMs = current.AvgDurationMs - baseline.AvgDurationMs,
-
-            CurrentP95DurationMs = current.P95DurationMs,
-            BaselineP95DurationMs = baseline.P95DurationMs,
-            P95DurationDeltaMs = current.P95DurationMs - baseline.P95DurationMs,
-
-            CurrentThroughputPerSecond = current.ThroughputPerSecond,
-            BaselineThroughputPerSecond = baseline.ThroughputPerSecond,
-            ThroughputDelta = current.ThroughputPerSecond - baseline.ThroughputPerSecond,
-
-            CurrentErrorCount = current.ErrorCount,
-            BaselineErrorCount = baseline.ErrorCount,
-            ErrorCountDelta = current.ErrorCount - baseline.ErrorCount,
-
-            CurrentRetryCount = current.RetryCount,
-            BaselineRetryCount = baseline.RetryCount,
-            RetryCountDelta = current.RetryCount - baseline.RetryCount,
-
-            IncludeSampleLevelDiff = includeSampleLevelDiff,
-            ComparedAtUtc = DateTime.UtcNow
+            RunId = currentRun.RunId,
+            BaselineRunId = baselineRun.RunId,
+            CurrentProfileName = currentRun.ProfileName,
+            BaselineProfileName = baselineRun.ProfileName,
+            CurrentScenarioName = currentRun.ScenarioName,
+            BaselineScenarioName = baselineRun.ScenarioName,
+            AvgDurationDeltaMs = avgDelta,
+            P95DurationDeltaMs = p95Delta,
+            ThroughputDelta = throughputDelta,
+            ErrorCountDelta = errorDelta,
+            RetryCountDelta = retryDelta,
+            IsRegression = isRegression,
+            SummaryText = isRegression ? "Regression detected" : "No regression detected"
         };
-
-        result.IsRegression = IsRegression(result);
-
-        result.SummaryText =
-            $"AVG Δ={result.AvgDurationDeltaMs:F2} ms; " +
-            $"P95 Δ={result.P95DurationDeltaMs}; " +
-            $"THR Δ={result.ThroughputDelta:F2}; " +
-            $"ERR Δ={result.ErrorCountDelta}; " +
-            $"RETRY Δ={result.RetryCountDelta}; " +
-            $"REGRESSION={result.IsRegression}";
-
-        return result;
-    }
-
-    private static bool IsRegression(RunComparisonResult result)
-    {
-        if (result.AvgDurationDeltaMs > 0)
-            return true;
-
-        if (result.P95DurationDeltaMs > 0)
-            return true;
-
-        if (result.ThroughputDelta < 0)
-            return true;
-
-        if (result.ErrorCountDelta > 0)
-            return true;
-
-        return false;
     }
 }
