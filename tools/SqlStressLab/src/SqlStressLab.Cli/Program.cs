@@ -43,7 +43,11 @@ try
     new ListScenarioPacksCommandService(),
     new RenderCommandService(),
     new RunTemplateCommandService(),
-    new RunMatrixCommandService());
+    new RunMatrixCommandService(),
+    new BatchCommandService(),
+    new RunbookCommandService(),
+    new BundleCommandService(),
+    new PublishBundleCommandService());
 
     return await dispatcher.DispatchAsync(cliArgs, cts.Token);
 }

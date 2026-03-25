@@ -3,5 +3,5 @@ namespace SqlStressLab.Core.Models;
 public sealed class RunbookConfig
 {
     public bool Enabled { get; set; } = false;
-    public List<string> Steps { get; set; } = new();
+    public List<RunbookStep> Steps { get; set; } = new();
 }
