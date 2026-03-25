@@ -14,9 +14,9 @@ public sealed class CommandDispatcher
         CompareCommandService compareCommandService,
         TrendCommandService trendCommandService)
     {
-        _runCommandService = runCommandService;
-        _compareCommandService = compareCommandService;
-        _trendCommandService = trendCommandService;
+        _runCommandService = runCommandService ?? throw new ArgumentNullException(nameof(runCommandService));
+        _compareCommandService = compareCommandService ?? throw new ArgumentNullException(nameof(compareCommandService));
+        _trendCommandService = trendCommandService ?? throw new ArgumentNullException(nameof(trendCommandService));
     }
 
     public async Task<int> DispatchAsync(
