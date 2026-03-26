@@ -25,6 +25,7 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<ProfilesCommandHandler>();
         services.AddSingleton<ErrorLogCommandHandler>();
+        services.AddSingleton<IErrorLogReader, ErrorLogReader>();
         services.AddSingleton<CliApplication>();
 
         return services;

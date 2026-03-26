@@ -41,5 +41,9 @@ public sealed class CliApplication(
         AnsiConsole.MarkupLine("  [green]profiles test --name LOCALDEV[/]");
         AnsiConsole.MarkupLine("  [green]errorlog list --name LOCALDEV[/]");
         AnsiConsole.MarkupLine("  [green]errorlog list --name LOCALDEV --top 5[/]");
+        AnsiConsole.MarkupLine("  [green]errorlog read --name LOCALDEV[/]");
+AnsiConsole.MarkupLine("  [green]errorlog read --name LOCALDEV --log 1[/]");
+AnsiConsole.MarkupLine("  [green]errorlog read --name LOCALDEV --contains \"Login failed\"[/]");
+AnsiConsole.MarkupLine("  [green]errorlog read --name LOCALDEV --top 50[/]");
     }
 }
