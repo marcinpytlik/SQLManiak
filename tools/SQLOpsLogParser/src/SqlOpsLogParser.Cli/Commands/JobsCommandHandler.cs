@@ -7,6 +7,109 @@ public sealed class JobsCommandHandler(
     IProfileProvider profileProvider,
     IJobRepository jobRepository)
 {
+    private async Task<int> HandleFailedStepsAsync(string[] args)
+{
+    var profile = GetProfile(args);
+    if (profile is null)
+    {
+        return 3;
+    }
+
+    var hoursValue = GetOptionValue(args, "--hours");
+    var jobName = GetOptionValue(args, "--job");
+    var hours = 24;
+
+    if (!string.IsNullOrWhiteSpace(hoursValue))
+    {
+        if (!int.TryParse(hoursValue, out hours) || hours <= 0)
+        {
+            AnsiConsole.MarkupLine("[red]Nieprawidłowa wartość parametru --hours[/]");
+            return 4;
+        }
+    }
+
+    var failedSteps = await jobRepository.GetFailedJobStepsAsync(profile, hours, jobName);
+
+    if (failedSteps.Count == 0)
+    {
+        AnsiConsole.MarkupLine("[yellow]Brak failed steps w zadanym oknie czasu.[/]");
+        return 3;
+    }
+
+    var table = new Table().Border(TableBorder.Rounded);
+    table.AddColumn("JobName");
+    table.AddColumn("StepId");
+    table.AddColumn("StepName");
+    table.AddColumn("RunDateTime");
+    table.AddColumn("Duration");
+    table.AddColumn("Severity");
+    table.AddColumn("Subsystem");
+    table.AddColumn("Message");
+
+    foreach (var item in failedSteps)
+    {
+        table.AddRow(
+            Markup.Escape(item.JobName),
+            Markup.Escape(item.StepId.ToString()),
+            Markup.Escape(item.StepName),
+            Markup.Escape(item.RunDateTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? string.Empty),
+            Markup.Escape(FormatDuration(item.RunDurationSeconds)),
+            Markup.Escape(item.SqlSeverity.ToString()),
+            Markup.Escape(item.Subsystem ?? string.Empty),
+            Markup.Escape(Truncate(item.Message, 120)));
+    }
+
+    AnsiConsole.Write(table);
+    return 0;
+}
+private async Task<int> HandleStepsAsync(string[] args)
+{
+    var profile = GetProfile(args);
+    if (profile is null)
+    {
+        return 3;
+    }
+
+    var jobName = GetOptionValue(args, "--job");
+    if (string.IsNullOrWhiteSpace(jobName))
+    {
+        AnsiConsole.MarkupLine("[red]Brak parametru --job[/]");
+        return 4;
+    }
+
+    var steps = await jobRepository.GetJobStepsAsync(profile, jobName);
+
+    if (steps.Count == 0)
+    {
+        AnsiConsole.MarkupLine("[yellow]Brak kroków dla podanego joba.[/]");
+        return 3;
+    }
+
+    var table = new Table().Border(TableBorder.Rounded);
+    table.AddColumn("StepId");
+    table.AddColumn("StepName");
+    table.AddColumn("Subsystem");
+    table.AddColumn("Database");
+    table.AddColumn("OnSuccess");
+    table.AddColumn("OnFail");
+    table.AddColumn("Command");
+
+    foreach (var step in steps)
+    {
+        table.AddRow(
+            Markup.Escape(step.StepId.ToString()),
+            Markup.Escape(step.StepName),
+            Markup.Escape(step.Subsystem),
+            Markup.Escape(step.DatabaseName),
+            Markup.Escape(step.OnSuccessAction.ToString()),
+            Markup.Escape(step.OnFailAction.ToString()),
+            Markup.Escape(Truncate(step.Command, 80)));
+    }
+
+    AnsiConsole.Write(table);
+    return 0;
+}
+
     public async Task<int> HandleAsync(string[] args)
     {
         if (args.Length < 2)
@@ -22,6 +125,8 @@ public sealed class JobsCommandHandler(
             "list" => await HandleListAsync(args),
             "failed" => await HandleFailedAsync(args),
             "history" => await HandleHistoryAsync(args),
+            "steps" => await HandleStepsAsync(args),
+    "failed-steps" => await HandleFailedStepsAsync(args),
             _ => HandleUnknownSubcommand()
         };
     }

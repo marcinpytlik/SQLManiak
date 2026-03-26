@@ -54,5 +54,9 @@ AnsiConsole.MarkupLine("  [green]errorlog read --name LOCALDEV --severity Error 
 AnsiConsole.MarkupLine("  [green]jobs list --name LOCALDEV[/]");
 AnsiConsole.MarkupLine("  [green]jobs failed --name LOCALDEV --hours 24[/]");
 AnsiConsole.MarkupLine("  [green]jobs history --name LOCALDEV --job \"Backup User Databases\"[/]");
+AnsiConsole.MarkupLine("  [green]jobs steps --name LOCALDEV --job \"MaintenancePlan.Subplan_2\"[/]");
+AnsiConsole.MarkupLine("  [green]jobs failed-steps --name LOCALDEV --hours 24[/]");
+AnsiConsole.MarkupLine("  [green]jobs failed-steps --name LOCALDEV --job \"MaintenancePlan.Subplan_2\" --hours 24[/]");
+
     }
 }
