@@ -29,6 +29,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ILogEntryClassifier, LogEntryClassifier>();
         services.AddSingleton<IJobRepository, JobRepository>();
 services.AddSingleton<JobsCommandHandler>();
+services.AddSingleton<ITimelineService, TimelineService>();
+services.AddSingleton<TimelineCommandHandler>();
         services.AddSingleton<CliApplication>();
 
         return services;

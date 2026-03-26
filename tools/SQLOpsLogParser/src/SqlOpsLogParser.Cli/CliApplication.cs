@@ -6,7 +6,8 @@ namespace SqlOpsLogParser.Cli;
 public sealed class CliApplication(
     ProfilesCommandHandler profilesCommandHandler,
     ErrorLogCommandHandler errorLogCommandHandler,
-    JobsCommandHandler jobsCommandHandler)
+    JobsCommandHandler jobsCommandHandler,
+    TimelineCommandHandler timelineCommandHandler)
 {
     public async Task<int> RunAsync(string[] args)
     {
@@ -23,6 +24,7 @@ public sealed class CliApplication(
             "profiles" => await profilesCommandHandler.HandleAsync(args),
             "errorlog" => await errorLogCommandHandler.HandleAsync(args),
             "jobs" => await jobsCommandHandler.HandleAsync(args),
+            "timeline" => await timelineCommandHandler.HandleAsync(args),
             _ => HandleUnknownCommand()
         };
     }
@@ -57,6 +59,9 @@ AnsiConsole.MarkupLine("  [green]jobs history --name LOCALDEV --job \"Backup Use
 AnsiConsole.MarkupLine("  [green]jobs steps --name LOCALDEV --job \"MaintenancePlan.Subplan_2\"[/]");
 AnsiConsole.MarkupLine("  [green]jobs failed-steps --name LOCALDEV --hours 24[/]");
 AnsiConsole.MarkupLine("  [green]jobs failed-steps --name LOCALDEV --job \"MaintenancePlan.Subplan_2\" --hours 24[/]");
-
+AnsiConsole.MarkupLine("  [green]timeline --name LOCALDEV --hours 24[/]");
+AnsiConsole.MarkupLine("  [green]timeline --name LOCALDEV --from \"2026-03-26 00:00\" --to \"2026-03-26 23:59\"[/]");
+AnsiConsole.MarkupLine("  [green]timeline --name LOCALDEV --hours 24 --only-errors[/]");
+AnsiConsole.MarkupLine("  [green]timeline --name LOCALDEV --hours 24 --source ErrorLog[/]");
     }
 }
