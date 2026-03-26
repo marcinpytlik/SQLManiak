@@ -2,14 +2,18 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using SqlOpsLogParser.Cli;
 using SqlOpsLogParser.Cli.Composition;
+
+Directory.CreateDirectory("logs");
+Directory.CreateDirectory("profiles");
+Directory.CreateDirectory("reports");
 
 var builder = Host.CreateApplicationBuilder(args);
 
 builder.Configuration
-    .SetBasePath(AppContext.BaseDirectory)
-    .AddJsonFile("appsettings.json", optional: true)
-    .AddJsonFile(Path.Combine("profiles", "profiles.json"), optional: true);
+    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
+    .AddJsonFile(Path.Combine("profiles", "profiles.json"), optional: true, reloadOnChange: false);
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()

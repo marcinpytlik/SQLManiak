@@ -12,6 +12,14 @@ public sealed class CliApplication
             return Task.FromResult(0);
         }
 
+        if (args.Length >= 2 &&
+            string.Equals(args[0], "profiles", StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(args[1], "list", StringComparison.OrdinalIgnoreCase))
+        {
+            AnsiConsole.MarkupLine("[green]profiles list działa[/]");
+            return Task.FromResult(0);
+        }
+
         AnsiConsole.MarkupLine("[red]Unknown command.[/]");
         ShowHelp();
         return Task.FromResult(4);
@@ -22,5 +30,6 @@ public sealed class CliApplication
         AnsiConsole.Write(new Rule("[yellow]SqlOpsLogParser[/]"));
         AnsiConsole.MarkupLine("Available commands:");
         AnsiConsole.MarkupLine("  [green]--help[/]");
+        AnsiConsole.MarkupLine("  [green]profiles list[/]");
     }
 }
