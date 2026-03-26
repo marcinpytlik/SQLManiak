@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SqlOpsLogParser.Cli/SqlOpsLogParser.Cli.csproj" />
+    <Project Path="src/SqlOpsLogParser.Core/SqlOpsLogParser.Core.csproj" />
+    <Project Path="src/SqlOpsLogParser.Infrastructure/SqlOpsLogParser.Infrastructure.csproj" />
+    <Project Path="src/SqlOpsLogParser.Reporting/SqlOpsLogParser.Reporting.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SqlOpsLogParser.Tests/SqlOpsLogParser.Tests.csproj" />
+  </Folder>
+</Solution>

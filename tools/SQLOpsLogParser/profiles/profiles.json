@@ -1,0 +1,13 @@
+{
+  "profiles": [
+    {
+      "name": "LOCALDEV",
+      "server": "localhost",
+      "database": "master",
+      "authentication": "Windows",
+      "encrypt": true,
+      "trustServerCertificate": true,
+      "connectTimeoutSeconds": 15
+    }
+  ]
+}
