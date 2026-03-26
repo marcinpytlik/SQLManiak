@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SqlOpsLogParser.Cli.Commands;
 using SqlOpsLogParser.Core.Interfaces;
 using SqlOpsLogParser.Core.Models;
 using SqlOpsLogParser.Infrastructure.Configuration;
@@ -19,6 +20,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IProfileProvider, JsonProfileProvider>();
         services.AddSingleton<ISqlConnectionFactory, SqlConnectionFactory>();
         services.AddSingleton<IConnectionTestService, ConnectionTestService>();
+
+        services.AddSingleton<ProfilesCommandHandler>();
         services.AddSingleton<CliApplication>();
 
         return services;

@@ -1,35 +1,40 @@
 using Spectre.Console;
+using SqlOpsLogParser.Cli.Commands;
 
 namespace SqlOpsLogParser.Cli;
 
-public sealed class CliApplication
+public sealed class CliApplication(ProfilesCommandHandler profilesCommandHandler)
 {
-    public Task<int> RunAsync(string[] args)
+    public async Task<int> RunAsync(string[] args)
     {
         if (args.Length == 0 || args.Contains("--help") || args.Contains("-h"))
         {
             ShowHelp();
-            return Task.FromResult(0);
+            return 0;
         }
 
-        if (args.Length >= 2 &&
-            string.Equals(args[0], "profiles", StringComparison.OrdinalIgnoreCase) &&
-            string.Equals(args[1], "list", StringComparison.OrdinalIgnoreCase))
+        var command = args[0].ToLowerInvariant();
+
+        return command switch
         {
-            AnsiConsole.MarkupLine("[green]profiles list działa[/]");
-            return Task.FromResult(0);
-        }
+            "profiles" => await profilesCommandHandler.HandleAsync(args),
+            _ => HandleUnknownCommand()
+        };
+    }
 
+    private static int HandleUnknownCommand()
+    {
         AnsiConsole.MarkupLine("[red]Unknown command.[/]");
         ShowHelp();
-        return Task.FromResult(4);
+        return 4;
     }
 
     private static void ShowHelp()
     {
         AnsiConsole.Write(new Rule("[yellow]SqlOpsLogParser[/]"));
         AnsiConsole.MarkupLine("Available commands:");
-        AnsiConsole.MarkupLine("  [green]--help[/]");
         AnsiConsole.MarkupLine("  [green]profiles list[/]");
+        AnsiConsole.MarkupLine("  [green]profiles show --name LOCALDEV[/]");
+        AnsiConsole.MarkupLine("  [green]profiles test --name LOCALDEV[/]");
     }
 }
