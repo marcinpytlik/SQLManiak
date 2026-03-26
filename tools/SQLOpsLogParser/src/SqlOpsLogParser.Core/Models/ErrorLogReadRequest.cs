@@ -1,3 +1,5 @@
+using SqlOpsLogParser.Core.Enums;
+
 namespace SqlOpsLogParser.Core.Models;
 
 public sealed class ErrorLogReadRequest
@@ -8,4 +10,7 @@ public sealed class ErrorLogReadRequest
     public DateTime? From { get; set; }
     public DateTime? To { get; set; }
     public int? Top { get; set; }
+
+    public EventSeverity? SeverityFilter { get; set; }
+    public EventCategory? CategoryFilter { get; set; }
 }

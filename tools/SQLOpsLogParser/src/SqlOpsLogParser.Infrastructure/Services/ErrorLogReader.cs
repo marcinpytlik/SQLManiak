@@ -5,7 +5,9 @@ using SqlOpsLogParser.Core.Models;
 
 namespace SqlOpsLogParser.Infrastructure.Services;
 
-public sealed class ErrorLogReader(ISqlConnectionFactory connectionFactory) : IErrorLogReader
+public sealed class ErrorLogReader(
+    ISqlConnectionFactory connectionFactory,
+    ILogEntryClassifier logEntryClassifier) : IErrorLogReader
 {
     public async Task<IReadOnlyList<SqlLogEntry>> ReadAsync(
         ErrorLogReadRequest request,
@@ -59,6 +61,24 @@ public sealed class ErrorLogReader(ISqlConnectionFactory connectionFactory) : IE
             });
 
         var result = rows.ToList();
+
+        foreach (var entry in result)
+        {
+            logEntryClassifier.Classify(entry);
+        }
+if (request.SeverityFilter.HasValue)
+{
+    result = result
+        .Where(x => x.Severity == request.SeverityFilter.Value)
+        .ToList();
+}
+
+if (request.CategoryFilter.HasValue)
+{
+    result = result
+        .Where(x => x.Category == request.CategoryFilter.Value)
+        .ToList();
+}
 
         if (request.Top is > 0)
         {

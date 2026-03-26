@@ -45,5 +45,9 @@ public sealed class CliApplication(
 AnsiConsole.MarkupLine("  [green]errorlog read --name LOCALDEV --log 1[/]");
 AnsiConsole.MarkupLine("  [green]errorlog read --name LOCALDEV --contains \"Login failed\"[/]");
 AnsiConsole.MarkupLine("  [green]errorlog read --name LOCALDEV --top 50[/]");
+AnsiConsole.MarkupLine("  [green]errorlog read --name LOCALDEV --severity Error[/]");
+AnsiConsole.MarkupLine("  [green]errorlog read --name LOCALDEV --category Security[/]");
+AnsiConsole.MarkupLine("  [green]errorlog read --name LOCALDEV --category Recovery[/]");
+AnsiConsole.MarkupLine("  [green]errorlog read --name LOCALDEV --severity Error --top 20[/]");
     }
 }

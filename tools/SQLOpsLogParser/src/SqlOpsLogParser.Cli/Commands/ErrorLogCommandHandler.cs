@@ -81,7 +81,8 @@ public sealed class ErrorLogCommandHandler(
     private async Task<int> HandleReadAsync(string[] args)
     {
         var name = GetOptionValue(args, "--name");
-
+var severityValue = GetOptionValue(args, "--severity");
+var categoryValue = GetOptionValue(args, "--category");
         if (string.IsNullOrWhiteSpace(name))
         {
             AnsiConsole.MarkupLine("[red]Brak parametru --name[/]");
@@ -108,6 +109,33 @@ public sealed class ErrorLogCommandHandler(
             LogNumber = 0,
             ContainsText = contains
         };
+if (!string.IsNullOrWhiteSpace(severityValue))
+{
+    if (!Enum.TryParse<SqlOpsLogParser.Core.Enums.EventSeverity>(
+        severityValue,
+        ignoreCase: true,
+        out var severity))
+    {
+        AnsiConsole.MarkupLine("[red]Nieprawidłowa wartość parametru --severity[/]");
+        return 4;
+    }
+
+    request.SeverityFilter = severity;
+}
+
+if (!string.IsNullOrWhiteSpace(categoryValue))
+{
+    if (!Enum.TryParse<SqlOpsLogParser.Core.Enums.EventCategory>(
+        categoryValue,
+        ignoreCase: true,
+        out var category))
+    {
+        AnsiConsole.MarkupLine("[red]Nieprawidłowa wartość parametru --category[/]");
+        return 4;
+    }
+
+    request.CategoryFilter = category;
+}
 
         if (!string.IsNullOrWhiteSpace(logValue))
         {
@@ -168,17 +196,20 @@ public sealed class ErrorLogCommandHandler(
         }
 
         var table = new Table().Border(TableBorder.Rounded);
-        table.AddColumn("LogDate");
-        table.AddColumn("ProcessInfo");
-        table.AddColumn("Text");
-
+table.AddColumn("LogDate");
+table.AddColumn("Severity");
+table.AddColumn("Category");
+table.AddColumn("ProcessInfo");
+table.AddColumn("Text");
         foreach (var entry in entries)
-        {
-            table.AddRow(
-                  Markup.Escape(entry.LogDate.ToString("yyyy-MM-dd HH:mm:ss")),
+{
+    table.AddRow(
+        Markup.Escape(entry.LogDate.ToString("yyyy-MM-dd HH:mm:ss")),
+        Markup.Escape(entry.Severity.ToString()),
+        Markup.Escape(entry.Category.ToString()),
         Markup.Escape(entry.ProcessInfo),
-        Markup.Escape(Truncate(entry.Text, 140)));
-        }
+        Markup.Escape(Truncate(entry.Text, 120)));
+}
 
         AnsiConsole.Write(table);
         return 0;
