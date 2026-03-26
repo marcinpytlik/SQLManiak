@@ -38,7 +38,12 @@ try
 catch (Exception ex)
 {
     Log.Fatal(ex, "Application terminated unexpectedly");
+    Console.Error.WriteLine($"FATAL: {ex.Message}");
+    Console.Error.WriteLine(ex.ToString());
     return 1;
+
+   // Log.Fatal(ex, "Application terminated unexpectedly");
+   // return 1;
 }
 finally
 {

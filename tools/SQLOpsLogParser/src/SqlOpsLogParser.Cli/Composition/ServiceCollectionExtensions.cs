@@ -5,6 +5,7 @@ using SqlOpsLogParser.Core.Interfaces;
 using SqlOpsLogParser.Core.Models;
 using SqlOpsLogParser.Infrastructure.Configuration;
 using SqlOpsLogParser.Infrastructure.Connection;
+using SqlOpsLogParser.Infrastructure.Repositories;
 using SqlOpsLogParser.Infrastructure.Services;
 
 namespace SqlOpsLogParser.Cli.Composition;
@@ -20,8 +21,10 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IProfileProvider, JsonProfileProvider>();
         services.AddSingleton<ISqlConnectionFactory, SqlConnectionFactory>();
         services.AddSingleton<IConnectionTestService, ConnectionTestService>();
+        services.AddSingleton<IErrorLogRepository, ErrorLogRepository>();
 
         services.AddSingleton<ProfilesCommandHandler>();
+        services.AddSingleton<ErrorLogCommandHandler>();
         services.AddSingleton<CliApplication>();
 
         return services;

@@ -3,7 +3,9 @@ using SqlOpsLogParser.Cli.Commands;
 
 namespace SqlOpsLogParser.Cli;
 
-public sealed class CliApplication(ProfilesCommandHandler profilesCommandHandler)
+public sealed class CliApplication(
+    ProfilesCommandHandler profilesCommandHandler,
+    ErrorLogCommandHandler errorLogCommandHandler)
 {
     public async Task<int> RunAsync(string[] args)
     {
@@ -18,6 +20,7 @@ public sealed class CliApplication(ProfilesCommandHandler profilesCommandHandler
         return command switch
         {
             "profiles" => await profilesCommandHandler.HandleAsync(args),
+            "errorlog" => await errorLogCommandHandler.HandleAsync(args),
             _ => HandleUnknownCommand()
         };
     }
@@ -36,5 +39,7 @@ public sealed class CliApplication(ProfilesCommandHandler profilesCommandHandler
         AnsiConsole.MarkupLine("  [green]profiles list[/]");
         AnsiConsole.MarkupLine("  [green]profiles show --name LOCALDEV[/]");
         AnsiConsole.MarkupLine("  [green]profiles test --name LOCALDEV[/]");
+        AnsiConsole.MarkupLine("  [green]errorlog list --name LOCALDEV[/]");
+        AnsiConsole.MarkupLine("  [green]errorlog list --name LOCALDEV --top 5[/]");
     }
 }
