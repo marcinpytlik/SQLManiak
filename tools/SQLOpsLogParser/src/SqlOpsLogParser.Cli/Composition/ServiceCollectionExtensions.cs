@@ -27,6 +27,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ErrorLogCommandHandler>();
         services.AddSingleton<IErrorLogReader, ErrorLogReader>();
         services.AddSingleton<ILogEntryClassifier, LogEntryClassifier>();
+        services.AddSingleton<IJobRepository, JobRepository>();
+services.AddSingleton<JobsCommandHandler>();
         services.AddSingleton<CliApplication>();
 
         return services;

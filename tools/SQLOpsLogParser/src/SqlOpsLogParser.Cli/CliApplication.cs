@@ -5,7 +5,8 @@ namespace SqlOpsLogParser.Cli;
 
 public sealed class CliApplication(
     ProfilesCommandHandler profilesCommandHandler,
-    ErrorLogCommandHandler errorLogCommandHandler)
+    ErrorLogCommandHandler errorLogCommandHandler,
+    JobsCommandHandler jobsCommandHandler)
 {
     public async Task<int> RunAsync(string[] args)
     {
@@ -21,6 +22,7 @@ public sealed class CliApplication(
         {
             "profiles" => await profilesCommandHandler.HandleAsync(args),
             "errorlog" => await errorLogCommandHandler.HandleAsync(args),
+            "jobs" => await jobsCommandHandler.HandleAsync(args),
             _ => HandleUnknownCommand()
         };
     }
@@ -49,5 +51,8 @@ AnsiConsole.MarkupLine("  [green]errorlog read --name LOCALDEV --severity Error[
 AnsiConsole.MarkupLine("  [green]errorlog read --name LOCALDEV --category Security[/]");
 AnsiConsole.MarkupLine("  [green]errorlog read --name LOCALDEV --category Recovery[/]");
 AnsiConsole.MarkupLine("  [green]errorlog read --name LOCALDEV --severity Error --top 20[/]");
+AnsiConsole.MarkupLine("  [green]jobs list --name LOCALDEV[/]");
+AnsiConsole.MarkupLine("  [green]jobs failed --name LOCALDEV --hours 24[/]");
+AnsiConsole.MarkupLine("  [green]jobs history --name LOCALDEV --job \"Backup User Databases\"[/]");
     }
 }

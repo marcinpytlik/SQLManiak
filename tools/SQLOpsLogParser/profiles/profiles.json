@@ -2,9 +2,11 @@
   "profiles": [
     {
       "name": "LOCALDEV",
-      "server": "localhost",
+      "server": "syriusz",
       "database": "master",
-      "authentication": "Windows",
+      "authentication": "Sql",
+      "userName": "sa",
+      "password": "W@rsz@wa2050",
       "encrypt": true,
       "trustServerCertificate": true,
       "connectTimeoutSeconds": 15
