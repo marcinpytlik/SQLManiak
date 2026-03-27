@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SqlOpsToolkit.Core\SqlOpsToolkit.Core.csproj" />
+    <ProjectReference Include="..\SqlOpsToolkit.Infrastructure\SqlOpsToolkit.Infrastructure.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

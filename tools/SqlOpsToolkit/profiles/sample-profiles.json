@@ -2,27 +2,15 @@
   "profiles": [
     {
       "name": "sql2022-prod-01",
-      "server": "SQL01",
+      "server": "syriusz",
       "port": 1433,
       "database": "master",
-      "authenticationMode": "Windows",
-      "user": "",
-      "password": "",
+      "authenticationMode": "2",
+      "user": "sa",
+      "password": "W@rsz@wa2050",
       "encrypt": true,
       "trustServerCertificate": true,
       "tags": [ "prod", "sql2022" ]
-    },
-    {
-      "name": "sql2019-lab-01",
-      "server": "SQLLAB01",
-      "port": 1433,
-      "database": "master",
-      "authenticationMode": "Sql",
-      "user": "toolkit_user",
-      "password": "CHANGE_ME",
-      "encrypt": true,
-      "trustServerCertificate": true,
-      "tags": [ "lab", "sql2019" ]
     }
   ]
 }
