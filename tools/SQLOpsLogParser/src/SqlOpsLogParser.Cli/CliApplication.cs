@@ -7,7 +7,8 @@ public sealed class CliApplication(
     ProfilesCommandHandler profilesCommandHandler,
     ErrorLogCommandHandler errorLogCommandHandler,
     JobsCommandHandler jobsCommandHandler,
-    TimelineCommandHandler timelineCommandHandler)
+    TimelineCommandHandler timelineCommandHandler,
+    ReportCommandHandler reportCommandHandler)
 {
     public async Task<int> RunAsync(string[] args)
     {
@@ -25,6 +26,7 @@ public sealed class CliApplication(
             "errorlog" => await errorLogCommandHandler.HandleAsync(args),
             "jobs" => await jobsCommandHandler.HandleAsync(args),
             "timeline" => await timelineCommandHandler.HandleAsync(args),
+            "report" => await reportCommandHandler.HandleAsync(args),
             _ => HandleUnknownCommand()
         };
     }
@@ -63,5 +65,8 @@ AnsiConsole.MarkupLine("  [green]timeline --name LOCALDEV --hours 24[/]");
 AnsiConsole.MarkupLine("  [green]timeline --name LOCALDEV --from \"2026-03-26 00:00\" --to \"2026-03-26 23:59\"[/]");
 AnsiConsole.MarkupLine("  [green]timeline --name LOCALDEV --hours 24 --only-errors[/]");
 AnsiConsole.MarkupLine("  [green]timeline --name LOCALDEV --hours 24 --source ErrorLog[/]");
+AnsiConsole.MarkupLine("  [green]report nightly --name LOCALDEV --hours 24[/]");
+AnsiConsole.MarkupLine("  [green]report incident --name LOCALDEV --contains \"MaintenancePlan.Subplan_2\" --hours 24[/]");
+
     }
 }

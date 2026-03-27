@@ -38,6 +38,8 @@ services.AddSingleton<IReportWriter, JsonReportWriter>();
 services.AddSingleton<IReportWriter, CsvReportWriter>();
 services.AddSingleton<IReportWriterFactory, ReportWriterFactory>();
 services.AddSingleton<IReportService, ReportService>();
+services.AddSingleton<IOperationalReportService, OperationalReportService>();
+services.AddSingleton<ReportCommandHandler>();
         services.AddSingleton<CliApplication>();
 
         return services;
