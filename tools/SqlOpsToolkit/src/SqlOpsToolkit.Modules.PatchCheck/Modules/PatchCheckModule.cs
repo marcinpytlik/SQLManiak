@@ -1,4 +1,5 @@
 ﻿using SqlOpsToolkit.Core.Abstractions;
+using SqlOpsToolkit.Core.Enums;
 using SqlOpsToolkit.Infrastructure.Configuration;
 using SqlOpsToolkit.Infrastructure.Sql;
 using SqlOpsToolkit.Modules.PatchCheck.Commands;
@@ -30,13 +31,18 @@ public sealed class PatchCheckModule : IToolModule
 
             var options = PatchCheckOptionsParser.Parse(args.Skip(1).ToArray());
 
-            var loader = new JsonConnectionProfileLoader();
-            var validator = new ConnectionProfileValidator();
-            var connectionStringFactory = new SqlConnectionStringFactory();
-            var tester = new SqlConnectionTester(connectionStringFactory);
-            var metadataReader = new SqlServerMetadataReader(connectionStringFactory);
+            var profileLoader = new JsonConnectionProfileLoader();
+            var profileValidator = new ConnectionProfileValidator();
+            var baselineLoader = new JsonPatchBaselineLoader();
 
-            var profilesFile = await loader.LoadAsync(options.ProfilesFile, cancellationToken);
+            var connectionStringFactory = new SqlConnectionStringFactory();
+            var connectionTester = new SqlConnectionTester(connectionStringFactory);
+            var metadataReader = new SqlServerMetadataReader(connectionStringFactory);
+            var evaluator = new PatchComplianceEvaluator();
+
+            var profilesFile = await profileLoader.LoadAsync(options.ProfilesFile, cancellationToken);
+            var baseline = await baselineLoader.LoadAsync(options.BaselineFile, cancellationToken);
+
             var selectedProfiles = ConnectionProfileSelector.Select(
                 profilesFile.Profiles,
                 options.ProfileName,
@@ -50,7 +56,7 @@ public sealed class PatchCheckModule : IToolModule
 
             foreach (var profile in selectedProfiles)
             {
-                var validationErrors = validator.Validate(profile);
+                var validationErrors = profileValidator.Validate(profile);
 
                 if (validationErrors.Count > 0)
                 {
@@ -62,7 +68,7 @@ public sealed class PatchCheckModule : IToolModule
                     continue;
                 }
 
-                var connectionResult = await tester.TestAsync(profile, cancellationToken);
+                var connectionResult = await connectionTester.TestAsync(profile, cancellationToken);
 
                 if (!connectionResult.ConnectOk)
                 {
@@ -71,9 +77,19 @@ public sealed class PatchCheckModule : IToolModule
                 }
 
                 var metadata = await metadataReader.ReadAsync(profile, cancellationToken);
+                var compliance = evaluator.Evaluate(metadata, baseline);
+
+                var statusText = compliance.Status switch
+                {
+                    ComplianceStatus.Compliant => "COMPLIANT",
+                    ComplianceStatus.Outdated => "OUTDATED",
+                    ComplianceStatus.Unsupported => "UNSUPPORTED",
+                    ComplianceStatus.Error => "ERROR",
+                    _ => "UNKNOWN"
+                };
 
                 Console.WriteLine(
-                    $"[OK] {profile.Name} | {metadata.ServerName} | Version={metadata.ProductVersion} | Level={metadata.ProductLevel} | Edition={metadata.Edition} | Major={metadata.MajorVersion}");
+                    $"[{statusText}] {profile.Name} | {metadata.ServerName} | Detected={compliance.DetectedVersion} | Recommended={compliance.RecommendedBuild} | Label={compliance.RecommendedLabel}");
             }
 
             return 0;
@@ -88,6 +104,6 @@ public sealed class PatchCheckModule : IToolModule
     private static void ShowHelp()
     {
         Console.WriteLine("Użycie:");
-        Console.WriteLine("  sqlopstoolkit patch check --profiles-file <path> [--profile <name>] [--tag <tag>]");
+        Console.WriteLine("  sqlopstoolkit patch check --profiles-file <path> --baseline <path> [--profile <name>] [--tag <tag>]");
     }
 }

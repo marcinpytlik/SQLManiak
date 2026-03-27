@@ -5,6 +5,7 @@ public static class PatchCheckOptionsParser
     public static PatchCheckOptions Parse(string[] args)
     {
         var profilesFile = @".\profiles\sample-profiles.json";
+        var baselineFile = @".\baseline\sqlserver-patch-baseline.sample.json";
         string? profileName = null;
         string? tag = null;
 
@@ -15,6 +16,12 @@ public static class PatchCheckOptionsParser
             if (string.Equals(arg, "--profiles-file", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
             {
                 profilesFile = args[++i];
+                continue;
+            }
+
+            if (string.Equals(arg, "--baseline", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
+            {
+                baselineFile = args[++i];
                 continue;
             }
 
@@ -34,6 +41,7 @@ public static class PatchCheckOptionsParser
         return new PatchCheckOptions
         {
             ProfilesFile = profilesFile,
+            BaselineFile = baselineFile,
             ProfileName = profileName,
             Tag = tag
         };
