@@ -7,6 +7,8 @@ using SqlOpsLogParser.Infrastructure.Configuration;
 using SqlOpsLogParser.Infrastructure.Connection;
 using SqlOpsLogParser.Infrastructure.Repositories;
 using SqlOpsLogParser.Infrastructure.Services;
+using SqlOpsLogParser.Reporting;
+
 
 namespace SqlOpsLogParser.Cli.Composition;
 
@@ -31,6 +33,11 @@ public static class ServiceCollectionExtensions
 services.AddSingleton<JobsCommandHandler>();
 services.AddSingleton<ITimelineService, TimelineService>();
 services.AddSingleton<TimelineCommandHandler>();
+services.AddSingleton<IReportWriter, MarkdownReportWriter>();
+services.AddSingleton<IReportWriter, JsonReportWriter>();
+services.AddSingleton<IReportWriter, CsvReportWriter>();
+services.AddSingleton<IReportWriterFactory, ReportWriterFactory>();
+services.AddSingleton<IReportService, ReportService>();
         services.AddSingleton<CliApplication>();
 
         return services;

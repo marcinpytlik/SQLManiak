@@ -7,7 +7,8 @@ namespace SqlOpsLogParser.Cli.Commands;
 
 public sealed class TimelineCommandHandler(
     IProfileProvider profileProvider,
-    ITimelineService timelineService)
+    ITimelineService timelineService,
+    IReportService reportService)
 {
     public async Task<int> HandleAsync(string[] args)
     {
@@ -38,8 +39,12 @@ public sealed class TimelineCommandHandler(
         var topValue = GetOptionValue(args, "--top");
         var sourceValue = GetOptionValue(args, "--source");
         var containsValue = GetOptionValue(args, "--contains");
+        var outValue = GetOptionValue(args, "--out");
+        var formatValue = GetOptionValue(args, "--format");
 
-        request.OnlyErrors = args.Any(x => string.Equals(x, "--only-errors", StringComparison.OrdinalIgnoreCase));
+        request.OnlyErrors = args.Any(x =>
+            string.Equals(x, "--only-errors", StringComparison.OrdinalIgnoreCase));
+
         request.ContainsText = containsValue;
 
         if (!string.IsNullOrWhiteSpace(hoursValue))
@@ -116,6 +121,38 @@ public sealed class TimelineCommandHandler(
             return 3;
         }
 
+        if (!string.IsNullOrWhiteSpace(outValue))
+        {
+            if (!TryParseFormat(formatValue, out var format))
+            {
+                AnsiConsole.MarkupLine("[red]Nieprawidłowa wartość parametru --format[/]");
+                return 4;
+            }
+
+            await reportService.WriteAsync(
+                events,
+                new ReportRequest
+                {
+                    OutputPath = outValue,
+                    Format = format,
+                    Title = "Timeline Report",
+                    Metadata = new Dictionary<string, string>
+                    {
+                        ["Profile"] = profile.Name,
+                        ["Hours"] = request.Hours?.ToString() ?? string.Empty,
+                        ["From"] = request.From?.ToString("yyyy-MM-dd HH:mm:ss") ?? string.Empty,
+                        ["To"] = request.To?.ToString("yyyy-MM-dd HH:mm:ss") ?? string.Empty,
+                        ["OnlyErrors"] = request.OnlyErrors.ToString(),
+                        ["SourceFilter"] = request.SourceFilter?.ToString() ?? string.Empty,
+                        ["Contains"] = request.ContainsText ?? string.Empty,
+                        ["Top"] = request.Top?.ToString() ?? string.Empty
+                    }
+                });
+
+            AnsiConsole.MarkupLine($"[green]Raport zapisany do:[/] {Markup.Escape(outValue)}");
+            return 0;
+        }
+
         var table = new Table().Border(TableBorder.Rounded);
         table.AddColumn("EventTime");
         table.AddColumn("Source");
@@ -137,6 +174,24 @@ public sealed class TimelineCommandHandler(
 
         AnsiConsole.Write(table);
         return 0;
+    }
+
+    private static bool TryParseFormat(string? value, out ReportFormat format)
+    {
+        format = ReportFormat.Markdown;
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return true;
+        }
+
+        if (string.Equals(value, "md", StringComparison.OrdinalIgnoreCase))
+        {
+            format = ReportFormat.Markdown;
+            return true;
+        }
+
+        return Enum.TryParse(value, true, out format);
     }
 
     private static string? GetOptionValue(string[] args, string optionName)

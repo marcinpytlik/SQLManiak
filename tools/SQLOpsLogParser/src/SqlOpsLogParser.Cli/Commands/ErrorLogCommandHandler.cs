@@ -1,4 +1,5 @@
 using Spectre.Console;
+using SqlOpsLogParser.Core.Enums;
 using SqlOpsLogParser.Core.Interfaces;
 using SqlOpsLogParser.Core.Models;
 
@@ -7,7 +8,8 @@ namespace SqlOpsLogParser.Cli.Commands;
 public sealed class ErrorLogCommandHandler(
     IProfileProvider profileProvider,
     IErrorLogRepository errorLogRepository,
-    IErrorLogReader errorLogReader)
+    IErrorLogReader errorLogReader,
+    IReportService reportService)
 {
     public async Task<int> HandleAsync(string[] args)
     {
@@ -68,10 +70,10 @@ public sealed class ErrorLogCommandHandler(
         foreach (var log in logs)
         {
             table.AddRow(
-                log.ArchiveNumber.ToString(),
-                log.LogDate.ToString("yyyy-MM-dd HH:mm:ss"),
-                log.LogFileSizeBytes.ToString(),
-                FormatMegabytes(log.LogFileSizeBytes));
+                Markup.Escape(log.ArchiveNumber.ToString()),
+                Markup.Escape(log.LogDate.ToString("yyyy-MM-dd HH:mm:ss")),
+                Markup.Escape(log.LogFileSizeBytes.ToString()),
+                Markup.Escape(FormatMegabytes(log.LogFileSizeBytes)));
         }
 
         AnsiConsole.Write(table);
@@ -81,8 +83,7 @@ public sealed class ErrorLogCommandHandler(
     private async Task<int> HandleReadAsync(string[] args)
     {
         var name = GetOptionValue(args, "--name");
-var severityValue = GetOptionValue(args, "--severity");
-var categoryValue = GetOptionValue(args, "--category");
+
         if (string.IsNullOrWhiteSpace(name))
         {
             AnsiConsole.MarkupLine("[red]Brak parametru --name[/]");
@@ -102,6 +103,10 @@ var categoryValue = GetOptionValue(args, "--category");
         var fromValue = GetOptionValue(args, "--from");
         var toValue = GetOptionValue(args, "--to");
         var topValue = GetOptionValue(args, "--top");
+        var severityValue = GetOptionValue(args, "--severity");
+        var categoryValue = GetOptionValue(args, "--category");
+        var outValue = GetOptionValue(args, "--out");
+        var formatValue = GetOptionValue(args, "--format");
 
         var request = new ErrorLogReadRequest
         {
@@ -109,33 +114,6 @@ var categoryValue = GetOptionValue(args, "--category");
             LogNumber = 0,
             ContainsText = contains
         };
-if (!string.IsNullOrWhiteSpace(severityValue))
-{
-    if (!Enum.TryParse<SqlOpsLogParser.Core.Enums.EventSeverity>(
-        severityValue,
-        ignoreCase: true,
-        out var severity))
-    {
-        AnsiConsole.MarkupLine("[red]Nieprawidłowa wartość parametru --severity[/]");
-        return 4;
-    }
-
-    request.SeverityFilter = severity;
-}
-
-if (!string.IsNullOrWhiteSpace(categoryValue))
-{
-    if (!Enum.TryParse<SqlOpsLogParser.Core.Enums.EventCategory>(
-        categoryValue,
-        ignoreCase: true,
-        out var category))
-    {
-        AnsiConsole.MarkupLine("[red]Nieprawidłowa wartość parametru --category[/]");
-        return 4;
-    }
-
-    request.CategoryFilter = category;
-}
 
         if (!string.IsNullOrWhiteSpace(logValue))
         {
@@ -187,6 +165,28 @@ if (!string.IsNullOrWhiteSpace(categoryValue))
             request.Top = top;
         }
 
+        if (!string.IsNullOrWhiteSpace(severityValue))
+        {
+            if (!Enum.TryParse<EventSeverity>(severityValue, true, out var severity))
+            {
+                AnsiConsole.MarkupLine("[red]Nieprawidłowa wartość parametru --severity[/]");
+                return 4;
+            }
+
+            request.SeverityFilter = severity;
+        }
+
+        if (!string.IsNullOrWhiteSpace(categoryValue))
+        {
+            if (!Enum.TryParse<EventCategory>(categoryValue, true, out var category))
+            {
+                AnsiConsole.MarkupLine("[red]Nieprawidłowa wartość parametru --category[/]");
+                return 4;
+            }
+
+            request.CategoryFilter = category;
+        }
+
         var entries = await errorLogReader.ReadAsync(request);
 
         if (entries.Count == 0)
@@ -195,24 +195,75 @@ if (!string.IsNullOrWhiteSpace(categoryValue))
             return 3;
         }
 
+        if (!string.IsNullOrWhiteSpace(outValue))
+        {
+            if (!TryParseFormat(formatValue, out var format))
+            {
+                AnsiConsole.MarkupLine("[red]Nieprawidłowa wartość parametru --format[/]");
+                return 4;
+            }
+
+            await reportService.WriteAsync(
+                entries,
+                new ReportRequest
+                {
+                    OutputPath = outValue,
+                    Format = format,
+                    Title = "ErrorLog Report",
+                    Metadata = new Dictionary<string, string>
+                    {
+                        ["Profile"] = profile.Name,
+                        ["LogNumber"] = request.LogNumber.ToString(),
+                        ["Contains"] = request.ContainsText ?? string.Empty,
+                        ["From"] = request.From?.ToString("yyyy-MM-dd HH:mm:ss") ?? string.Empty,
+                        ["To"] = request.To?.ToString("yyyy-MM-dd HH:mm:ss") ?? string.Empty,
+                        ["Top"] = request.Top?.ToString() ?? string.Empty,
+                        ["Severity"] = request.SeverityFilter?.ToString() ?? string.Empty,
+                        ["Category"] = request.CategoryFilter?.ToString() ?? string.Empty
+                    }
+                });
+
+            AnsiConsole.MarkupLine($"[green]Raport zapisany do:[/] {Markup.Escape(outValue)}");
+            return 0;
+        }
+
         var table = new Table().Border(TableBorder.Rounded);
-table.AddColumn("LogDate");
-table.AddColumn("Severity");
-table.AddColumn("Category");
-table.AddColumn("ProcessInfo");
-table.AddColumn("Text");
+        table.AddColumn("LogDate");
+        table.AddColumn("Severity");
+        table.AddColumn("Category");
+        table.AddColumn("ProcessInfo");
+        table.AddColumn("Text");
+
         foreach (var entry in entries)
-{
-    table.AddRow(
-        Markup.Escape(entry.LogDate.ToString("yyyy-MM-dd HH:mm:ss")),
-        Markup.Escape(entry.Severity.ToString()),
-        Markup.Escape(entry.Category.ToString()),
-        Markup.Escape(entry.ProcessInfo),
-        Markup.Escape(Truncate(entry.Text, 120)));
-}
+        {
+            table.AddRow(
+                Markup.Escape(entry.LogDate.ToString("yyyy-MM-dd HH:mm:ss")),
+                Markup.Escape(entry.Severity.ToString()),
+                Markup.Escape(entry.Category.ToString()),
+                Markup.Escape(entry.ProcessInfo),
+                Markup.Escape(Truncate(entry.Text, 120)));
+        }
 
         AnsiConsole.Write(table);
         return 0;
+    }
+
+    private static bool TryParseFormat(string? value, out ReportFormat format)
+    {
+        format = ReportFormat.Markdown;
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return true;
+        }
+
+        if (string.Equals(value, "md", StringComparison.OrdinalIgnoreCase))
+        {
+            format = ReportFormat.Markdown;
+            return true;
+        }
+
+        return Enum.TryParse(value, true, out format);
     }
 
     private static string FormatMegabytes(long bytes)
@@ -247,7 +298,11 @@ table.AddColumn("Text");
         AnsiConsole.MarkupLine("  [green]errorlog read --name LOCALDEV --log 1[/]");
         AnsiConsole.MarkupLine("  [green]errorlog read --name LOCALDEV --contains \"Login failed\"[/]");
         AnsiConsole.MarkupLine("  [green]errorlog read --name LOCALDEV --top 50[/]");
+        AnsiConsole.MarkupLine("  [green]errorlog read --name LOCALDEV --severity Error[/]");
+        AnsiConsole.MarkupLine("  [green]errorlog read --name LOCALDEV --category ExtendedEvents[/]");
         AnsiConsole.MarkupLine("  [green]errorlog read --name LOCALDEV --from \"2026-03-22 00:00\" --to \"2026-03-22 23:59\"[/]");
+        AnsiConsole.MarkupLine("  [green]errorlog read --name LOCALDEV --top 50 --format json --out \".\\reports\\errorlog.json\"[/]");
+        AnsiConsole.MarkupLine("  [green]errorlog read --name LOCALDEV --category ExtendedEvents --top 20 --format md --out \".\\reports\\errorlog-xe.md\"[/]");
     }
 
     private static string? GetOptionValue(string[] args, string optionName)
