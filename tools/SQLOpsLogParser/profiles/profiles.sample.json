@@ -1,0 +1,24 @@
+{
+  "profiles": [
+    {
+      "name": "LOCALDEV_WINDOWS",
+      "server": "localhost",
+      "database": "master",
+      "authentication": "Windows",
+      "encrypt": true,
+      "trustServerCertificate": true,
+      "connectTimeoutSeconds": 15
+    },
+    {
+      "name": "LOCALDEV_SQL",
+      "server": "localhost",
+      "database": "master",
+      "authentication": "Sql",
+      "userName": "sa",
+      "password": "YourPasswordHere",
+      "encrypt": true,
+      "trustServerCertificate": true,
+      "connectTimeoutSeconds": 15
+    }
+  ]
+}

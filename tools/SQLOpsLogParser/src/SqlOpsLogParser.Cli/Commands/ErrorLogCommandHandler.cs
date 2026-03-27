@@ -2,7 +2,7 @@ using Spectre.Console;
 using SqlOpsLogParser.Core.Enums;
 using SqlOpsLogParser.Core.Interfaces;
 using SqlOpsLogParser.Core.Models;
-
+using SqlOpsLogParser.Core.Abstractions;
 namespace SqlOpsLogParser.Cli.Commands;
 
 public sealed class ErrorLogCommandHandler(
@@ -16,7 +16,7 @@ public sealed class ErrorLogCommandHandler(
         if (args.Length < 2)
         {
             ShowHelp();
-            return 4;
+            return ExitCodes.ValidationError;;
         }
 
         var subcommand = args[1].ToLowerInvariant();
@@ -36,7 +36,7 @@ public sealed class ErrorLogCommandHandler(
         if (string.IsNullOrWhiteSpace(name))
         {
             AnsiConsole.MarkupLine("[red]Brak parametru --name[/]");
-            return 4;
+            return ExitCodes.ValidationError;;
         }
 
         var profile = profileProvider.GetByName(name);
@@ -44,7 +44,7 @@ public sealed class ErrorLogCommandHandler(
         if (profile is null)
         {
             AnsiConsole.MarkupLine($"[red]Nie znaleziono profilu:[/] {name}");
-            return 3;
+            return ExitCodes.NoData;;
         }
 
         var logs = await errorLogRepository.GetErrorLogsAsync(profile);
@@ -52,7 +52,7 @@ public sealed class ErrorLogCommandHandler(
         if (logs.Count == 0)
         {
             AnsiConsole.MarkupLine("[yellow]Brak wpisów z listą errorlogów.[/]");
-            return 3;
+            return ExitCodes.NoData;;
         }
 
         var topValue = GetOptionValue(args, "--top");
@@ -77,7 +77,7 @@ public sealed class ErrorLogCommandHandler(
         }
 
         AnsiConsole.Write(table);
-        return 0;
+        return ExitCodes.Success;;
     }
 
     private async Task<int> HandleReadAsync(string[] args)
@@ -87,7 +87,7 @@ public sealed class ErrorLogCommandHandler(
         if (string.IsNullOrWhiteSpace(name))
         {
             AnsiConsole.MarkupLine("[red]Brak parametru --name[/]");
-            return 4;
+            return ExitCodes.ValidationError;;
         }
 
         var profile = profileProvider.GetByName(name);
@@ -95,7 +95,7 @@ public sealed class ErrorLogCommandHandler(
         if (profile is null)
         {
             AnsiConsole.MarkupLine($"[red]Nie znaleziono profilu:[/] {name}");
-            return 3;
+            return ExitCodes.NoData;;
         }
 
         var logValue = GetOptionValue(args, "--log");
@@ -120,7 +120,7 @@ public sealed class ErrorLogCommandHandler(
             if (!int.TryParse(logValue, out var logNumber) || logNumber < 0)
             {
                 AnsiConsole.MarkupLine("[red]Nieprawidłowa wartość parametru --log[/]");
-                return 4;
+                return ExitCodes.ValidationError;;
             }
 
             request.LogNumber = logNumber;
@@ -131,7 +131,7 @@ public sealed class ErrorLogCommandHandler(
             if (!DateTime.TryParse(fromValue, out var fromDate))
             {
                 AnsiConsole.MarkupLine("[red]Nieprawidłowa wartość parametru --from[/]");
-                return 4;
+                return ExitCodes.ValidationError;;
             }
 
             request.From = fromDate;
@@ -142,7 +142,7 @@ public sealed class ErrorLogCommandHandler(
             if (!DateTime.TryParse(toValue, out var toDate))
             {
                 AnsiConsole.MarkupLine("[red]Nieprawidłowa wartość parametru --to[/]");
-                return 4;
+                return ExitCodes.ValidationError;;
             }
 
             request.To = toDate;
@@ -151,7 +151,7 @@ public sealed class ErrorLogCommandHandler(
         if (request.From.HasValue && request.To.HasValue && request.From > request.To)
         {
             AnsiConsole.MarkupLine("[red]Parametr --from nie może być większy niż --to[/]");
-            return 4;
+            return ExitCodes.ValidationError;;
         }
 
         if (!string.IsNullOrWhiteSpace(topValue))
@@ -159,7 +159,7 @@ public sealed class ErrorLogCommandHandler(
             if (!int.TryParse(topValue, out var top) || top <= 0)
             {
                 AnsiConsole.MarkupLine("[red]Nieprawidłowa wartość parametru --top[/]");
-                return 4;
+                return ExitCodes.ValidationError;;
             }
 
             request.Top = top;
@@ -170,7 +170,7 @@ public sealed class ErrorLogCommandHandler(
             if (!Enum.TryParse<EventSeverity>(severityValue, true, out var severity))
             {
                 AnsiConsole.MarkupLine("[red]Nieprawidłowa wartość parametru --severity[/]");
-                return 4;
+                return ExitCodes.ValidationError;;
             }
 
             request.SeverityFilter = severity;
@@ -181,7 +181,7 @@ public sealed class ErrorLogCommandHandler(
             if (!Enum.TryParse<EventCategory>(categoryValue, true, out var category))
             {
                 AnsiConsole.MarkupLine("[red]Nieprawidłowa wartość parametru --category[/]");
-                return 4;
+                return ExitCodes.ValidationError;;
             }
 
             request.CategoryFilter = category;
@@ -192,7 +192,7 @@ public sealed class ErrorLogCommandHandler(
         if (entries.Count == 0)
         {
             AnsiConsole.MarkupLine("[yellow]Brak wpisów w logu dla podanych filtrów.[/]");
-            return 3;
+            return ExitCodes.NoData;;
         }
 
         if (!string.IsNullOrWhiteSpace(outValue))
@@ -200,7 +200,7 @@ public sealed class ErrorLogCommandHandler(
             if (!TryParseFormat(formatValue, out var format))
             {
                 AnsiConsole.MarkupLine("[red]Nieprawidłowa wartość parametru --format[/]");
-                return 4;
+                return ExitCodes.ValidationError;;
             }
 
             await reportService.WriteAsync(
@@ -224,7 +224,7 @@ public sealed class ErrorLogCommandHandler(
                 });
 
             AnsiConsole.MarkupLine($"[green]Raport zapisany do:[/] {Markup.Escape(outValue)}");
-            return 0;
+            return ExitCodes.Success;;
         }
 
         var table = new Table().Border(TableBorder.Rounded);
@@ -245,7 +245,7 @@ public sealed class ErrorLogCommandHandler(
         }
 
         AnsiConsole.Write(table);
-        return 0;
+        return ExitCodes.Success;;
     }
 
     private static bool TryParseFormat(string? value, out ReportFormat format)
@@ -286,7 +286,7 @@ public sealed class ErrorLogCommandHandler(
     {
         AnsiConsole.MarkupLine("[red]Nieznana subkomenda errorlog[/]");
         ShowHelp();
-        return 4;
+        return ExitCodes.ValidationError;;
     }
 
     private static void ShowHelp()
