@@ -11,7 +11,7 @@ Architektura `SqlOpsLogParser` została zaprojektowana jako **modularne narzędz
 - generowanie raportów operacyjnych,
 - eksport wyników do plików.
 
-To nie jest aplikacja webowa ani UI desktopowe. To jest **narzędzie konsolowe**.
+To jest **narzędzie konsolowe**.
 
 ## 2. Główne założenia architektoniczne
 

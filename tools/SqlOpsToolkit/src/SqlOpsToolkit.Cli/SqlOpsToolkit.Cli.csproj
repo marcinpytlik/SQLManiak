@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\SqlOpsToolkit.Core\SqlOpsToolkit.Core.csproj" />
+    <ProjectReference Include="..\SqlOpsToolkit.Infrastructure\SqlOpsToolkit.Infrastructure.csproj" />
+    <ProjectReference Include="..\SqlOpsToolkit.Modules.PatchCheck\SqlOpsToolkit.Modules.PatchCheck.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

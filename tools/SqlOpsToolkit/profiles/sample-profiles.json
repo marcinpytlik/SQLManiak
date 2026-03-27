@@ -1,0 +1,28 @@
+{
+  "profiles": [
+    {
+      "name": "sql2022-prod-01",
+      "server": "SQL01",
+      "port": 1433,
+      "database": "master",
+      "authenticationMode": "Windows",
+      "user": "",
+      "password": "",
+      "encrypt": true,
+      "trustServerCertificate": true,
+      "tags": [ "prod", "sql2022" ]
+    },
+    {
+      "name": "sql2019-lab-01",
+      "server": "SQLLAB01",
+      "port": 1433,
+      "database": "master",
+      "authenticationMode": "Sql",
+      "user": "toolkit_user",
+      "password": "CHANGE_ME",
+      "encrypt": true,
+      "trustServerCertificate": true,
+      "tags": [ "lab", "sql2019" ]
+    }
+  ]
+}

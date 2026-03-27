@@ -1,0 +1,37 @@
+{
+  "entries": [
+    {
+      "majorVersion": 16,
+      "productName": "SQL Server 2022",
+      "supported": true,
+      "recommendedBuild": "16.0.4185.3",
+      "recommendedLabel": "CU24",
+      "recommendedReleased": "2026-03-10",
+      "minimumSupportedBuild": "16.0.1000.6",
+      "supportState": "Supported",
+      "notes": "Docelowy baseline dla środowisk SQL Server 2022."
+    },
+    {
+      "majorVersion": 15,
+      "productName": "SQL Server 2019",
+      "supported": true,
+      "recommendedBuild": "15.0.xxxx.x",
+      "recommendedLabel": "LatestApproved",
+      "recommendedReleased": "2026-03-01",
+      "minimumSupportedBuild": "15.0.2000.5",
+      "supportState": "Supported",
+      "notes": "Przykładowy wpis."
+    },
+    {
+      "majorVersion": 13,
+      "productName": "SQL Server 2016",
+      "supported": false,
+      "recommendedBuild": "",
+      "recommendedLabel": "",
+      "recommendedReleased": "",
+      "minimumSupportedBuild": "",
+      "supportState": "Unsupported",
+      "notes": "Poza wspieranym baseline organizacji."
+    }
+  ]
+}

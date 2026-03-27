@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SqlOpsToolkit.Cli/SqlOpsToolkit.Cli.csproj" />
+    <Project Path="src/SqlOpsToolkit.Core/SqlOpsToolkit.Core.csproj" />
+    <Project Path="src/SqlOpsToolkit.Infrastructure/SqlOpsToolkit.Infrastructure.csproj" />
+    <Project Path="src/SqlOpsToolkit.Modules.PatchCheck/SqlOpsToolkit.Modules.PatchCheck.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SqlOpsToolkit.Core.Tests/SqlOpsToolkit.Core.Tests.csproj" />
+    <Project Path="tests/SqlOpsToolkit.Modules.PatchCheck.Tests/SqlOpsToolkit.Modules.PatchCheck.Tests.csproj" />
+  </Folder>
+</Solution>
