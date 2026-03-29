@@ -1,0 +1,6334 @@
+==================================================
+START: 2026-03-29 00:13:43
+Iterations=360 DelaySeconds=60
+==================================================
+[2026-03-29 00:13:43] Snapshot 1 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:13:44.139149
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 13819
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.45920000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 189490256
+PageLifeExpectancy: 3672
+[2026-03-29 00:14:44] Snapshot 2 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:14:44.953169
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 13836
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.74520000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 189611804
+PageLifeExpectancy: 3732
+[2026-03-29 00:15:45] Snapshot 3 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:15:45.814921
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 13853
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 8.14940000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 189732044
+PageLifeExpectancy: 3793
+[2026-03-29 00:16:45] Snapshot 4 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:16:46.618469
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 13876
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 15.42250000
+AvgLogicalReads: 283.375000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 189857448
+PageLifeExpectancy: 3853
+[2026-03-29 00:17:46] Snapshot 5 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:17:47.383834
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 13893
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.86200000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 189977680
+PageLifeExpectancy: 3914
+[2026-03-29 00:18:47] Snapshot 6 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:18:48.228371
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 13910
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.94760000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 190097934
+PageLifeExpectancy: 3975
+[2026-03-29 00:19:48] Snapshot 7 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:19:48.993776
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 13927
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.75820000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 190218271
+PageLifeExpectancy: 4035
+[2026-03-29 00:20:49] Snapshot 8 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:20:49.792572
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 13944
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.85720000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 190338613
+PageLifeExpectancy: 4097
+[2026-03-29 00:21:49] Snapshot 9 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:21:51.861884
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 13965
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 24.15440000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 190462866
+PageLifeExpectancy: 4159
+[2026-03-29 00:22:51] Snapshot 10 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:22:52.909414
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 13982
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.76140000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 190583938
+PageLifeExpectancy: 4220
+[2026-03-29 00:23:52] Snapshot 11 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:23:53.672560
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 13999
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.60260000
+AvgLogicalReads: 16.200000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 190704160
+PageLifeExpectancy: 4281
+[2026-03-29 00:24:53] Snapshot 12 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:24:55.137147
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14016
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 71.09940000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 190825611
+PageLifeExpectancy: 4343
+[2026-03-29 00:25:55] Snapshot 13 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:25:56.186012
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14033
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 11.23660000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 190946150
+PageLifeExpectancy: 4403
+[2026-03-29 00:26:56] Snapshot 14 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:26:57.117372
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14054
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 14.41333333
+AvgLogicalReads: 232.500000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 191068351
+PageLifeExpectancy: 4464
+[2026-03-29 00:27:57] Snapshot 15 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:27:58.183622
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14071
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 13.93980000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 191208113
+PageLifeExpectancy: 4526
+[2026-03-29 00:28:58] Snapshot 16 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:28:59.035828
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14088
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.79880000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 191314313
+PageLifeExpectancy: 4586
+[2026-03-29 00:29:59] Snapshot 17 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:29:59.811708
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14105
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.88960000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 191451280
+PageLifeExpectancy: 4647
+[2026-03-29 00:30:59] Snapshot 18 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:31:00.677550
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14122
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 14.02100000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 191557598
+PageLifeExpectancy: 4708
+[2026-03-29 00:32:00] Snapshot 19 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:32:01.627837
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14143
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 11.25320000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 191692219
+PageLifeExpectancy: 4768
+[2026-03-29 00:33:02] Snapshot 20 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:33:06.208774
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14160
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 17.49820000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 191830463
+PageLifeExpectancy: 4833
+[2026-03-29 00:34:06] Snapshot 21 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:34:07.056141
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14177
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.67880000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 191952471
+PageLifeExpectancy: 4894
+[2026-03-29 00:35:07] Snapshot 22 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:35:07.875216
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14194
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 12.05180000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 192072732
+PageLifeExpectancy: 4954
+[2026-03-29 00:36:08] Snapshot 23 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:36:08.703733
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14211
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 8.19260000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 192198026
+PageLifeExpectancy: 5016
+[2026-03-29 00:37:08] Snapshot 24 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:37:09.467793
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14232
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 8.51820000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 192318281
+PageLifeExpectancy: 5077
+[2026-03-29 00:38:09] Snapshot 25 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:38:10.457978
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14249
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 10.66940000
+AvgLogicalReads: 16.200000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 192438592
+PageLifeExpectancy: 5137
+[2026-03-29 00:39:10] Snapshot 26 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:39:11.422492
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14266
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.89860000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 192559599
+PageLifeExpectancy: 5198
+[2026-03-29 00:40:11] Snapshot 27 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:40:12.153018
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14283
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 9.06980000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 192682262
+PageLifeExpectancy: 5259
+[2026-03-29 00:41:12] Snapshot 28 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:41:12.846071
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14430
+UserConnections: 7
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 79.98468421
+AvgLogicalReads: 1517.526315
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 192805307
+PageLifeExpectancy: 5320
+[2026-03-29 00:42:12] Snapshot 29 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:42:13.487674
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14451
+UserConnections: 7
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 13.17183333
+AvgLogicalReads: 206.166666
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 192925677
+PageLifeExpectancy: 5380
+[2026-03-29 00:43:13] Snapshot 30 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:43:14.146322
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14468
+UserConnections: 7
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.83860000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 193055818
+PageLifeExpectancy: 5441
+[2026-03-29 00:44:14] Snapshot 31 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:44:14.800997
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14485
+UserConnections: 7
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.14260000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 193181149
+PageLifeExpectancy: 5502
+[2026-03-29 00:45:14] Snapshot 32 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:45:15.568278
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14504
+UserConnections: 7
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.09733333
+AvgLogicalReads: 194.500000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 193301420
+PageLifeExpectancy: 5562
+[2026-03-29 00:46:15] Snapshot 33 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:46:16.272945
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14521
+UserConnections: 7
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.07240000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 193421655
+PageLifeExpectancy: 5623
+[2026-03-29 00:47:16] Snapshot 34 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:47:16.942629
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14542
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.17200000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 193541891
+PageLifeExpectancy: 5683
+[2026-03-29 00:48:17] Snapshot 35 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:48:17.614436
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14559
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.63540000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 193662162
+PageLifeExpectancy: 5744
+[2026-03-29 00:49:17] Snapshot 36 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:49:18.283198
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14576
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.33120000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 193782501
+PageLifeExpectancy: 5805
+[2026-03-29 00:50:18] Snapshot 37 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:50:18.932827
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14593
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.29420000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 193902771
+PageLifeExpectancy: 5866
+[2026-03-29 00:51:18] Snapshot 38 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:51:19.549949
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14610
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 2.73600000
+AvgLogicalReads: 89.714285
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 194022965
+PageLifeExpectancy: 5927
+[2026-03-29 00:52:19] Snapshot 39 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:52:20.214163
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14631
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 16.25650000
+AvgLogicalReads: 206.166666
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 194148227
+PageLifeExpectancy: 5988
+[2026-03-29 00:53:20] Snapshot 40 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:53:20.966941
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14648
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.27960000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 194268444
+PageLifeExpectancy: 6048
+[2026-03-29 00:54:21] Snapshot 41 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:54:21.641848
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14667
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.87000000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 194388843
+PageLifeExpectancy: 6109
+[2026-03-29 00:55:21] Snapshot 42 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:55:22.306175
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14684
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.58840000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 194509124
+PageLifeExpectancy: 6169
+[2026-03-29 00:56:22] Snapshot 43 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:56:22.977593
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14701
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 3.40610000
+AvgLogicalReads: 117.200000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 194629373
+PageLifeExpectancy: 6230
+[2026-03-29 00:57:23] Snapshot 44 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:57:23.646230
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14722
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.08080000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 194749641
+PageLifeExpectancy: 6291
+[2026-03-29 00:58:23] Snapshot 45 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:58:24.319195
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14739
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 8.21700000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 194869996
+PageLifeExpectancy: 6351
+[2026-03-29 00:59:24] Snapshot 46 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 00:59:25.009731
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14756
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 8.56200000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 194990319
+PageLifeExpectancy: 6412
+[2026-03-29 01:00:25] Snapshot 47 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:00:25.676108
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14773
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.33260000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 195111493
+PageLifeExpectancy: 6473
+[2026-03-29 01:01:25] Snapshot 48 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:01:26.416582
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14790
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 12.14760000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 195236729
+PageLifeExpectancy: 6533
+[2026-03-29 01:02:26] Snapshot 49 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:02:27.075929
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14811
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.28360000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 195356958
+PageLifeExpectancy: 6594
+[2026-03-29 01:03:27] Snapshot 50 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:03:27.726910
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14828
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.62500000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 195477214
+PageLifeExpectancy: 6655
+[2026-03-29 01:04:27] Snapshot 51 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:04:28.346685
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14845
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 2.91085714
+AvgLogicalReads: 89.714285
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 195597428
+PageLifeExpectancy: 6715
+[2026-03-29 01:05:28] Snapshot 52 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:05:28.996201
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14862
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.05920000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 195717644
+PageLifeExpectancy: 6775
+[2026-03-29 01:06:29] Snapshot 53 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:06:29.769252
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14879
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.42820000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 195837961
+PageLifeExpectancy: 6837
+[2026-03-29 01:07:29] Snapshot 54 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:07:30.727988
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14900
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 10.80720000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 195973822
+PageLifeExpectancy: 6898
+[2026-03-29 01:08:30] Snapshot 55 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:08:31.453556
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14917
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.25600000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 196080714
+PageLifeExpectancy: 6958
+[2026-03-29 01:09:31] Snapshot 56 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:09:32.079981
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14934
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.26120000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 196221096
+PageLifeExpectancy: 7019
+[2026-03-29 01:10:32] Snapshot 57 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:10:32.945945
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14951
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 8.54600000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 196326268
+PageLifeExpectancy: 7080
+[2026-03-29 01:11:33] Snapshot 58 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:11:33.616607
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14972
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 14.33966666
+AvgLogicalReads: 206.166666
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 196461606
+PageLifeExpectancy: 7140
+[2026-03-29 01:12:33] Snapshot 59 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:12:34.260808
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 14989
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.17720000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 196566813
+PageLifeExpectancy: 7201
+[2026-03-29 01:13:34] Snapshot 60 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:13:34.941713
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15006
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.94740000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 196702090
+PageLifeExpectancy: 7262
+[2026-03-29 01:14:35] Snapshot 61 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:14:35.605365
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15023
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.44880000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 196807305
+PageLifeExpectancy: 7321
+[2026-03-29 01:15:35] Snapshot 62 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:15:38.656586
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15042
+UserConnections: 7
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 21.94216666
+AvgLogicalReads: 195.333333
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 196952458
+PageLifeExpectancy: 7385
+[2026-03-29 01:16:38] Snapshot 63 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:16:39.393128
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15175
+UserConnections: 7
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.97480000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 197059081
+PageLifeExpectancy: 7446
+[2026-03-29 01:17:39] Snapshot 64 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:17:40.078795
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15192
+UserConnections: 7
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.15300000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 197194294
+PageLifeExpectancy: 7507
+[2026-03-29 01:18:40] Snapshot 65 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:18:40.731589
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15209
+UserConnections: 7
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.13260000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 197299608
+PageLifeExpectancy: 7568
+[2026-03-29 01:19:40] Snapshot 66 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:19:41.439697
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15226
+UserConnections: 7
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.10280000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 197434757
+PageLifeExpectancy: 7629
+[2026-03-29 01:20:41] Snapshot 67 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:20:42.113066
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15243
+UserConnections: 7
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.17260000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 197540039
+PageLifeExpectancy: 7689
+[2026-03-29 01:21:42] Snapshot 68 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:21:42.761342
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15264
+UserConnections: 7
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 12.35287500
+AvgLogicalReads: 158.375000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 197675233
+PageLifeExpectancy: 7750
+[2026-03-29 01:22:42] Snapshot 69 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:22:43.425460
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15281
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.31940000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 197784407
+PageLifeExpectancy: 7811
+[2026-03-29 01:23:43] Snapshot 70 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:23:44.104284
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15298
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.56960000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 197921311
+PageLifeExpectancy: 7871
+[2026-03-29 01:24:44] Snapshot 71 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:24:44.742633
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15315
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.12920000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 198055922
+PageLifeExpectancy: 7932
+[2026-03-29 01:25:44] Snapshot 72 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:25:45.391595
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15332
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.04540000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 198176153
+PageLifeExpectancy: 7993
+[2026-03-29 01:26:45] Snapshot 73 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:26:46.051085
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15353
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 11.89966666
+AvgLogicalReads: 232.500000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 198296416
+PageLifeExpectancy: 8053
+[2026-03-29 01:27:46] Snapshot 74 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:27:46.698740
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15370
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.19200000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 198416673
+PageLifeExpectancy: 8114
+[2026-03-29 01:28:46] Snapshot 75 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:28:47.369811
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15387
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.05460000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 198536942
+PageLifeExpectancy: 8174
+[2026-03-29 01:29:47] Snapshot 76 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:29:48.235102
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15404
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.29360000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 198657182
+PageLifeExpectancy: 8235
+[2026-03-29 01:30:48] Snapshot 77 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:30:48.895565
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15421
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.61020000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 198782891
+PageLifeExpectancy: 8296
+[2026-03-29 01:31:48] Snapshot 78 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:31:49.570322
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15442
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 13.34716666
+AvgLogicalReads: 206.166666
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 198903215
+PageLifeExpectancy: 8357
+[2026-03-29 01:32:49] Snapshot 79 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:32:50.245258
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15459
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.81620000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 199023448
+PageLifeExpectancy: 8417
+[2026-03-29 01:33:50] Snapshot 80 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:33:50.895456
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15476
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.99620000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 199143735
+PageLifeExpectancy: 8478
+[2026-03-29 01:34:50] Snapshot 81 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:34:51.557866
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15493
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.88740000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 199264002
+PageLifeExpectancy: 8539
+[2026-03-29 01:35:51] Snapshot 82 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:35:52.467935
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15512
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.17900000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 199385223
+PageLifeExpectancy: 8600
+[2026-03-29 01:36:52] Snapshot 83 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:36:53.242209
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15533
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 17.51016666
+AvgLogicalReads: 232.500000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 199505489
+PageLifeExpectancy: 8660
+[2026-03-29 01:37:53] Snapshot 84 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:37:53.940792
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15550
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.28580000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 199625754
+PageLifeExpectancy: 8721
+[2026-03-29 01:38:54] Snapshot 85 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:38:54.613335
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15567
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.41180000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 199751092
+PageLifeExpectancy: 8781
+[2026-03-29 01:39:54] Snapshot 86 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:39:55.290603
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15584
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.11000000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 199871414
+PageLifeExpectancy: 8842
+[2026-03-29 01:40:55] Snapshot 87 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:40:55.943742
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15601
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.34020000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 199991719
+PageLifeExpectancy: 8903
+[2026-03-29 01:41:56] Snapshot 88 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:41:56.609446
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15622
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.09540000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 200111984
+PageLifeExpectancy: 8963
+[2026-03-29 01:42:56] Snapshot 89 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:42:57.279076
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15639
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.07360000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 200232283
+PageLifeExpectancy: 9024
+[2026-03-29 01:43:57] Snapshot 90 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:43:57.953377
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15656
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.02960000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 200352533
+PageLifeExpectancy: 9085
+[2026-03-29 01:44:58] Snapshot 91 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:44:58.680943
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15673
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.42780000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 200472829
+PageLifeExpectancy: 9146
+[2026-03-29 01:45:58] Snapshot 92 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:45:59.356284
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15690
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.44880000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 200606516
+PageLifeExpectancy: 9207
+[2026-03-29 01:46:59] Snapshot 93 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:47:00.054080
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15711
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 16.53866666
+AvgLogicalReads: 232.500000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 200713750
+PageLifeExpectancy: 9267
+[2026-03-29 01:48:00] Snapshot 94 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:48:00.745662
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15728
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.82920000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 200852382
+PageLifeExpectancy: 9328
+[2026-03-29 01:49:00] Snapshot 95 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:49:01.400027
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15745
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.10860000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 200959315
+PageLifeExpectancy: 9389
+[2026-03-29 01:50:01] Snapshot 96 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:50:02.054511
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15762
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.09100000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 201093117
+PageLifeExpectancy: 9449
+[2026-03-29 01:51:02] Snapshot 97 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:51:02.763213
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15779
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 8.12040000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 201200099
+PageLifeExpectancy: 9510
+[2026-03-29 01:52:02] Snapshot 98 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:52:03.522390
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15800
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.68440000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 201333652
+PageLifeExpectancy: 9570
+[2026-03-29 01:53:03] Snapshot 99 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:53:04.196566
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15817
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.59580000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 201440634
+PageLifeExpectancy: 9631
+[2026-03-29 01:54:04] Snapshot 100 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:54:05.184004
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15836
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.57600000
+AvgLogicalReads: 194.500000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 201580711
+PageLifeExpectancy: 9692
+[2026-03-29 01:55:05] Snapshot 101 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:55:05.874344
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15853
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.28160000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 201700975
+PageLifeExpectancy: 9752
+[2026-03-29 01:56:05] Snapshot 102 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:56:06.556980
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15870
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.48260000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 201826203
+PageLifeExpectancy: 9813
+[2026-03-29 01:57:06] Snapshot 103 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:57:07.204539
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15891
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.06660000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 201946551
+PageLifeExpectancy: 9874
+[2026-03-29 01:58:07] Snapshot 104 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:58:07.845797
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15908
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.18820000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 202066843
+PageLifeExpectancy: 9935
+[2026-03-29 01:59:07] Snapshot 105 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 01:59:08.669648
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15925
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 8.25560000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 202187184
+PageLifeExpectancy: 9996
+[2026-03-29 03:00:08] Snapshot 106 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:00:09.346198
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15942
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.44340000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 202310234
+PageLifeExpectancy: 10056
+[2026-03-29 03:01:09] Snapshot 107 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:01:10.081723
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15959
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.45600000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 202431779
+PageLifeExpectancy: 10117
+[2026-03-29 03:02:10] Snapshot 108 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:02:10.722367
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15980
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 13.01650000
+AvgLogicalReads: 206.166666
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 202552288
+PageLifeExpectancy: 10178
+[2026-03-29 03:03:10] Snapshot 109 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:03:11.395658
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 15997
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.01320000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 202673882
+PageLifeExpectancy: 10239
+[2026-03-29 03:04:11] Snapshot 110 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:04:12.095083
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16014
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.55180000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 202800325
+PageLifeExpectancy: 10299
+[2026-03-29 03:05:12] Snapshot 111 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:05:12.855115
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 2.50
+BatchRequestsPerSec: 16031
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.20880000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 202922821
+PageLifeExpectancy: 10359
+[2026-03-29 03:06:12] Snapshot 112 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:06:13.524343
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16048
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.60460000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 203044294
+PageLifeExpectancy: 10420
+[2026-03-29 03:07:13] Snapshot 113 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:07:14.232143
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16069
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.11280000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 203166057
+PageLifeExpectancy: 10482
+[2026-03-29 03:08:14] Snapshot 114 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:08:14.889378
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16086
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.58540000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 203287148
+PageLifeExpectancy: 10542
+[2026-03-29 03:09:14] Snapshot 115 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:09:15.826663
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16103
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.43980000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 203418924
+PageLifeExpectancy: 10603
+[2026-03-29 03:10:15] Snapshot 116 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:10:16.498123
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16120
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.12900000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 203540273
+PageLifeExpectancy: 10664
+[2026-03-29 03:11:16] Snapshot 117 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:11:17.156293
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16137
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.03720000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 203661923
+PageLifeExpectancy: 10724
+[2026-03-29 03:12:17] Snapshot 118 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:12:17.865271
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16158
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.91240000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 203789948
+PageLifeExpectancy: 10784
+[2026-03-29 03:13:17] Snapshot 119 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:13:18.509190
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16175
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.91580000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 203911251
+PageLifeExpectancy: 10845
+[2026-03-29 03:14:18] Snapshot 120 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:14:19.213563
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16192
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.17420000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 204032268
+PageLifeExpectancy: 10906
+[2026-03-29 03:15:19] Snapshot 121 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:15:19.894127
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16209
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.12000000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 204153724
+PageLifeExpectancy: 10967
+[2026-03-29 03:16:19] Snapshot 122 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:16:20.559078
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16226
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.81860000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 204274844
+PageLifeExpectancy: 11028
+[2026-03-29 03:17:20] Snapshot 123 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:17:21.332617
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16249
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.71820000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 204396208
+PageLifeExpectancy: 11088
+[2026-03-29 03:18:21] Snapshot 124 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:18:21.990279
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16266
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.82620000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 204517773
+PageLifeExpectancy: 11149
+[2026-03-29 03:19:22] Snapshot 125 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:19:22.643235
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16283
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.31700000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 204639071
+PageLifeExpectancy: 11210
+[2026-03-29 03:20:22] Snapshot 126 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:20:23.295720
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16300
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.25240000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 204760344
+PageLifeExpectancy: 11270
+[2026-03-29 03:21:23] Snapshot 127 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:21:23.943183
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16317
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.05480000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 204886671
+PageLifeExpectancy: 11331
+[2026-03-29 03:22:24] Snapshot 128 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:22:24.637107
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16338
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.71480000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 205006725
+PageLifeExpectancy: 11392
+[2026-03-29 03:23:24] Snapshot 129 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:23:25.322069
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16355
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.95220000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 205128037
+PageLifeExpectancy: 11453
+[2026-03-29 03:24:25] Snapshot 130 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:24:25.967205
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16372
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.10540000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 205249095
+PageLifeExpectancy: 11513
+[2026-03-29 03:25:26] Snapshot 131 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:25:26.653548
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16389
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.93400000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 205370814
+PageLifeExpectancy: 11573
+[2026-03-29 03:26:26] Snapshot 132 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:26:27.335990
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16406
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.93040000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 205492131
+PageLifeExpectancy: 11634
+[2026-03-29 03:27:27] Snapshot 133 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:27:29.262462
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16427
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 13.19720000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 205618296
+PageLifeExpectancy: 11696
+[2026-03-29 03:28:29] Snapshot 134 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:28:30.628548
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16444
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 26.74400000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 205741805
+PageLifeExpectancy: 11757
+[2026-03-29 03:29:30] Snapshot 135 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:29:31.436478
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16461
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.27860000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 205863300
+PageLifeExpectancy: 11818
+[2026-03-29 03:30:31] Snapshot 136 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:30:32.159857
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16478
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.17920000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 205985186
+PageLifeExpectancy: 11879
+[2026-03-29 03:31:32] Snapshot 137 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:31:32.830396
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16499
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 11.70200000
+AvgLogicalReads: 206.166666
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 206122977
+PageLifeExpectancy: 11940
+[2026-03-29 03:32:32] Snapshot 138 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:32:33.521000
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16516
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 8.09660000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 206227617
+PageLifeExpectancy: 12001
+[2026-03-29 03:33:33] Snapshot 139 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:33:34.194753
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16533
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 8.39940000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 206366651
+PageLifeExpectancy: 12062
+[2026-03-29 03:34:34] Snapshot 140 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:34:35.044972
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16550
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.71400000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 206476725
+PageLifeExpectancy: 12122
+[2026-03-29 03:35:35] Snapshot 141 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:35:35.714986
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16567
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.60880000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 206616182
+PageLifeExpectancy: 12183
+[2026-03-29 03:36:35] Snapshot 142 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:36:36.387518
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16588
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 13.09750000
+AvgLogicalReads: 232.500000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 206721050
+PageLifeExpectancy: 12243
+[2026-03-29 03:37:36] Snapshot 143 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:37:37.039078
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16605
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.10660000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 206859428
+PageLifeExpectancy: 12304
+[2026-03-29 03:38:37] Snapshot 144 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:38:37.711712
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16622
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.01900000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 206964390
+PageLifeExpectancy: 12363
+[2026-03-29 03:39:37] Snapshot 145 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:39:40.036047
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16639
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.76620000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 207105001
+PageLifeExpectancy: 12426
+[2026-03-29 03:40:40] Snapshot 146 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:40:40.901328
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16656
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.89500000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 207214856
+PageLifeExpectancy: 12487
+[2026-03-29 03:41:40] Snapshot 147 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:41:41.611899
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16677
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 13.29566666
+AvgLogicalReads: 206.166666
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 207357688
+PageLifeExpectancy: 12548
+[2026-03-29 03:42:41] Snapshot 148 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:42:42.218778
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16694
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.69680000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 207462749
+PageLifeExpectancy: 12609
+[2026-03-29 03:43:42] Snapshot 149 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:43:43.157093
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16711
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 10.40480000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 207603297
+PageLifeExpectancy: 12670
+[2026-03-29 03:44:43] Snapshot 150 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:44:43.934378
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16728
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.45700000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 207710088
+PageLifeExpectancy: 12730
+[2026-03-29 03:45:44] Snapshot 151 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:45:44.558791
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16745
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.86180000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 207849627
+PageLifeExpectancy: 12791
+[2026-03-29 03:46:44] Snapshot 152 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:46:45.153540
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16766
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.65940000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 207954773
+PageLifeExpectancy: 12852
+[2026-03-29 03:47:45] Snapshot 153 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:47:45.927942
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16783
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.93480000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 208107565
+PageLifeExpectancy: 12912
+[2026-03-29 03:48:45] Snapshot 154 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:48:46.530763
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16800
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.68480000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 208234458
+PageLifeExpectancy: 12974
+[2026-03-29 03:49:46] Snapshot 155 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:49:47.141715
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16817
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.72480000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 208357334
+PageLifeExpectancy: 13034
+[2026-03-29 03:50:47] Snapshot 156 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:50:47.762431
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16834
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.70280000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 208484969
+PageLifeExpectancy: 13095
+[2026-03-29 03:51:47] Snapshot 157 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:51:48.490869
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16855
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 15.65000000
+AvgLogicalReads: 30.000000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 208608176
+PageLifeExpectancy: 13155
+[2026-03-29 03:52:48] Snapshot 158 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:52:49.100966
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16872
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.66920000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 208730033
+PageLifeExpectancy: 13216
+[2026-03-29 03:53:49] Snapshot 159 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:53:49.722291
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16889
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.74600000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 208862192
+PageLifeExpectancy: 13277
+[2026-03-29 03:54:49] Snapshot 160 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:54:50.327515
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16906
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.62960000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 208983478
+PageLifeExpectancy: 13337
+[2026-03-29 03:55:50] Snapshot 161 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:55:50.949349
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16923
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.77240000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 209105558
+PageLifeExpectancy: 13398
+[2026-03-29 03:56:51] Snapshot 162 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:56:51.554198
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16944
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 18.36700000
+AvgLogicalReads: 232.500000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 209226778
+PageLifeExpectancy: 13458
+[2026-03-29 03:57:51] Snapshot 163 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:57:52.135553
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16961
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.68280000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 209348612
+PageLifeExpectancy: 13519
+[2026-03-29 03:58:52] Snapshot 164 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:58:52.783359
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16978
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.57900000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 209471107
+PageLifeExpectancy: 13579
+[2026-03-29 03:59:52] Snapshot 165 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 03:59:53.412924
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 16995
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.58060000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 209594892
+PageLifeExpectancy: 13640
+[2026-03-29 04:00:53] Snapshot 166 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:00:54.620469
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17012
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.33760000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 209721600
+PageLifeExpectancy: 13701
+[2026-03-29 04:01:54] Snapshot 167 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:01:55.246596
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17033
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.84280000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 209846265
+PageLifeExpectancy: 13763
+[2026-03-29 04:02:55] Snapshot 168 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:02:55.856644
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17050
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.61720000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 209971739
+PageLifeExpectancy: 13823
+[2026-03-29 04:03:55] Snapshot 169 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:03:56.512208
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17067
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.75820000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 210100769
+PageLifeExpectancy: 13884
+[2026-03-29 04:04:56] Snapshot 170 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:04:57.112993
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17084
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.77240000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 210221605
+PageLifeExpectancy: 13944
+[2026-03-29 04:05:57] Snapshot 171 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:05:57.747057
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17101
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.60160000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 210345672
+PageLifeExpectancy: 14005
+[2026-03-29 04:06:57] Snapshot 172 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:06:58.629719
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17122
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 13.45233333
+AvgLogicalReads: 232.500000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 210466828
+PageLifeExpectancy: 14066
+[2026-03-29 04:07:58] Snapshot 173 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:08:00.778299
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17139
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.69920000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 210606925
+PageLifeExpectancy: 14128
+[2026-03-29 04:09:00] Snapshot 174 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:09:01.582241
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17156
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.03220000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 210721406
+PageLifeExpectancy: 14189
+[2026-03-29 04:10:01] Snapshot 175 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:10:04.002956
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17173
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.87940000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 210859252
+PageLifeExpectancy: 14250
+[2026-03-29 04:11:04] Snapshot 176 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:11:09.083152
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17190
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.24940000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 210992868
+PageLifeExpectancy: 14315
+[2026-03-29 04:12:09] Snapshot 177 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:12:10.576858
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17211
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.11940000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 211114369
+PageLifeExpectancy: 14377
+[2026-03-29 04:13:10] Snapshot 178 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:13:12.203420
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17228
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.46940000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 211244152
+PageLifeExpectancy: 14439
+[2026-03-29 04:14:12] Snapshot 179 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:14:12.844626
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17245
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 8.21240000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 211367615
+PageLifeExpectancy: 14500
+[2026-03-29 04:15:12] Snapshot 180 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:15:13.502402
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17262
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 8.00140000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 211490090
+PageLifeExpectancy: 14560
+[2026-03-29 04:16:13] Snapshot 181 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:16:14.143212
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17279
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.67100000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 211613088
+PageLifeExpectancy: 14622
+[2026-03-29 04:17:14] Snapshot 182 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:17:14.760197
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17302
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.58320000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 211735661
+PageLifeExpectancy: 14681
+[2026-03-29 04:18:14] Snapshot 183 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:18:15.411738
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17319
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.65900000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 211860481
+PageLifeExpectancy: 14742
+[2026-03-29 04:19:15] Snapshot 184 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:19:16.000598
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17336
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.67260000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 211981604
+PageLifeExpectancy: 14803
+[2026-03-29 04:20:16] Snapshot 185 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:20:18.533986
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17353
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 10.36900000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 212120911
+PageLifeExpectancy: 14866
+[2026-03-29 04:21:18] Snapshot 186 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:21:23.656540
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17370
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 8.29440000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 212249591
+PageLifeExpectancy: 14930
+[2026-03-29 04:22:23] Snapshot 187 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:22:24.680610
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17391
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.72500000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 212371417
+PageLifeExpectancy: 14992
+[2026-03-29 04:23:24] Snapshot 188 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:23:25.334636
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17408
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.64580000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 212495443
+PageLifeExpectancy: 15052
+[2026-03-29 04:24:25] Snapshot 189 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:24:25.944708
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17425
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.68280000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 212619075
+PageLifeExpectancy: 15113
+[2026-03-29 04:25:26] Snapshot 190 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:25:29.453705
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17442
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 8.30320000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 212749127
+PageLifeExpectancy: 15176
+[2026-03-29 04:26:29] Snapshot 191 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:26:30.933545
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17459
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.93500000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 212872794
+PageLifeExpectancy: 15238
+[2026-03-29 04:27:31] Snapshot 192 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:27:32.487787
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17480
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.41480000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 212995135
+PageLifeExpectancy: 15300
+[2026-03-29 04:28:32] Snapshot 193 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:28:33.090209
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17497
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.68860000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 213121274
+PageLifeExpectancy: 15360
+[2026-03-29 04:29:33] Snapshot 194 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:29:33.698821
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17514
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.72440000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 213262243
+PageLifeExpectancy: 15420
+[2026-03-29 04:30:33] Snapshot 195 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:30:34.333852
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17531
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.63000000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 213367044
+PageLifeExpectancy: 15481
+[2026-03-29 04:31:34] Snapshot 196 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:31:34.945668
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17552
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 10.78783333
+AvgLogicalReads: 206.166666
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 213506318
+PageLifeExpectancy: 15542
+[2026-03-29 04:32:35] Snapshot 197 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:32:35.552326
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17569
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.61500000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 213610602
+PageLifeExpectancy: 15603
+[2026-03-29 04:33:35] Snapshot 198 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:33:36.628942
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17586
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 9.17200000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 213759058
+PageLifeExpectancy: 15664
+[2026-03-29 04:34:36] Snapshot 199 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:34:42.486836
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17603
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.64480000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 213871030
+PageLifeExpectancy: 15729
+[2026-03-29 04:35:42] Snapshot 200 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:35:43.142748
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17620
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.65000000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 214010317
+PageLifeExpectancy: 15790
+[2026-03-29 04:36:43] Snapshot 201 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:36:43.746240
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17641
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 12.90616666
+AvgLogicalReads: 232.500000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 214115966
+PageLifeExpectancy: 15851
+[2026-03-29 04:37:43] Snapshot 202 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:37:44.369852
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17658
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.65380000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 214258707
+PageLifeExpectancy: 15910
+[2026-03-29 04:38:44] Snapshot 203 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:38:44.965218
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17675
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.72680000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 214365933
+PageLifeExpectancy: 15971
+[2026-03-29 04:39:45] Snapshot 204 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:39:45.591964
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17692
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.43240000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 214509379
+PageLifeExpectancy: 16032
+[2026-03-29 04:40:45] Snapshot 205 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:40:46.355938
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17709
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.65380000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 214613871
+PageLifeExpectancy: 16093
+[2026-03-29 04:41:46] Snapshot 206 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:41:46.964429
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17730
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.67300000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 214768580
+PageLifeExpectancy: 16154
+[2026-03-29 04:42:47] Snapshot 207 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:42:47.568540
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17747
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.98900000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 214891070
+PageLifeExpectancy: 16215
+[2026-03-29 04:43:47] Snapshot 208 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:43:48.199502
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17764
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.62820000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 215012950
+PageLifeExpectancy: 16275
+[2026-03-29 04:44:48] Snapshot 209 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:44:48.842154
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17781
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.78500000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 215134355
+PageLifeExpectancy: 16335
+[2026-03-29 04:45:48] Snapshot 210 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:45:49.448701
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17798
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.69280000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 215257412
+PageLifeExpectancy: 16396
+[2026-03-29 04:46:49] Snapshot 211 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:46:50.040486
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17819
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.69580000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 215378847
+PageLifeExpectancy: 16456
+[2026-03-29 04:47:50] Snapshot 212 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:47:50.919344
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17836
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.63300000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 215500349
+PageLifeExpectancy: 16518
+[2026-03-29 04:48:50] Snapshot 213 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:48:52.355021
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17853
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.24980000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 215628574
+PageLifeExpectancy: 16579
+[2026-03-29 04:49:52] Snapshot 214 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:49:53.004289
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17870
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.68200000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 215756766
+PageLifeExpectancy: 16640
+[2026-03-29 04:50:53] Snapshot 215 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:50:53.606675
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17887
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.85840000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 215878672
+PageLifeExpectancy: 16700
+[2026-03-29 04:51:53] Snapshot 216 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:51:54.199723
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17908
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.72140000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 215999799
+PageLifeExpectancy: 16761
+[2026-03-29 04:52:54] Snapshot 217 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:52:54.790475
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17925
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.57500000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 216122127
+PageLifeExpectancy: 16822
+[2026-03-29 04:53:54] Snapshot 218 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:53:55.397320
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17942
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.63760000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 216247064
+PageLifeExpectancy: 16882
+[2026-03-29 04:54:55] Snapshot 219 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:54:56.147486
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17959
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.77400000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 216369826
+PageLifeExpectancy: 16943
+[2026-03-29 04:55:56] Snapshot 220 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:55:57.234856
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17976
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 8.29960000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 216492779
+PageLifeExpectancy: 17004
+[2026-03-29 04:56:57] Snapshot 221 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:56:57.904064
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 17997
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.70740000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 216614459
+PageLifeExpectancy: 17065
+[2026-03-29 04:57:57] Snapshot 222 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:57:58.497208
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18014
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.68340000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 216744268
+PageLifeExpectancy: 17125
+[2026-03-29 04:58:58] Snapshot 223 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:58:59.097727
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18031
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.60580000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 216871100
+PageLifeExpectancy: 17185
+[2026-03-29 04:59:59] Snapshot 224 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 04:59:59.707338
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18048
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.64040000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 217004765
+PageLifeExpectancy: 17247
+[2026-03-29 05:00:59] Snapshot 225 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:01:00.356781
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18065
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.63760000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 217120333
+PageLifeExpectancy: 17307
+[2026-03-29 05:02:00] Snapshot 226 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:02:01.125067
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18086
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 12.23533333
+AvgLogicalReads: 206.166666
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 217255839
+PageLifeExpectancy: 17368
+[2026-03-29 05:03:01] Snapshot 227 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:03:03.105872
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18103
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.41780000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 217368641
+PageLifeExpectancy: 17430
+[2026-03-29 05:04:03] Snapshot 228 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:04:03.966136
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18120
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.76140000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 217503198
+PageLifeExpectancy: 17490
+[2026-03-29 05:05:04] Snapshot 229 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:05:05.433354
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18137
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.33260000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 217618251
+PageLifeExpectancy: 17552
+[2026-03-29 05:06:05] Snapshot 230 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:06:06.052306
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18154
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 8.09560000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 217758168
+PageLifeExpectancy: 17613
+[2026-03-29 05:07:06] Snapshot 231 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:07:06.659684
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18175
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.66620000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 217886924
+PageLifeExpectancy: 17674
+[2026-03-29 05:08:06] Snapshot 232 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:08:07.269575
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18192
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 9.45200000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 218008300
+PageLifeExpectancy: 17734
+[2026-03-29 05:09:07] Snapshot 233 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:09:07.889016
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18209
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.07200000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 218129973
+PageLifeExpectancy: 17795
+[2026-03-29 05:10:07] Snapshot 234 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:10:08.537792
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18226
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.68420000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 218251916
+PageLifeExpectancy: 17855
+[2026-03-29 05:11:08] Snapshot 235 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:11:09.152784
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18243
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.66540000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 218375026
+PageLifeExpectancy: 17916
+[2026-03-29 05:12:09] Snapshot 236 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:12:10.547298
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18264
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 8.03520000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 218502528
+PageLifeExpectancy: 17977
+[2026-03-29 05:13:10] Snapshot 237 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:13:12.667721
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18281
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.42960000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 218624235
+PageLifeExpectancy: 18040
+[2026-03-29 05:14:12] Snapshot 238 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:14:13.293483
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18298
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.63060000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 218746886
+PageLifeExpectancy: 18100
+[2026-03-29 05:15:13] Snapshot 239 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:15:14.947541
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18315
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 11.80520000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 218870506
+PageLifeExpectancy: 18162
+[2026-03-29 05:16:15] Snapshot 240 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:16:16.199752
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18332
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.38480000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 218997294
+PageLifeExpectancy: 18222
+[2026-03-29 05:17:16] Snapshot 241 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:17:16.820922
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18355
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.71500000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 219119057
+PageLifeExpectancy: 18283
+[2026-03-29 05:18:16] Snapshot 242 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:18:17.420450
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18372
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.63040000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 219254502
+PageLifeExpectancy: 18345
+[2026-03-29 05:19:17] Snapshot 243 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:19:18.045334
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18389
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.65780000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 219376165
+PageLifeExpectancy: 18405
+[2026-03-29 05:20:18] Snapshot 244 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:20:18.666373
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18406
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.62740000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 219498928
+PageLifeExpectancy: 18465
+[2026-03-29 05:21:18] Snapshot 245 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:21:19.246278
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18423
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.61620000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 219620721
+PageLifeExpectancy: 18526
+[2026-03-29 05:22:19] Snapshot 246 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:22:19.880429
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18444
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.66560000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 219740968
+PageLifeExpectancy: 18587
+[2026-03-29 05:23:20] Snapshot 247 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:23:21.938686
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18461
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 10.91520000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 219868629
+PageLifeExpectancy: 18649
+[2026-03-29 05:24:22] Snapshot 248 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:24:22.688335
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18478
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.93300000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 219991486
+PageLifeExpectancy: 18709
+[2026-03-29 05:25:22] Snapshot 249 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:25:24.559043
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 10.00
+BatchRequestsPerSec: 18495
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: None
+AvgLogicalReads: None
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 220116513
+PageLifeExpectancy: 18772
+[2026-03-29 05:26:24] Snapshot 250 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:26:25.193412
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18513
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.61780000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 220240596
+PageLifeExpectancy: 18832
+[2026-03-29 05:27:25] Snapshot 251 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:27:25.820317
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18534
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.99360000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 220362440
+PageLifeExpectancy: 18893
+[2026-03-29 05:28:25] Snapshot 252 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:28:26.417991
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18551
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.78500000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 220483712
+PageLifeExpectancy: 18954
+[2026-03-29 05:29:26] Snapshot 253 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:29:27.065980
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18568
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.32680000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 220606369
+PageLifeExpectancy: 19014
+[2026-03-29 05:30:27] Snapshot 254 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:30:27.712958
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18585
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.70860000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 220740774
+PageLifeExpectancy: 19074
+[2026-03-29 05:31:27] Snapshot 255 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:31:28.339553
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18602
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.63880000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 220872207
+PageLifeExpectancy: 19135
+[2026-03-29 05:32:28] Snapshot 256 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:32:28.933840
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18623
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.87820000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 220993648
+PageLifeExpectancy: 19196
+[2026-03-29 05:33:28] Snapshot 257 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:33:29.533661
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18640
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.62280000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 221116221
+PageLifeExpectancy: 19257
+[2026-03-29 05:34:29] Snapshot 258 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:34:30.121299
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18657
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.89100000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 221238411
+PageLifeExpectancy: 19317
+[2026-03-29 05:35:30] Snapshot 259 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:35:30.837089
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18674
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.67260000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 221359571
+PageLifeExpectancy: 19377
+[2026-03-29 05:36:30] Snapshot 260 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:36:31.442656
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18691
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.72200000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 221481294
+PageLifeExpectancy: 19438
+[2026-03-29 05:37:31] Snapshot 261 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:37:32.143128
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18712
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 8.47480000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 221602935
+PageLifeExpectancy: 19499
+[2026-03-29 05:38:32] Snapshot 262 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:38:32.830455
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18729
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.77300000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 221724143
+PageLifeExpectancy: 19560
+[2026-03-29 05:39:33] Snapshot 263 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:39:34.170798
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18746
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.85100000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 221850805
+PageLifeExpectancy: 19620
+[2026-03-29 05:40:34] Snapshot 264 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:40:35.950950
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18763
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.48500000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 221973439
+PageLifeExpectancy: 19683
+[2026-03-29 05:41:36] Snapshot 265 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:41:36.808737
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18784
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 13.21716666
+AvgLogicalReads: 206.166666
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 222117295
+PageLifeExpectancy: 19743
+[2026-03-29 05:42:36] Snapshot 266 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:42:43.386485
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18801
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.91900000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 222229141
+PageLifeExpectancy: 19811
+[2026-03-29 05:43:43] Snapshot 267 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:43:44.933361
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18818
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.04820000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 222372700
+PageLifeExpectancy: 19872
+[2026-03-29 05:44:45] Snapshot 268 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:44:46.839952
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18835
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.66880000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 222478224
+PageLifeExpectancy: 19933
+[2026-03-29 05:45:46] Snapshot 269 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:45:47.436033
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18852
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.65480000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 222617496
+PageLifeExpectancy: 19994
+[2026-03-29 05:46:47] Snapshot 270 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:46:48.023843
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18873
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 13.58950000
+AvgLogicalReads: 232.500000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 222754838
+PageLifeExpectancy: 20055
+[2026-03-29 05:47:48] Snapshot 271 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:47:49.183838
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18890
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.68640000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 222876839
+PageLifeExpectancy: 20116
+[2026-03-29 05:48:49] Snapshot 272 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:48:49.784151
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18907
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.63000000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 222998163
+PageLifeExpectancy: 20177
+[2026-03-29 05:49:49] Snapshot 273 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:49:50.390532
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18924
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.90320000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 223119180
+PageLifeExpectancy: 20237
+[2026-03-29 05:50:50] Snapshot 274 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:50:50.995484
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18941
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.71060000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 223251695
+PageLifeExpectancy: 20298
+[2026-03-29 05:51:51] Snapshot 275 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:51:51.574395
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18962
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.63560000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 223373892
+PageLifeExpectancy: 20359
+[2026-03-29 05:52:51] Snapshot 276 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:52:53.297719
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18979
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 118.03200000
+AvgLogicalReads: 30.000000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 223497104
+PageLifeExpectancy: 20420
+[2026-03-29 05:53:53] Snapshot 277 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:53:53.949471
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 18996
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.73920000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 223618696
+PageLifeExpectancy: 20481
+[2026-03-29 05:54:54] Snapshot 278 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:54:55.112320
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19013
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 14.73780000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 223742972
+PageLifeExpectancy: 20542
+[2026-03-29 05:55:55] Snapshot 279 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:55:55.774506
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19030
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.62780000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 223864834
+PageLifeExpectancy: 20603
+[2026-03-29 05:56:55] Snapshot 280 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:56:56.418904
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19051
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 12.16733333
+AvgLogicalReads: 232.500000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 223986387
+PageLifeExpectancy: 20664
+[2026-03-29 05:57:56] Snapshot 281 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:57:57.014137
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19068
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.68800000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 224112818
+PageLifeExpectancy: 20724
+[2026-03-29 05:58:57] Snapshot 282 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:58:57.622308
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19085
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.71440000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 224236342
+PageLifeExpectancy: 20785
+[2026-03-29 05:59:57] Snapshot 283 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 05:59:58.220129
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19102
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.68740000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 224357738
+PageLifeExpectancy: 20845
+[2026-03-29 06:00:58] Snapshot 284 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:00:58.824456
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19119
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.68120000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 224480065
+PageLifeExpectancy: 20906
+[2026-03-29 06:01:58] Snapshot 285 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:01:59.448943
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19140
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.63680000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 224613196
+PageLifeExpectancy: 20966
+[2026-03-29 06:02:59] Snapshot 286 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:03:00.086456
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19157
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.71080000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 224725094
+PageLifeExpectancy: 21027
+[2026-03-29 06:04:00] Snapshot 287 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:04:00.676498
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19174
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.69600000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 224859374
+PageLifeExpectancy: 21087
+[2026-03-29 06:05:00] Snapshot 288 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:05:01.422668
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19191
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 0.09000000
+AvgLogicalReads: 0.000000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 224969454
+PageLifeExpectancy: 21149
+[2026-03-29 06:06:01] Snapshot 289 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:06:02.013068
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19208
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.94240000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 225103236
+PageLifeExpectancy: 21209
+[2026-03-29 06:07:02] Snapshot 290 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:07:02.614301
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19229
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 12.47983333
+AvgLogicalReads: 232.500000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 225213183
+PageLifeExpectancy: 21269
+[2026-03-29 06:08:02] Snapshot 291 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:08:03.308483
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19246
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 8.76600000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 225353719
+PageLifeExpectancy: 21331
+[2026-03-29 06:09:03] Snapshot 292 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:09:03.918190
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19263
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.74700000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 225463728
+PageLifeExpectancy: 21391
+[2026-03-29 06:10:03] Snapshot 293 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:10:04.554087
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19280
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.65180000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 225597376
+PageLifeExpectancy: 21451
+[2026-03-29 06:11:04] Snapshot 294 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:11:05.159965
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19297
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.71780000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 225710127
+PageLifeExpectancy: 21512
+[2026-03-29 06:12:05] Snapshot 295 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:12:05.810591
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19318
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.53920000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 225843320
+PageLifeExpectancy: 21572
+[2026-03-29 06:13:05] Snapshot 296 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:13:06.406818
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19335
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.63600000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 225972143
+PageLifeExpectancy: 21633
+[2026-03-29 06:14:06] Snapshot 297 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:14:08.264839
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19352
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 8.66040000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 226093270
+PageLifeExpectancy: 21696
+[2026-03-29 06:15:08] Snapshot 298 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:15:09.230414
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19369
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.81420000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 226221555
+PageLifeExpectancy: 21756
+[2026-03-29 06:16:09] Snapshot 299 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:16:11.209127
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19386
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.75460000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 226343328
+PageLifeExpectancy: 21817
+[2026-03-29 06:17:11] Snapshot 300 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:17:12.731403
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19409
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.37200000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 226465370
+PageLifeExpectancy: 21880
+[2026-03-29 06:18:12] Snapshot 301 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:18:14.687500
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19426
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.64180000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 226597517
+PageLifeExpectancy: 21941
+[2026-03-29 06:19:14] Snapshot 302 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:19:15.596409
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19443
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.13260000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 226720535
+PageLifeExpectancy: 22003
+[2026-03-29 06:20:15] Snapshot 303 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:20:17.030549
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19460
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.43920000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 226846913
+PageLifeExpectancy: 22063
+[2026-03-29 06:21:17] Snapshot 304 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:21:18.102783
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19477
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.27340000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 226979752
+PageLifeExpectancy: 22125
+[2026-03-29 06:22:18] Snapshot 305 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:22:19.589706
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19498
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.61980000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 227101821
+PageLifeExpectancy: 22187
+[2026-03-29 06:23:19] Snapshot 306 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:23:20.966105
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19515
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.18220000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 227228371
+PageLifeExpectancy: 22248
+[2026-03-29 06:24:21] Snapshot 307 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:24:22.462273
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19532
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.26160000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 227351157
+PageLifeExpectancy: 22310
+[2026-03-29 06:25:22] Snapshot 308 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:25:23.856014
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19549
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.48500000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 227472305
+PageLifeExpectancy: 22371
+[2026-03-29 06:26:23] Snapshot 309 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:26:24.473855
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19566
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.66140000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 227595221
+PageLifeExpectancy: 22431
+[2026-03-29 06:27:24] Snapshot 310 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:27:26.925772
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19587
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.88720000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 227723609
+PageLifeExpectancy: 22493
+[2026-03-29 06:28:27] Snapshot 311 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:28:27.562521
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19604
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.67420000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 227850688
+PageLifeExpectancy: 22554
+[2026-03-29 06:29:27] Snapshot 312 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:29:29.552630
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19621
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.75220000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 227977646
+PageLifeExpectancy: 22617
+[2026-03-29 06:30:29] Snapshot 313 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:30:30.828559
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19638
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.63780000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 228099884
+PageLifeExpectancy: 22678
+[2026-03-29 06:31:30] Snapshot 314 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:31:31.928750
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19655
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 11.54380000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 228230590
+PageLifeExpectancy: 22738
+[2026-03-29 06:32:32] Snapshot 315 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:32:32.602083
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 5.00
+BatchRequestsPerSec: 19676
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: None
+AvgLogicalReads: None
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 228351613
+PageLifeExpectancy: 22799
+[2026-03-29 06:33:32] Snapshot 316 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:33:33.227987
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19694
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.61540000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 228475506
+PageLifeExpectancy: 22860
+[2026-03-29 06:34:33] Snapshot 317 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:34:33.843431
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19711
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.69660000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 228598629
+PageLifeExpectancy: 22921
+[2026-03-29 06:35:33] Snapshot 318 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:35:34.440221
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19728
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.40400000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 228722471
+PageLifeExpectancy: 22981
+[2026-03-29 06:36:34] Snapshot 319 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:36:35.093496
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19745
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.83000000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 228845843
+PageLifeExpectancy: 23042
+[2026-03-29 06:37:35] Snapshot 320 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:37:36.847522
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19766
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 11.70340000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 228986376
+PageLifeExpectancy: 23103
+[2026-03-29 06:38:36] Snapshot 321 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:38:37.467582
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19783
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.62280000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 229089993
+PageLifeExpectancy: 23164
+[2026-03-29 06:39:37] Snapshot 322 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:39:39.449103
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19800
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.58140000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 229239646
+PageLifeExpectancy: 23226
+[2026-03-29 06:40:39] Snapshot 323 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:40:40.798518
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19817
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.72700000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 229345868
+PageLifeExpectancy: 23288
+[2026-03-29 06:41:40] Snapshot 324 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:41:41.629109
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19838
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.84760000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 229486714
+PageLifeExpectancy: 23349
+[2026-03-29 06:42:41] Snapshot 325 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:42:43.578299
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19855
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.34740000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 229590279
+PageLifeExpectancy: 23411
+[2026-03-29 06:43:43] Snapshot 326 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:43:44.743550
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19872
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.20680000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 229737320
+PageLifeExpectancy: 23471
+[2026-03-29 06:44:44] Snapshot 327 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:44:47.059177
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19889
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.70640000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 229842092
+PageLifeExpectancy: 23534
+[2026-03-29 06:45:47] Snapshot 328 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:45:47.841050
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19906
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 23.80300000
+AvgLogicalReads: 30.000000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 229982241
+PageLifeExpectancy: 23594
+[2026-03-29 06:46:47] Snapshot 329 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:46:49.104523
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19927
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 13.44033333
+AvgLogicalReads: 232.500000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 230116158
+PageLifeExpectancy: 23656
+[2026-03-29 06:47:49] Snapshot 330 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:47:49.732981
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19944
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.69580000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 230239516
+PageLifeExpectancy: 23717
+[2026-03-29 06:48:49] Snapshot 331 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:48:50.333758
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19961
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.57600000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 230365858
+PageLifeExpectancy: 23777
+[2026-03-29 06:49:50] Snapshot 332 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:49:50.956982
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19978
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.65080000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 230487392
+PageLifeExpectancy: 23838
+[2026-03-29 06:50:51] Snapshot 333 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:50:51.580414
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 19995
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.79940000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 230609250
+PageLifeExpectancy: 23898
+[2026-03-29 06:51:51] Snapshot 334 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:51:52.213051
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20016
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 12.14566666
+AvgLogicalReads: 206.166666
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 230731824
+PageLifeExpectancy: 23959
+[2026-03-29 06:52:52] Snapshot 335 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:52:52.940909
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20033
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.77580000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 230853603
+PageLifeExpectancy: 24020
+[2026-03-29 06:53:53] Snapshot 336 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:53:58.995788
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20050
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.97120000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 230980293
+PageLifeExpectancy: 24085
+[2026-03-29 06:54:59] Snapshot 337 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:55:00.598710
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20067
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.53160000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 231104610
+PageLifeExpectancy: 24147
+[2026-03-29 06:56:00] Snapshot 338 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:56:01.199586
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20084
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.56600000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 231238721
+PageLifeExpectancy: 24208
+[2026-03-29 06:57:01] Snapshot 339 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:57:01.836436
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20105
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.61500000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 231354270
+PageLifeExpectancy: 24268
+[2026-03-29 06:58:01] Snapshot 340 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:58:02.407391
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20122
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.64500000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 231486779
+PageLifeExpectancy: 24329
+[2026-03-29 06:59:02] Snapshot 341 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 06:59:03.006553
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20139
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.56860000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 231597578
+PageLifeExpectancy: 24389
+[2026-03-29 07:00:03] Snapshot 342 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 07:00:03.670991
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20156
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 0.11800000
+AvgLogicalReads: 0.000000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 231732561
+PageLifeExpectancy: 24450
+[2026-03-29 07:01:03] Snapshot 343 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 07:01:04.258689
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20173
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.64580000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 231842761
+PageLifeExpectancy: 24510
+[2026-03-29 07:02:04] Snapshot 344 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 07:02:04.893410
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20194
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 13.06966666
+AvgLogicalReads: 206.166666
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 231977567
+PageLifeExpectancy: 24572
+[2026-03-29 07:03:04] Snapshot 345 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 07:03:05.492721
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20211
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.80760000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 232089837
+PageLifeExpectancy: 24633
+[2026-03-29 07:04:05] Snapshot 346 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 07:04:06.092595
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20228
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.28980000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 232223123
+PageLifeExpectancy: 24693
+[2026-03-29 07:05:06] Snapshot 347 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 07:05:06.708394
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20245
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.67580000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 232352017
+PageLifeExpectancy: 24753
+[2026-03-29 07:06:06] Snapshot 348 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 07:06:07.298472
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20262
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.67980000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 232475939
+PageLifeExpectancy: 24814
+[2026-03-29 07:07:07] Snapshot 349 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 07:07:07.907329
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20283
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.98620000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 232604062
+PageLifeExpectancy: 24875
+[2026-03-29 07:08:07] Snapshot 350 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 07:08:08.531802
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20300
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 8.21260000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 232726591
+PageLifeExpectancy: 24935
+[2026-03-29 07:09:08] Snapshot 351 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 07:09:10.538366
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20317
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 20.37040000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 232848693
+PageLifeExpectancy: 24997
+[2026-03-29 07:10:10] Snapshot 352 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 07:10:12.438280
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20334
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.00400000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 232970507
+PageLifeExpectancy: 25060
+[2026-03-29 07:11:12] Snapshot 353 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 07:11:13.073846
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20351
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.64080000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 233092421
+PageLifeExpectancy: 25120
+[2026-03-29 07:12:13] Snapshot 354 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 07:12:13.730138
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 2.50
+BatchRequestsPerSec: 20372
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: None
+AvgLogicalReads: None
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 233219751
+PageLifeExpectancy: 25180
+[2026-03-29 07:13:13] Snapshot 355 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 07:13:14.337619
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20390
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.62520000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 233340509
+PageLifeExpectancy: 25241
+[2026-03-29 07:14:14] Snapshot 356 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 07:14:14.935839
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20407
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.68960000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 233466562
+PageLifeExpectancy: 25302
+[2026-03-29 07:15:15] Snapshot 357 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 07:15:15.547526
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20424
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.64980000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 233590895
+PageLifeExpectancy: 25363
+[2026-03-29 07:16:15] Snapshot 358 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 07:16:16.258632
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20441
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.69300000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 233712494
+PageLifeExpectancy: 25423
+[2026-03-29 07:17:16] Snapshot 359 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 07:17:16.897963
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20464
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.66260000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 233835369
+PageLifeExpectancy: 25484
+[2026-03-29 07:18:16] Snapshot 360 / 360
+Zapisano snapshot:
+CaptureTime: 2026-03-29 07:18:17.502022
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20481
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.68520000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 233957480
+PageLifeExpectancy: 25544
+END: 2026-03-29 07:18:17
+==================================================
+START: 2026-03-29 08:26:54
+Iterations=720 DelaySeconds=60
+==================================================
+[2026-03-29 08:26:54] Snapshot 1 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:26:59.272453
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20571
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 14.96600000
+AvgLogicalReads: 232.500000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 242444091
+PageLifeExpectancy: 29666
+[2026-03-29 08:27:59] Snapshot 2 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:28:00.119120
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20588
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.00980000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 242590306
+PageLifeExpectancy: 29727
+[2026-03-29 08:29:00] Snapshot 3 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:29:02.311182
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20605
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 58.06980000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 242707742
+PageLifeExpectancy: 29789
+[2026-03-29 08:30:02] Snapshot 4 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:30:03.193460
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20622
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 8.36220000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 242845518
+PageLifeExpectancy: 29850
+[2026-03-29 08:31:03] Snapshot 5 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:31:03.945841
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20639
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 9.07080000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 242960563
+PageLifeExpectancy: 29911
+[2026-03-29 08:32:04] Snapshot 6 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:32:04.684850
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20660
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.78460000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 243097185
+PageLifeExpectancy: 29972
+[2026-03-29 08:33:04] Snapshot 7 / 720
+Traceback (most recent call last):
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\pool\base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\pool\base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\pool\base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\pool\base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\pool\base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\pool\base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\pool\base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\engine\create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\engine\default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+pyodbc.OperationalError: ('08001', '[08001] [Microsoft][ODBC Driver 17 for SQL Server]Unable to complete login process due to delay in opening server connection (0) (SQLDriverConnect)')
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\src\collector\collector.py", line 138, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\src\collector\collector.py", line 124, in main
+    with engine.begin() as conn:
+         ~~~~~~~~~~~~^^
+  File "C:\Python313\Lib\contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 3257, in begin
+    with self.connect() as conn:
+         ~~~~~~~~~~~~^^
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 3293, in connect
+    return self._connection_cls(self)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 145, in __init__
+    Connection._handle_dbapi_exception_noconnection(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        err, dialect, engine
+        ^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2448, in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 143, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 3317, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\pool\base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\pool\base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\pool\base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 177, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 175, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\pool\base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\pool\base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\pool\base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 121, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\pool\base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\engine\create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\blad\Documents\GitHub\SQLManiak\ML\SqlAnomalyWatcher\.venv\Lib\site-packages\sqlalchemy\engine\default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (pyodbc.OperationalError) ('08001', '[08001] [Microsoft][ODBC Driver 17 for SQL Server]Unable to complete login process due to delay in opening server connection (0) (SQLDriverConnect)')
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+[2026-03-29 08:33:04] ERROR: collector zwrócił kod 1
+[2026-03-29 08:34:24] Snapshot 8 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:34:24.784572
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20677
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.93800000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 243436352
+PageLifeExpectancy: 30112
+[2026-03-29 08:35:24] Snapshot 9 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:35:26.746121
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20694
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 133.50900000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 243564520
+PageLifeExpectancy: 30173
+[2026-03-29 08:36:27] Snapshot 10 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:36:29.078715
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20711
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 18.26340000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 243691584
+PageLifeExpectancy: 30236
+[2026-03-29 08:37:29] Snapshot 11 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:37:31.494755
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20732
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 46.69460000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 243827935
+PageLifeExpectancy: 30298
+[2026-03-29 08:38:31] Snapshot 12 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:38:32.441489
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20749
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.85600000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 243953897
+PageLifeExpectancy: 30359
+[2026-03-29 08:39:32] Snapshot 13 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:39:33.420540
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20766
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 10.72100000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 244080986
+PageLifeExpectancy: 30420
+[2026-03-29 08:40:34] Snapshot 14 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:40:35.098082
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20783
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 10.23220000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 244207188
+PageLifeExpectancy: 30481
+[2026-03-29 08:41:35] Snapshot 15 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:41:35.958992
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20800
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.74880000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 244330842
+PageLifeExpectancy: 30543
+[2026-03-29 08:42:36] Snapshot 16 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:42:36.819197
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20821
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.80740000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 244458566
+PageLifeExpectancy: 30603
+[2026-03-29 08:43:36] Snapshot 17 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:43:37.872656
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20838
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 17.43340000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 244581582
+PageLifeExpectancy: 30665
+[2026-03-29 08:44:37] Snapshot 18 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:44:43.249207
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20855
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 10.33820000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 244730862
+PageLifeExpectancy: 30730
+[2026-03-29 08:45:43] Snapshot 19 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:45:44.231807
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20872
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 9.25960000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 244873128
+PageLifeExpectancy: 30791
+[2026-03-29 08:46:44] Snapshot 20 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:46:45.231705
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 20893
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 26.29828571
+AvgLogicalReads: 199.285714
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 244977754
+PageLifeExpectancy: 30852
+[2026-03-29 08:47:45] Snapshot 21 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:47:47.469239
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 21031
+UserConnections: 8
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 162.81716666
+AvgLogicalReads: 1601.666666
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 245129350
+PageLifeExpectancy: 30915
+[2026-03-29 08:48:47] Snapshot 22 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:48:48.304736
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 21070
+UserConnections: 9
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.31085714
+AvgLogicalReads: 168.857142
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 245235909
+PageLifeExpectancy: 30975
+[2026-03-29 08:49:48] Snapshot 23 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:49:49.058371
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 21087
+UserConnections: 9
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 6.89540000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 245383332
+PageLifeExpectancy: 31036
+[2026-03-29 08:50:49] Snapshot 24 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:50:52.305767
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22220
+UserConnections: 9
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 5.76642857
+AvgLogicalReads: 168.857142
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 245516754
+PageLifeExpectancy: 31099
+[2026-03-29 08:51:52] Snapshot 25 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:51:57.298472
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22380
+UserConnections: 9
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 28.34583333
+AvgLogicalReads: 206.166666
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 245646181
+PageLifeExpectancy: 31163
+[2026-03-29 08:52:57] Snapshot 26 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:52:58.194977
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22416
+UserConnections: 10
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.59300000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 245773507
+PageLifeExpectancy: 31226
+[2026-03-29 08:53:58] Snapshot 27 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:54:03.988959
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22433
+UserConnections: 10
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 2.89540000
+AvgLogicalReads: 242.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 245910669
+PageLifeExpectancy: 31290
+[2026-03-29 08:55:04] Snapshot 28 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:55:06.752322
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22450
+UserConnections: 10
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 9.60180000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 246029565
+PageLifeExpectancy: 31353
+[2026-03-29 08:56:06] Snapshot 29 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:56:08.551585
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22467
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.38260000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 246168813
+PageLifeExpectancy: 31416
+[2026-03-29 08:57:08] Snapshot 30 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:57:09.377802
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22488
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.60000000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 246292521
+PageLifeExpectancy: 31477
+[2026-03-29 08:58:09] Snapshot 31 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:58:10.108034
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22505
+UserConnections: 6
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 8.59560000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 246414290
+PageLifeExpectancy: 31537
+[2026-03-29 08:59:10] Snapshot 32 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 08:59:12.537045
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22522
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 8.38840000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 246540850
+PageLifeExpectancy: 31598
+[2026-03-29 09:00:12] Snapshot 33 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 09:00:13.704161
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22539
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 14.75660000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 246662498
+PageLifeExpectancy: 31661
+[2026-03-29 09:01:13] Snapshot 34 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 09:01:14.599694
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22556
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 9.32980000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 246784757
+PageLifeExpectancy: 31722
+[2026-03-29 09:02:14] Snapshot 35 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 09:02:17.275310
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22577
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 16.17333333
+AvgLogicalReads: 206.166666
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 246911236
+PageLifeExpectancy: 31784
+[2026-03-29 09:03:17] Snapshot 36 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 09:03:18.198711
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22594
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.36160000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 247031950
+PageLifeExpectancy: 31845
+[2026-03-29 09:04:18] Snapshot 37 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 09:04:18.919349
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22611
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.00020000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 247152266
+PageLifeExpectancy: 31906
+[2026-03-29 09:05:18] Snapshot 38 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 09:05:19.628482
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22628
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.10180000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 247273927
+PageLifeExpectancy: 31966
+[2026-03-29 09:06:19] Snapshot 39 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 09:06:20.421926
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22645
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 9.41400000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 247394470
+PageLifeExpectancy: 32027
+[2026-03-29 09:07:20] Snapshot 40 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 09:07:21.384772
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22666
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 8.55500000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 247528826
+PageLifeExpectancy: 32088
+[2026-03-29 09:08:21] Snapshot 41 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 09:08:22.333090
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22683
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 14.33840000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 247653459
+PageLifeExpectancy: 32149
+[2026-03-29 09:09:22] Snapshot 42 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 09:09:23.203881
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22700
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.65980000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 247780812
+PageLifeExpectancy: 32211
+[2026-03-29 09:10:23] Snapshot 43 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 09:10:24.143186
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22717
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 10.50160000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 247901244
+PageLifeExpectancy: 32271
+[2026-03-29 09:11:24] Snapshot 44 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 09:11:25.030773
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22734
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.93040000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 248021760
+PageLifeExpectancy: 32332
+[2026-03-29 09:12:25] Snapshot 45 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 09:12:26.088713
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22755
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 16.61250000
+AvgLogicalReads: 26.000000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 248142086
+PageLifeExpectancy: 32393
+[2026-03-29 09:13:26] Snapshot 46 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 09:13:26.995905
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22772
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 8.64120000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 248262839
+PageLifeExpectancy: 32454
+[2026-03-29 09:14:27] Snapshot 47 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 09:14:28.257598
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22789
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.16540000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 248383924
+PageLifeExpectancy: 32515
+[2026-03-29 09:15:28] Snapshot 48 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 09:15:29.099780
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22806
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 10.74560000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 248509559
+PageLifeExpectancy: 32576
+[2026-03-29 09:16:29] Snapshot 49 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 09:16:29.862403
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22823
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 9.50680000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 248629811
+PageLifeExpectancy: 32636
+[2026-03-29 09:17:29] Snapshot 50 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 09:17:31.895329
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22846
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 11.31080000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 248751344
+PageLifeExpectancy: 32699
+[2026-03-29 09:18:31] Snapshot 51 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 09:18:33.154399
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22863
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 7.37900000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 248871959
+PageLifeExpectancy: 32760
+[2026-03-29 09:19:33] Snapshot 52 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 09:19:33.995985
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22880
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 8.31240000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 248992541
+PageLifeExpectancy: 32820
+[2026-03-29 09:20:34] Snapshot 53 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 09:20:36.509667
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22897
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 11.99900000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 249119192
+PageLifeExpectancy: 32883
+[2026-03-29 09:21:36] Snapshot 54 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 09:21:37.298404
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22914
+UserConnections: 4
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 9.02780000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 249243307
+PageLifeExpectancy: 32944
+[2026-03-29 09:22:37] Snapshot 55 / 720
+Zapisano snapshot:
+CaptureTime: 2026-03-29 09:22:40.503578
+ServerName: deweloper
+InstanceName: MSSQLSERVER
+CpuPercent: 0.00
+BatchRequestsPerSec: 22935
+UserConnections: 5
+BlockedSessions: 0
+DeadlocksPerMin: 0
+AvgQueryDurationMs: 8.34940000
+AvgLogicalReads: 232.800000
+TempdbUsedMb: 8.0000000
+SignalWaitTimeMs: 249366768
+PageLifeExpectancy: 33008

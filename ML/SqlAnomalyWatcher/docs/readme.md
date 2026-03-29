@@ -19,3 +19,9 @@ Zbieranie metryk telemetrycznych z SQL Server, wykrywanie anomalii i generowanie
 - Sprint 2: collector metryk
 - Sprint 3: feature engineering
 - Sprint 4: anomaly detection
+
+#.\scripts\collect-loop-logged.ps1 -Iterations 360 -DelaySeconds 60
+# po zebraniu wykonać
+#.\.venv\Scripts\python.exe -m src.ml.prepare_features
+#.\.venv\Scripts\python.exe -m src.ml.score_anomalies
+#Import-Csv .\output\top_anomalies.csv | Select-Object -First 20
