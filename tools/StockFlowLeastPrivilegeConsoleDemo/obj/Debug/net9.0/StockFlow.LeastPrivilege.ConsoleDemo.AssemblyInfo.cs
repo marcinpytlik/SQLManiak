@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("StockFlow.LeastPrivilege.ConsoleDemo")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+85fe360254985f4b00b804894443354755c234f1")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6fce1eaa398593a45cb43f3b5f3222cbe9c5d26a")]
 [assembly: System.Reflection.AssemblyProductAttribute("StockFlow.LeastPrivilege.ConsoleDemo")]
 [assembly: System.Reflection.AssemblyTitleAttribute("StockFlow.LeastPrivilege.ConsoleDemo")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

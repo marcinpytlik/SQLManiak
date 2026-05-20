@@ -12,7 +12,7 @@ using StockFlow.LeastPrivilege.ConsoleDemo.Data;
 namespace StockFlow.LeastPrivilege.ConsoleDemo.Migrations
 {
     [DbContext(typeof(StockFlowDbContext))]
-    [Migration("20260323090137_InitialCreate")]
+    [Migration("20260410073813_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />

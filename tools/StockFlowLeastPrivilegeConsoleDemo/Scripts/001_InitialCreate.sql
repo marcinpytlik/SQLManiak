@@ -24,7 +24,7 @@ CREATE TABLE [app].[Products] (
 CREATE UNIQUE INDEX [IX_Products_Sku] ON [app].[Products] ([Sku]);
 
 INSERT INTO [app].[__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-VALUES (N'20260323090137_InitialCreate', N'9.0.0');
+VALUES (N'20260410073813_InitialCreate', N'9.0.0');
 
 COMMIT;
 GO
