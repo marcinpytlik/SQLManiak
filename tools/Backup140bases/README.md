@@ -23,7 +23,7 @@ EXEC msdb.dbo.usp_BackupDatabases_ByConfig @BackupType = 'LOG';
 
 Procedura czyta konfigurację z tabeli i zapisuje backupy do odpowiedniego katalogu.
 
-## Kolejność uruchomienia na `sql32\sqlins`
+## Kolejność uruchomienia na `syriusz`
 
 ```powershell
 sqlcmd -S "syriusz" -E -i .\01_create_backup_config_tables.sql
@@ -66,3 +66,48 @@ Pliki powstaną w układzie:
 X:\backup\ERP_PROD\ERP_PROD_20260519_203000_FULL.bak
 Z:\backup\CRM_PROD\CRM_PROD_20260519_203000_FULL.bak
 ```
+
+---
+
+## Skrypty labowe do wygenerowania 25 baz testowych
+
+Dodane pliki:
+
+```text
+07_create_25_test_databases_and_seed_config.sql
+08_cleanup_25_test_databases_and_config.sql
+```
+
+### Utworzenie baz testowych
+
+```powershell
+sqlcmd -S "syriusz" -E -i .\01_create_backup_config_tables.sql
+sqlcmd -S "syriusz" -E -i .\02_create_backup_procedure_by_config.sql
+sqlcmd -S "syriusz" -E -i .\07_create_25_test_databases_and_seed_config.sql
+```
+
+Skrypt tworzy bazy:
+
+```text
+DBA_BCK_TEST_001 ... DBA_BCK_TEST_025
+```
+
+Pierwsze 13 baz trafia w konfiguracji na:
+
+```text
+X:\backup
+```
+
+Pozostałe 12 baz trafia w konfiguracji na:
+
+```text
+Z:\backup
+```
+
+### Usunięcie baz testowych
+
+```powershell
+sqlcmd -S "syriusz" -E -i .\08_cleanup_25_test_databases_and_config.sql
+```
+
+Uwaga: skrypt cleanup usuwa bazy danych `DBA_BCK_TEST_001` ... `DBA_BCK_TEST_025`.
