@@ -183,3 +183,41 @@ SELECT
     ModifiedAt
 FROM Calculated;
 GO
+--weryfikacja
+--Sprawdźmy dzisiejszą datę w widoku.
+
+USE msdb;
+GO
+
+SELECT
+    CalendarDate,
+    IsWorkingDay,
+    Description,
+    DayNamePL,
+    IsWeekend,
+    IsHolidayOrCompanyDayOff,
+    IsFirstWorkingDayOfMonth,
+    IsLastWorkingDayOfMonth,
+    WorkingDayNumberInMonth,
+    WorkingDaysInMonth,
+    PreviousWorkingDay,
+    NextWorkingDay
+FROM dba.vWorkCalendarEnriched
+WHERE CalendarDate = CONVERT(date, GETDATE());
+GO
+--Sprawdźmy wszystkie ostatnie dni robocze miesięcy w bieżącym roku.
+
+USE msdb;
+GO
+
+SELECT
+    CalendarDate,
+    Description,
+    DayNamePL,
+    WorkingDayNumberInMonth,
+    WorkingDaysInMonth
+FROM dba.vWorkCalendarEnriched
+WHERE CalendarYear = YEAR(GETDATE())
+  AND IsLastWorkingDayOfMonth = 1
+ORDER BY CalendarDate;
+GO

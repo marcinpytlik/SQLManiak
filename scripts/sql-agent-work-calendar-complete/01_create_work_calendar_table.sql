@@ -73,3 +73,12 @@ BEGIN CATCH
     RAISERROR(@ErrorMessage, @ErrorSeverity, @ErrorState);
 END CATCH;
 GO
+-- weryfikacja
+USE msdb;
+GO
+SELECT s.name AS SchemaName, t.name AS TableName
+FROM sys.tables AS t
+INNER JOIN sys.schemas AS s
+ON s.schema_id = t.schema_id
+WHERE s.name = N'dba' AND t.name = N'WorkCalendar';
+GO

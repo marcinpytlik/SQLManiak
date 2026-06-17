@@ -170,3 +170,61 @@ BEGIN
     RETURN 99;
 END;
 GO
+-- weryfikacja
+--msdb.dba.usp_CheckWorkCalendarRuleForSqlAgent
+
+--Ona przyjmuje nazwę reguły i zwraca kod.
+
+--Obsługiwane reguły to:
+
+--ANY_WORKING_DAY
+--FIRST_WORKING_DAY_OF_MONTH
+--LAST_WORKING_DAY_OF_MONTH
+--NTH_WORKING_DAY_OF_MONTH
+
+--Kody zwrotne są proste:
+
+--0  - reguła spełniona, job może działać
+--10 - reguła niespełniona, job powinien zakończyć się kontrolowanie jako sukces
+--99 - błąd konfiguracji, na przykład brak daty w kalendarzu
+USE msdb;
+GO
+
+DECLARE @ReturnCode int;
+
+EXEC @ReturnCode = msdb.dba.usp_CheckWorkCalendarRuleForSqlAgent
+    @RuleName = N'ANY_WORKING_DAY';
+
+SELECT @ReturnCode AS ReturnCode;
+GO
+
+--Jeżeli dzisiaj jest dzień roboczy, dostaniemy 0.
+
+--Jeżeli dzień wolny, dostaniemy 10.
+
+--Teraz sprawdzimy regułę: ostatni dzień roboczy miesiąca.
+
+USE msdb;
+GO
+
+DECLARE @ReturnCode int;
+
+EXEC @ReturnCode = msdb.dba.usp_CheckWorkCalendarRuleForSqlAgent
+    @RuleName = N'LAST_WORKING_DAY_OF_MONTH';
+
+SELECT @ReturnCode AS ReturnCode;
+GO
+
+--I regułę dla trzeciego dnia roboczego miesiąca.
+
+USE msdb;
+GO
+
+DECLARE @ReturnCode int;
+
+EXEC @ReturnCode = msdb.dba.usp_CheckWorkCalendarRuleForSqlAgent
+    @RuleName = N'NTH_WORKING_DAY_OF_MONTH',
+    @WorkingDayNumberInMonth = 3;
+
+SELECT @ReturnCode AS ReturnCode;
+GO

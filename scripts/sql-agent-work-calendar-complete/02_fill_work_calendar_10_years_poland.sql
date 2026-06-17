@@ -224,3 +224,35 @@ BEGIN CATCH
     RAISERROR(@ErrorMessage, @ErrorSeverity, @ErrorState);
 END CATCH;
 GO
+-- weryfikacja
+USE msdb;
+GO
+SELECT MIN(CalendarDate) AS MinDate,
+MAX(CalendarDate) AS MaxDate,
+COUNT(*) AS TotalDays,
+SUM(CASE WHEN IsWorkingDay = 1 THEN 1 ELSE 0 END) AS WorkingDays,
+SUM(CASE WHEN IsWorkingDay = 0 THEN 1 ELSE 0 END) AS NonWorkingDays
+FROM dba.WorkCalendar; GO
+-- sprawdzenie najbliższych dni wolnych
+USE msdb;
+GO
+SELECT TOP (30) CalendarDate,
+IsWorkingDay,
+Description
+FROM dba.WorkCalendar
+WHERE CalendarDate >= CONVERT(date, GETDATE()) AND IsWorkingDay = 0 ORDER BY CalendarDate;
+GO
+--sprawdzenie swiat w biezacym roku bez zwyklych sobót i niedziel
+USE msdb;
+GO
+DECLARE @Year int = YEAR(GETDATE());
+SELECT CalendarDate,
+IsWorkingDay,
+Description
+FROM dba.WorkCalendar
+WHERE CalendarDate >= DATEFROMPARTS(@Year, 1, 1)
+ AND CalendarDate < DATEFROMPARTS(@Year + 1, 1, 1)
+ AND IsWorkingDay = 0
+ AND Description NOT IN (N'Sobota', N'Niedziela')
+ORDER BY CalendarDate;
+GO
