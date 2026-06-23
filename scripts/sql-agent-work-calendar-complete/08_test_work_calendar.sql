@@ -4,7 +4,8 @@ GO
 /* ============================================================
    08_test_work_calendar.sql
 
-   Zestaw testów dla kompleksowego rozwiązania.
+   Bezpieczny zestaw testów.
+   Ten skrypt nie modyfikuje kalendarza.
    ============================================================ */
 
 ------------------------------------------------------------
@@ -14,6 +15,7 @@ SELECT
     CalendarDate,
     IsWorkingDay,
     Description,
+    IsManualOverride,
     DayNamePL,
     IsWeekend,
     IsHolidayOrCompanyDayOff,
@@ -34,6 +36,7 @@ SELECT TOP (30)
     CalendarDate,
     IsWorkingDay,
     Description,
+    IsManualOverride,
     DayNamePL,
     IsWeekend,
     IsHolidayOrCompanyDayOff
@@ -49,8 +52,8 @@ GO
 SELECT
     CalendarYear,
     CalendarMonth,
-    MIN(FirstWorkingDayOfMonth) AS FirstWorkingDayOfMonth,
-    MIN(LastWorkingDayOfMonth) AS LastWorkingDayOfMonth,
+    MAX(FirstWorkingDayOfMonth) AS FirstWorkingDayOfMonth,
+    MAX(LastWorkingDayOfMonth) AS LastWorkingDayOfMonth,
     MAX(WorkingDaysInMonth) AS WorkingDaysInMonth
 FROM dba.vWorkCalendarEnriched
 WHERE CalendarDate >= DATEFROMPARTS(YEAR(GETDATE()), 1, 1)
@@ -79,7 +82,7 @@ ORDER BY CalendarDate;
 GO
 
 ------------------------------------------------------------
--- 5. Sprawdzenie podstawowej procedury
+-- 5. Sprawdzenie podstawowej procedury dla dzisiaj
 ------------------------------------------------------------
 DECLARE @ReturnCodeBasic int;
 
@@ -131,4 +134,16 @@ EXEC @ReturnCodeThird = msdb.dba.usp_CheckWorkCalendarRuleForSqlAgent
     @WorkingDayNumberInMonth = 3;
 
 SELECT @ReturnCodeThird AS ReturnCodeThirdWorkingDayOfMonth;
+GO
+
+------------------------------------------------------------
+-- 10. Testy na konkretnych datach bez modyfikowania tabeli
+------------------------------------------------------------
+DECLARE @ReturnCode int;
+
+EXEC @ReturnCode = msdb.dba.usp_CheckWorkCalendarRuleForSqlAgent
+    @RuleName = N'ANY_WORKING_DAY',
+    @CheckDate = '2026-06-23';
+
+SELECT @ReturnCode AS ReturnCodeForSpecificDate;
 GO

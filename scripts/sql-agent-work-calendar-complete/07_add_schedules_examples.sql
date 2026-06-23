@@ -32,7 +32,7 @@ END;
 EXEC msdb.dbo.sp_add_schedule
     @schedule_name = @ScheduleDaily2000,
     @enabled = 1,
-    @freq_type = 4,
+    @freq_type = 4,          -- daily
     @freq_interval = 1,
     @active_start_time = 200000;
 
@@ -56,7 +56,7 @@ END;
 EXEC msdb.dbo.sp_add_schedule
     @schedule_name = @ScheduleDaily0700,
     @enabled = 1,
-    @freq_type = 4,
+    @freq_type = 4,          -- daily
     @freq_interval = 1,
     @active_start_time = 070000;
 
@@ -76,4 +76,27 @@ BEGIN
         @job_name = N'DBA - Work Calendar - Last Working Day Of Month',
         @schedule_name = @ScheduleDaily0700;
 END;
+GO
+
+-- Weryfikacja
+SELECT
+    j.name AS JobName,
+    s.name AS ScheduleName,
+    s.enabled,
+    s.freq_type,
+    s.freq_interval,
+    s.active_start_time
+FROM msdb.dbo.sysjobs AS j
+INNER JOIN msdb.dbo.sysjobschedules AS js
+    ON js.job_id = j.job_id
+INNER JOIN msdb.dbo.sysschedules AS s
+    ON s.schedule_id = js.schedule_id
+WHERE j.name IN
+(
+    N'DBA - Work Calendar - Any Working Day',
+    N'DBA - Work Calendar - Last Working Day Of Month'
+)
+ORDER BY
+    j.name,
+    s.name;
 GO

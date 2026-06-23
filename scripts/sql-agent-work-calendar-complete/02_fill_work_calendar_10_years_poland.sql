@@ -8,10 +8,6 @@ GO
    - Wypełnia msdb.dba.WorkCalendar od 1 stycznia bieżącego roku
      do 31 grudnia roku + 10 lat.
 
-   Przykład:
-   jeśli dziś jest 2026-06-10, skrypt wypełni zakres:
-   2026-01-01 do 2036-12-31
-
    Uwzględnia:
    - soboty,
    - niedziele,
@@ -19,9 +15,9 @@ GO
    - polskie święta ruchome liczone od Wielkanocy,
    - Wigilię 24 grudnia jako dzień wolny od 2025 roku.
 
-   Skrypt jest idempotentny:
-   - brakujące dni dodaje,
-   - istniejące dni aktualizuje.
+   Poprawki w tej wersji:
+   - Nie nadpisuje ręcznych wyjątków: IsManualOverride = 1.
+   - Nie używa MERGE.
    ============================================================ */
 
 SET NOCOUNT ON;
@@ -42,6 +38,8 @@ BEGIN TRY
             CalendarDate date NOT NULL,
             IsWorkingDay bit NOT NULL,
             Description nvarchar(200) NULL,
+            IsManualOverride bit NOT NULL
+                CONSTRAINT DF_WorkCalendar_IsManualOverride DEFAULT (0),
 
             CreatedAt datetime2(0) NOT NULL
                 CONSTRAINT DF_WorkCalendar_CreatedAt DEFAULT sysdatetime(),
@@ -51,6 +49,13 @@ BEGIN TRY
             CONSTRAINT PK_WorkCalendar
                 PRIMARY KEY CLUSTERED (CalendarDate)
         );
+    END;
+
+    IF COL_LENGTH(N'dba.WorkCalendar', N'IsManualOverride') IS NULL
+    BEGIN
+        ALTER TABLE dba.WorkCalendar
+        ADD IsManualOverride bit NOT NULL
+            CONSTRAINT DF_WorkCalendar_IsManualOverride DEFAULT (0);
     END;
 
     DECLARE @CurrentYear int = YEAR(GETDATE());
@@ -83,14 +88,14 @@ BEGIN TRY
     SELECT
         DATEADD(day, n, @StartDate) AS CalendarDate,
         CASE
-            WHEN DATEDIFF(day, '19000101', DATEADD(day, n, @StartDate)) % 7 IN (5, 6)
+            WHEN DATEDIFF(day, CONVERT(date, '19000101'), DATEADD(day, n, @StartDate)) % 7 IN (5, 6)
                 THEN 0
             ELSE 1
         END AS IsWorkingDay,
         CASE
-            WHEN DATEDIFF(day, '19000101', DATEADD(day, n, @StartDate)) % 7 = 5
+            WHEN DATEDIFF(day, CONVERT(date, '19000101'), DATEADD(day, n, @StartDate)) % 7 = 5
                 THEN N'Sobota'
-            WHEN DATEDIFF(day, '19000101', DATEADD(day, n, @StartDate)) % 7 = 6
+            WHEN DATEDIFF(day, CONVERT(date, '19000101'), DATEADD(day, n, @StartDate)) % 7 = 6
                 THEN N'Niedziela'
             ELSE N'Dzień roboczy'
         END AS Description
@@ -170,34 +175,51 @@ BEGIN TRY
     INNER JOIN #Holidays AS h
         ON h.HolidayDate = c.CalendarDate;
 
-    MERGE dba.WorkCalendar AS target
-    USING #Calendar AS source
-        ON target.CalendarDate = source.CalendarDate
-    WHEN MATCHED THEN
-        UPDATE SET
-            target.IsWorkingDay = source.IsWorkingDay,
-            target.Description = source.Description,
-            target.ModifiedAt = sysdatetime()
-    WHEN NOT MATCHED BY TARGET THEN
-        INSERT
-        (
-            CalendarDate,
-            IsWorkingDay,
-            Description
-        )
-        VALUES
-        (
-            source.CalendarDate,
-            source.IsWorkingDay,
-            source.Description
-        );
+    ------------------------------------------------------------
+    -- Aktualizujemy tylko rekordy bez ręcznego wyjątku.
+    ------------------------------------------------------------
+    UPDATE target
+    SET
+        target.IsWorkingDay = source.IsWorkingDay,
+        target.Description = source.Description,
+        target.ModifiedAt = sysdatetime()
+    FROM dba.WorkCalendar AS target
+    INNER JOIN #Calendar AS source
+        ON source.CalendarDate = target.CalendarDate
+    WHERE target.IsManualOverride = 0
+      AND
+      (
+          target.IsWorkingDay <> source.IsWorkingDay
+          OR ISNULL(target.Description, N'') <> source.Description
+      );
+
+    INSERT INTO dba.WorkCalendar
+    (
+        CalendarDate,
+        IsWorkingDay,
+        Description,
+        IsManualOverride
+    )
+    SELECT
+        source.CalendarDate,
+        source.IsWorkingDay,
+        source.Description,
+        0 AS IsManualOverride
+    FROM #Calendar AS source
+    WHERE NOT EXISTS
+    (
+        SELECT 1
+        FROM dba.WorkCalendar AS target
+        WHERE target.CalendarDate = source.CalendarDate
+    );
 
     SELECT
         @StartDate AS StartDate,
         @EndDate AS EndDate,
         COUNT(*) AS TotalDays,
         SUM(CASE WHEN IsWorkingDay = 1 THEN 1 ELSE 0 END) AS WorkingDays,
-        SUM(CASE WHEN IsWorkingDay = 0 THEN 1 ELSE 0 END) AS NonWorkingDays
+        SUM(CASE WHEN IsWorkingDay = 0 THEN 1 ELSE 0 END) AS NonWorkingDays,
+        SUM(CASE WHEN IsManualOverride = 1 THEN 1 ELSE 0 END) AS ManualOverrides
     FROM dba.WorkCalendar
     WHERE CalendarDate BETWEEN @StartDate AND @EndDate;
 
@@ -205,7 +227,8 @@ BEGIN TRY
         YEAR(CalendarDate) AS CalendarYear,
         COUNT(*) AS TotalDays,
         SUM(CASE WHEN IsWorkingDay = 1 THEN 1 ELSE 0 END) AS WorkingDays,
-        SUM(CASE WHEN IsWorkingDay = 0 THEN 1 ELSE 0 END) AS NonWorkingDays
+        SUM(CASE WHEN IsWorkingDay = 0 THEN 1 ELSE 0 END) AS NonWorkingDays,
+        SUM(CASE WHEN IsManualOverride = 1 THEN 1 ELSE 0 END) AS ManualOverrides
     FROM dba.WorkCalendar
     WHERE CalendarDate BETWEEN @StartDate AND @EndDate
     GROUP BY YEAR(CalendarDate)
@@ -224,35 +247,25 @@ BEGIN CATCH
     RAISERROR(@ErrorMessage, @ErrorSeverity, @ErrorState);
 END CATCH;
 GO
--- weryfikacja
-USE msdb;
+
+-- Weryfikacja
+SELECT
+    MIN(CalendarDate) AS MinDate,
+    MAX(CalendarDate) AS MaxDate,
+    COUNT(*) AS TotalDays,
+    SUM(CASE WHEN IsWorkingDay = 1 THEN 1 ELSE 0 END) AS WorkingDays,
+    SUM(CASE WHEN IsWorkingDay = 0 THEN 1 ELSE 0 END) AS NonWorkingDays,
+    SUM(CASE WHEN IsManualOverride = 1 THEN 1 ELSE 0 END) AS ManualOverrides
+FROM dba.WorkCalendar;
 GO
-SELECT MIN(CalendarDate) AS MinDate,
-MAX(CalendarDate) AS MaxDate,
-COUNT(*) AS TotalDays,
-SUM(CASE WHEN IsWorkingDay = 1 THEN 1 ELSE 0 END) AS WorkingDays,
-SUM(CASE WHEN IsWorkingDay = 0 THEN 1 ELSE 0 END) AS NonWorkingDays
-FROM dba.WorkCalendar; GO
--- sprawdzenie najbliższych dni wolnych
-USE msdb;
-GO
-SELECT TOP (30) CalendarDate,
-IsWorkingDay,
-Description
+
+SELECT TOP (30)
+    CalendarDate,
+    IsWorkingDay,
+    Description,
+    IsManualOverride
 FROM dba.WorkCalendar
-WHERE CalendarDate >= CONVERT(date, GETDATE()) AND IsWorkingDay = 0 ORDER BY CalendarDate;
-GO
---sprawdzenie swiat w biezacym roku bez zwyklych sobót i niedziel
-USE msdb;
-GO
-DECLARE @Year int = YEAR(GETDATE());
-SELECT CalendarDate,
-IsWorkingDay,
-Description
-FROM dba.WorkCalendar
-WHERE CalendarDate >= DATEFROMPARTS(@Year, 1, 1)
- AND CalendarDate < DATEFROMPARTS(@Year + 1, 1, 1)
- AND IsWorkingDay = 0
- AND Description NOT IN (N'Sobota', N'Niedziela')
+WHERE CalendarDate >= CONVERT(date, GETDATE())
+  AND IsWorkingDay = 0
 ORDER BY CalendarDate;
 GO

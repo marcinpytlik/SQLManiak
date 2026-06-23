@@ -7,17 +7,11 @@ GO
    Cel:
    - Tworzy widok msdb.dba.vWorkCalendarEnriched.
 
-   Widok dodaje informacje przydatne dla jobów:
-   - rok, miesiąc, dzień,
-   - początek i koniec miesiąca,
-   - pierwszy dzień roboczy miesiąca,
-   - ostatni dzień roboczy miesiąca,
-   - numer dnia roboczego w miesiącu,
-   - liczba dni roboczych w miesiącu,
-   - czy data jest pierwszym/ostatnim dniem roboczym miesiąca,
-   - poprzedni i następny dzień roboczy,
-   - czy jest weekendem,
-   - czy jest świętem ustawowym/firmowym według opisu.
+   Poprawki w tej wersji:
+   - Usunięto konstrukcje MIN/MAX(CASE WHEN ... THEN ... END),
+     które generowały ostrzeżenie:
+     "Null value is eliminated by an aggregate or other SET operation".
+   - Dodano IsManualOverride.
    ============================================================ */
 
 CREATE OR ALTER VIEW dba.vWorkCalendarEnriched
@@ -28,6 +22,7 @@ WITH BaseCalendar AS
         wc.CalendarDate,
         wc.IsWorkingDay,
         wc.Description,
+        wc.IsManualOverride,
         wc.CreatedAt,
         wc.ModifiedAt,
 
@@ -49,112 +44,83 @@ WITH BaseCalendar AS
             6 = sobota
             7 = niedziela
         */
-        CAST((DATEDIFF(day, '19000101', wc.CalendarDate) % 7) + 1 AS tinyint) AS IsoDayOfWeek
+        CAST((DATEDIFF(day, CONVERT(date, '19000101'), wc.CalendarDate) % 7) + 1 AS tinyint) AS IsoDayOfWeek
     FROM dba.WorkCalendar AS wc
 ),
-Calculated AS
+WorkingDays AS
 (
     SELECT
         bc.CalendarDate,
-        bc.IsWorkingDay,
-        bc.Description,
-        bc.CreatedAt,
-        bc.ModifiedAt,
-
+        ROW_NUMBER() OVER
+        (
+            PARTITION BY bc.CalendarYear, bc.CalendarMonth
+            ORDER BY bc.CalendarDate
+        ) AS WorkingDayNumberInMonth
+    FROM BaseCalendar AS bc
+    WHERE bc.IsWorkingDay = 1
+),
+MonthStats AS
+(
+    SELECT
         bc.CalendarYear,
         bc.CalendarMonth,
-        bc.DayOfMonth,
-        bc.MonthStartDate,
-        bc.MonthEndDate,
-        bc.IsoDayOfWeek,
-
-        CASE bc.IsoDayOfWeek
-            WHEN 1 THEN N'Poniedziałek'
-            WHEN 2 THEN N'Wtorek'
-            WHEN 3 THEN N'Środa'
-            WHEN 4 THEN N'Czwartek'
-            WHEN 5 THEN N'Piątek'
-            WHEN 6 THEN N'Sobota'
-            WHEN 7 THEN N'Niedziela'
-        END AS DayNamePL,
-
-        CAST(CASE WHEN bc.IsoDayOfWeek IN (6, 7) THEN 1 ELSE 0 END AS bit) AS IsWeekend,
-
-        CAST
-        (
-            CASE
-                WHEN bc.IsWorkingDay = 0
-                 AND bc.Description NOT IN (N'Sobota', N'Niedziela')
-                    THEN 1
-                ELSE 0
-            END AS bit
-        ) AS IsHolidayOrCompanyDayOff,
-
-        MIN(CASE WHEN bc.IsWorkingDay = 1 THEN bc.CalendarDate END)
-            OVER
-            (
-                PARTITION BY bc.CalendarYear, bc.CalendarMonth
-            ) AS FirstWorkingDayOfMonth,
-
-        MAX(CASE WHEN bc.IsWorkingDay = 1 THEN bc.CalendarDate END)
-            OVER
-            (
-                PARTITION BY bc.CalendarYear, bc.CalendarMonth
-            ) AS LastWorkingDayOfMonth,
-
-        SUM(CASE WHEN bc.IsWorkingDay = 1 THEN 1 ELSE 0 END)
-            OVER
-            (
-                PARTITION BY bc.CalendarYear, bc.CalendarMonth
-                ORDER BY bc.CalendarDate
-                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-            ) AS WorkingDayNumberInMonth,
-
-        SUM(CASE WHEN bc.IsWorkingDay = 1 THEN 1 ELSE 0 END)
-            OVER
-            (
-                PARTITION BY bc.CalendarYear, bc.CalendarMonth
-            ) AS WorkingDaysInMonth,
-
-        MAX(CASE WHEN bc.IsWorkingDay = 1 THEN bc.CalendarDate END)
-            OVER
-            (
-                ORDER BY bc.CalendarDate
-                ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
-            ) AS PreviousWorkingDay,
-
-        MIN(CASE WHEN bc.IsWorkingDay = 1 THEN bc.CalendarDate END)
-            OVER
-            (
-                ORDER BY bc.CalendarDate
-                ROWS BETWEEN 1 FOLLOWING AND UNBOUNDED FOLLOWING
-            ) AS NextWorkingDay
+        MIN(bc.CalendarDate) AS FirstWorkingDayOfMonth,
+        MAX(bc.CalendarDate) AS LastWorkingDayOfMonth,
+        COUNT_BIG(*) AS WorkingDaysInMonth
     FROM BaseCalendar AS bc
+    WHERE bc.IsWorkingDay = 1
+    GROUP BY
+        bc.CalendarYear,
+        bc.CalendarMonth
 )
 SELECT
-    CalendarDate,
-    IsWorkingDay,
-    Description,
+    bc.CalendarDate,
+    bc.IsWorkingDay,
+    bc.Description,
+    bc.IsManualOverride,
 
-    CalendarYear,
-    CalendarMonth,
-    DayOfMonth,
-    MonthStartDate,
-    MonthEndDate,
+    bc.CalendarYear,
+    bc.CalendarMonth,
+    bc.DayOfMonth,
+    bc.MonthStartDate,
+    bc.MonthEndDate,
 
-    IsoDayOfWeek,
-    DayNamePL,
-    IsWeekend,
-    IsHolidayOrCompanyDayOff,
+    bc.IsoDayOfWeek,
 
-    FirstWorkingDayOfMonth,
-    LastWorkingDayOfMonth,
+    CASE bc.IsoDayOfWeek
+        WHEN 1 THEN N'Poniedziałek'
+        WHEN 2 THEN N'Wtorek'
+        WHEN 3 THEN N'Środa'
+        WHEN 4 THEN N'Czwartek'
+        WHEN 5 THEN N'Piątek'
+        WHEN 6 THEN N'Sobota'
+        WHEN 7 THEN N'Niedziela'
+    END AS DayNamePL,
+
+    CAST(CASE WHEN bc.IsoDayOfWeek IN (6, 7) THEN 1 ELSE 0 END AS bit) AS IsWeekend,
 
     CAST
     (
         CASE
-            WHEN IsWorkingDay = 1
-             AND CalendarDate = FirstWorkingDayOfMonth
+            WHEN bc.IsWorkingDay = 0
+             AND
+             (
+                 bc.IsManualOverride = 1
+                 OR bc.IsoDayOfWeek NOT IN (6, 7)
+             )
+                THEN 1
+            ELSE 0
+        END AS bit
+    ) AS IsHolidayOrCompanyDayOff,
+
+    ms.FirstWorkingDayOfMonth,
+    ms.LastWorkingDayOfMonth,
+
+    CAST
+    (
+        CASE
+            WHEN bc.IsWorkingDay = 1
+             AND bc.CalendarDate = ms.FirstWorkingDayOfMonth
                 THEN 1
             ELSE 0
         END AS bit
@@ -163,36 +129,53 @@ SELECT
     CAST
     (
         CASE
-            WHEN IsWorkingDay = 1
-             AND CalendarDate = LastWorkingDayOfMonth
+            WHEN bc.IsWorkingDay = 1
+             AND bc.CalendarDate = ms.LastWorkingDayOfMonth
                 THEN 1
             ELSE 0
         END AS bit
     ) AS IsLastWorkingDayOfMonth,
 
-    CASE
-        WHEN IsWorkingDay = 1 THEN WorkingDayNumberInMonth
-        ELSE NULL
-    END AS WorkingDayNumberInMonth,
+    wd.WorkingDayNumberInMonth,
+    CONVERT(int, ms.WorkingDaysInMonth) AS WorkingDaysInMonth,
 
-    WorkingDaysInMonth,
-    PreviousWorkingDay,
-    NextWorkingDay,
+    prevwd.CalendarDate AS PreviousWorkingDay,
+    nextwd.CalendarDate AS NextWorkingDay,
 
-    CreatedAt,
-    ModifiedAt
-FROM Calculated;
+    bc.CreatedAt,
+    bc.ModifiedAt
+FROM BaseCalendar AS bc
+LEFT JOIN WorkingDays AS wd
+    ON wd.CalendarDate = bc.CalendarDate
+LEFT JOIN MonthStats AS ms
+    ON ms.CalendarYear = bc.CalendarYear
+   AND ms.CalendarMonth = bc.CalendarMonth
+OUTER APPLY
+(
+    SELECT TOP (1)
+        x.CalendarDate
+    FROM BaseCalendar AS x
+    WHERE x.IsWorkingDay = 1
+      AND x.CalendarDate < bc.CalendarDate
+    ORDER BY x.CalendarDate DESC
+) AS prevwd
+OUTER APPLY
+(
+    SELECT TOP (1)
+        x.CalendarDate
+    FROM BaseCalendar AS x
+    WHERE x.IsWorkingDay = 1
+      AND x.CalendarDate > bc.CalendarDate
+    ORDER BY x.CalendarDate ASC
+) AS nextwd;
 GO
---weryfikacja
---Sprawdźmy dzisiejszą datę w widoku.
 
-USE msdb;
-GO
-
+-- Weryfikacja
 SELECT
     CalendarDate,
     IsWorkingDay,
     Description,
+    IsManualOverride,
     DayNamePL,
     IsWeekend,
     IsHolidayOrCompanyDayOff,
@@ -204,10 +187,6 @@ SELECT
     NextWorkingDay
 FROM dba.vWorkCalendarEnriched
 WHERE CalendarDate = CONVERT(date, GETDATE());
-GO
---Sprawdźmy wszystkie ostatnie dni robocze miesięcy w bieżącym roku.
-
-USE msdb;
 GO
 
 SELECT

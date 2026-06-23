@@ -7,15 +7,11 @@ GO
    Cel:
    - Tworzy schemat msdb.dba, jeśli nie istnieje.
    - Tworzy tabelę msdb.dba.WorkCalendar, jeśli nie istnieje.
+   - Dostosowuje istniejącą tabelę do wersji poprawionej.
 
-   Tabela przechowuje:
-   - datę,
-   - znacznik dnia roboczego,
-   - opis dnia,
-   - daty utworzenia i modyfikacji wpisu.
-
-   To jest źródło prawdy dla kalendarza.
-   Widoki i procedury bazują na tej tabeli.
+   Poprawki w tej wersji:
+   - Dodano IsManualOverride, żeby ręcznie ustawione dni firmowo wolne
+     nie były nadpisywane przez ponowne uruchomienie skryptu 02.
    ============================================================ */
 
 SET NOCOUNT ON;
@@ -36,6 +32,8 @@ BEGIN TRY
             CalendarDate date NOT NULL,
             IsWorkingDay bit NOT NULL,
             Description nvarchar(200) NULL,
+            IsManualOverride bit NOT NULL
+                CONSTRAINT DF_WorkCalendar_IsManualOverride DEFAULT (0),
 
             CreatedAt datetime2(0) NOT NULL
                 CONSTRAINT DF_WorkCalendar_CreatedAt DEFAULT sysdatetime(),
@@ -45,6 +43,13 @@ BEGIN TRY
             CONSTRAINT PK_WorkCalendar
                 PRIMARY KEY CLUSTERED (CalendarDate)
         );
+    END;
+
+    IF COL_LENGTH(N'dba.WorkCalendar', N'IsManualOverride') IS NULL
+    BEGIN
+        ALTER TABLE dba.WorkCalendar
+        ADD IsManualOverride bit NOT NULL
+            CONSTRAINT DF_WorkCalendar_IsManualOverride DEFAULT (0);
     END;
 
     IF NOT EXISTS
@@ -57,7 +62,7 @@ BEGIN TRY
     BEGIN
         CREATE INDEX IX_WorkCalendar_IsWorkingDay_CalendarDate
             ON dba.WorkCalendar(IsWorkingDay, CalendarDate)
-            INCLUDE (Description);
+            INCLUDE (Description, IsManualOverride);
     END;
 
     COMMIT TRANSACTION;
@@ -73,12 +78,25 @@ BEGIN CATCH
     RAISERROR(@ErrorMessage, @ErrorSeverity, @ErrorState);
 END CATCH;
 GO
--- weryfikacja
-USE msdb;
-GO
-SELECT s.name AS SchemaName, t.name AS TableName
+
+-- Weryfikacja
+SELECT
+    s.name AS SchemaName,
+    t.name AS TableName
 FROM sys.tables AS t
 INNER JOIN sys.schemas AS s
-ON s.schema_id = t.schema_id
-WHERE s.name = N'dba' AND t.name = N'WorkCalendar';
+    ON s.schema_id = t.schema_id
+WHERE s.name = N'dba'
+  AND t.name = N'WorkCalendar';
+GO
+
+SELECT
+    c.name AS ColumnName,
+    ty.name AS DataType,
+    c.is_nullable
+FROM sys.columns AS c
+INNER JOIN sys.types AS ty
+    ON ty.user_type_id = c.user_type_id
+WHERE c.object_id = OBJECT_ID(N'dba.WorkCalendar', N'U')
+ORDER BY c.column_id;
 GO

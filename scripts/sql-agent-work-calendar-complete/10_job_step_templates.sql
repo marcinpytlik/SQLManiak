@@ -6,28 +6,19 @@ GO
 
    Gotowe szablony kroków do wklejenia do istniejących jobów.
 
-   Wariant C:
-   - Step 1: Check calendar rule
-   - Step 2: Decide controlled skip or real failure
-   - Step 10+: właściwe kroki joba
-
-   W SQL Agent ustawienia:
-   Step 1:
-     On success: Go to step: pierwszy właściwy krok joba
-     On failure: Go to step: Decide controlled skip or real failure
-
-   Step 2:
-     On success: Quit the job reporting success
-     On failure: Quit the job reporting failure
+   Poprawki w tej wersji:
+   - W krokach T-SQL SQL Agenta nie używamy RETURN 0.
+   - Używamy RETURN bez wartości.
+   - CONTROLLED_SKIP celowo kończy krok 1 błędem, aby SQL Agent
+     przeszedł do kroku decyzyjnego.
    ============================================================ */
 
 ------------------------------------------------------------
 -- TEMPLATE A:
+-- Step 1: Check calendar rule
 -- Job ma działać w każdy dzień roboczy
 ------------------------------------------------------------
-PRINT 'TEMPLATE A - ANY_WORKING_DAY';
-PRINT 'Step 1 command:';
-
+PRINT 'TEMPLATE A - ANY_WORKING_DAY - STEP 1';
 PRINT '
 DECLARE @ReturnCode int;
 
@@ -37,7 +28,7 @@ EXEC @ReturnCode = msdb.dba.usp_CheckWorkCalendarRuleForSqlAgent
 IF @ReturnCode = 0
 BEGIN
     PRINT ''Reguła spełniona - przechodzę do właściwych kroków joba.'';
-    RETURN 0;
+    RETURN;
 END;
 
 IF @ReturnCode = 10
@@ -49,9 +40,9 @@ END;
 
 RAISERROR(''WORK_CALENDAR_CONFIGURATION_ERROR'', 16, 1);
 ';
+GO
 
-PRINT 'Step 2 command:';
-
+PRINT 'TEMPLATE A - ANY_WORKING_DAY - STEP 2';
 PRINT '
 DECLARE @ReturnCode int;
 
@@ -61,19 +52,18 @@ EXEC @ReturnCode = msdb.dba.usp_CheckWorkCalendarRuleForSqlAgent
 IF @ReturnCode = 10
 BEGIN
     PRINT ''Job zakończony kontrolowanie, bo reguła kalendarza nie została spełniona.'';
-    RETURN 0;
+    RETURN;
 END;
 
 RAISERROR(''Błąd konfiguracji kalendarza albo nieoczekiwany kod zwrotny.'', 16, 1);
 ';
+GO
 
 ------------------------------------------------------------
 -- TEMPLATE B:
 -- Job ma działać tylko w ostatni dzień roboczy miesiąca
 ------------------------------------------------------------
-PRINT 'TEMPLATE B - LAST_WORKING_DAY_OF_MONTH';
-PRINT 'Step 1 command:';
-
+PRINT 'TEMPLATE B - LAST_WORKING_DAY_OF_MONTH - STEP 1';
 PRINT '
 DECLARE @ReturnCode int;
 
@@ -83,7 +73,7 @@ EXEC @ReturnCode = msdb.dba.usp_CheckWorkCalendarRuleForSqlAgent
 IF @ReturnCode = 0
 BEGIN
     PRINT ''Reguła spełniona - przechodzę do właściwych kroków joba.'';
-    RETURN 0;
+    RETURN;
 END;
 
 IF @ReturnCode = 10
@@ -95,9 +85,9 @@ END;
 
 RAISERROR(''WORK_CALENDAR_CONFIGURATION_ERROR'', 16, 1);
 ';
+GO
 
-PRINT 'Step 2 command:';
-
+PRINT 'TEMPLATE B - LAST_WORKING_DAY_OF_MONTH - STEP 2';
 PRINT '
 DECLARE @ReturnCode int;
 
@@ -107,19 +97,19 @@ EXEC @ReturnCode = msdb.dba.usp_CheckWorkCalendarRuleForSqlAgent
 IF @ReturnCode = 10
 BEGIN
     PRINT ''Job zakończony kontrolowanie, bo reguła kalendarza nie została spełniona.'';
-    RETURN 0;
+    RETURN;
 END;
 
 RAISERROR(''Błąd konfiguracji kalendarza albo nieoczekiwany kod zwrotny.'', 16, 1);
 ';
+GO
 
 ------------------------------------------------------------
 -- TEMPLATE C:
 -- Job ma działać tylko w N-ty dzień roboczy miesiąca
 ------------------------------------------------------------
-PRINT 'TEMPLATE C - NTH_WORKING_DAY_OF_MONTH';
+PRINT 'TEMPLATE C - NTH_WORKING_DAY_OF_MONTH - STEP 1';
 PRINT 'Przykład: trzeci dzień roboczy miesiąca.';
-
 PRINT '
 DECLARE @ReturnCode int;
 
@@ -130,7 +120,7 @@ EXEC @ReturnCode = msdb.dba.usp_CheckWorkCalendarRuleForSqlAgent
 IF @ReturnCode = 0
 BEGIN
     PRINT ''Reguła spełniona - przechodzę do właściwych kroków joba.'';
-    RETURN 0;
+    RETURN;
 END;
 
 IF @ReturnCode = 10
@@ -141,5 +131,23 @@ BEGIN
 END;
 
 RAISERROR(''WORK_CALENDAR_CONFIGURATION_ERROR'', 16, 1);
+';
+GO
+
+PRINT 'TEMPLATE C - NTH_WORKING_DAY_OF_MONTH - STEP 2';
+PRINT '
+DECLARE @ReturnCode int;
+
+EXEC @ReturnCode = msdb.dba.usp_CheckWorkCalendarRuleForSqlAgent
+    @RuleName = N''NTH_WORKING_DAY_OF_MONTH'',
+    @WorkingDayNumberInMonth = 3;
+
+IF @ReturnCode = 10
+BEGIN
+    PRINT ''Job zakończony kontrolowanie, bo reguła kalendarza nie została spełniona.'';
+    RETURN;
+END;
+
+RAISERROR(''Błąd konfiguracji kalendarza albo nieoczekiwany kod zwrotny.'', 16, 1);
 ';
 GO

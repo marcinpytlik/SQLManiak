@@ -9,22 +9,23 @@ GO
 
    Procedury:
    1. dba.usp_CheckWorkCalendarForSqlAgent
-      - podstawowe sprawdzanie: roboczy/wolny/brak wpisu
-
    2. dba.usp_CheckWorkCalendarRuleForSqlAgent
-      - sprawdzanie reguł:
-        ANY_WORKING_DAY
-        FIRST_WORKING_DAY_OF_MONTH
-        LAST_WORKING_DAY_OF_MONTH
-        NTH_WORKING_DAY_OF_MONTH
+
+   Kody zwrotne:
+   0  = reguła spełniona / dzień roboczy
+   10 = reguła niespełniona / dzień wolny
+   99 = błąd konfiguracji, brak daty albo zła reguła
    ============================================================ */
 
 CREATE OR ALTER PROCEDURE dba.usp_CheckWorkCalendarForSqlAgent
+(
+    @CheckDate date = NULL
+)
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    DECLARE @Today date = CONVERT(date, GETDATE());
+    DECLARE @DateToCheck date = ISNULL(@CheckDate, CONVERT(date, GETDATE()));
     DECLARE @IsWorkingDay bit;
     DECLARE @Description nvarchar(200);
 
@@ -32,29 +33,25 @@ BEGIN
         @IsWorkingDay = IsWorkingDay,
         @Description = Description
     FROM dba.WorkCalendar
-    WHERE CalendarDate = @Today;
+    WHERE CalendarDate = @DateToCheck;
 
     IF @IsWorkingDay IS NULL
     BEGIN
-        PRINT 'ERROR: Brak wpisu w msdb.dba.WorkCalendar dla dzisiejszej daty.';
-        PRINT CONCAT('Data: ', CONVERT(varchar(10), @Today, 120));
-
+        PRINT CONCAT('ERROR: Brak wpisu w msdb.dba.WorkCalendar dla daty: ', CONVERT(varchar(10), @DateToCheck, 120));
         RETURN 99;
     END;
 
     IF @IsWorkingDay = 0
     BEGIN
-        PRINT 'INFO: Dzisiaj jest dzień wolny.';
-        PRINT CONCAT('Data: ', CONVERT(varchar(10), @Today, 120));
+        PRINT 'INFO: Sprawdzana data jest dniem wolnym.';
+        PRINT CONCAT('Data: ', CONVERT(varchar(10), @DateToCheck, 120));
         PRINT CONCAT('Opis: ', ISNULL(@Description, N'brak opisu'));
-
         RETURN 10;
     END;
 
-    PRINT 'INFO: Dzisiaj jest dzień roboczy.';
-    PRINT CONCAT('Data: ', CONVERT(varchar(10), @Today, 120));
+    PRINT 'INFO: Sprawdzana data jest dniem roboczym.';
+    PRINT CONCAT('Data: ', CONVERT(varchar(10), @DateToCheck, 120));
     PRINT CONCAT('Opis: ', ISNULL(@Description, N'brak opisu'));
-
     RETURN 0;
 END;
 GO
@@ -69,20 +66,15 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    /*
-        Kody zwrotne:
-        0  = reguła spełniona, job może iść dalej
-        10 = reguła niespełniona, job ma zakończyć się kontrolowanie jako sukces
-        99 = błąd konfiguracji, brak daty albo zła reguła
-    */
-
     DECLARE @DateToCheck date = ISNULL(@CheckDate, CONVERT(date, GETDATE()));
+    DECLARE @NormalizedRuleName sysname = UPPER(LTRIM(RTRIM(ISNULL(@RuleName, N''))));
 
     DECLARE
         @IsWorkingDay bit,
         @IsFirstWorkingDayOfMonth bit,
         @IsLastWorkingDayOfMonth bit,
         @CurrentWorkingDayNumberInMonth int,
+        @WorkingDaysInMonth int,
         @Description nvarchar(200);
 
     SELECT
@@ -90,6 +82,7 @@ BEGIN
         @IsFirstWorkingDayOfMonth = IsFirstWorkingDayOfMonth,
         @IsLastWorkingDayOfMonth = IsLastWorkingDayOfMonth,
         @CurrentWorkingDayNumberInMonth = WorkingDayNumberInMonth,
+        @WorkingDaysInMonth = WorkingDaysInMonth,
         @Description = Description
     FROM dba.vWorkCalendarEnriched
     WHERE CalendarDate = @DateToCheck;
@@ -100,7 +93,7 @@ BEGIN
         RETURN 99;
     END;
 
-    IF @RuleName NOT IN
+    IF @NormalizedRuleName NOT IN
     (
         N'ANY_WORKING_DAY',
         N'FIRST_WORKING_DAY_OF_MONTH',
@@ -108,51 +101,57 @@ BEGIN
         N'NTH_WORKING_DAY_OF_MONTH'
     )
     BEGIN
-        PRINT CONCAT('ERROR: Nieobsługiwana reguła: ', @RuleName);
+        PRINT CONCAT('ERROR: Nieobsługiwana reguła: ', ISNULL(@RuleName, N'<NULL>'));
         RETURN 99;
     END;
 
-    IF @RuleName = N'ANY_WORKING_DAY'
+    IF @NormalizedRuleName = N'ANY_WORKING_DAY'
     BEGIN
         IF @IsWorkingDay = 1
         BEGIN
-            PRINT 'INFO: Reguła ANY_WORKING_DAY spełniona.';
+            PRINT CONCAT('INFO: Reguła ANY_WORKING_DAY spełniona. Data: ', CONVERT(varchar(10), @DateToCheck, 120));
             RETURN 0;
         END;
 
-        PRINT CONCAT('INFO: Reguła ANY_WORKING_DAY niespełniona. Opis: ', ISNULL(@Description, N'brak opisu'));
+        PRINT CONCAT('INFO: Reguła ANY_WORKING_DAY niespełniona. Data: ', CONVERT(varchar(10), @DateToCheck, 120), '. Opis: ', ISNULL(@Description, N'brak opisu'));
         RETURN 10;
     END;
 
-    IF @RuleName = N'FIRST_WORKING_DAY_OF_MONTH'
+    IF @NormalizedRuleName = N'FIRST_WORKING_DAY_OF_MONTH'
     BEGIN
         IF @IsFirstWorkingDayOfMonth = 1
         BEGIN
-            PRINT 'INFO: Reguła FIRST_WORKING_DAY_OF_MONTH spełniona.';
+            PRINT CONCAT('INFO: Reguła FIRST_WORKING_DAY_OF_MONTH spełniona. Data: ', CONVERT(varchar(10), @DateToCheck, 120));
             RETURN 0;
         END;
 
-        PRINT 'INFO: To nie jest pierwszy dzień roboczy miesiąca.';
+        PRINT CONCAT('INFO: To nie jest pierwszy dzień roboczy miesiąca. Data: ', CONVERT(varchar(10), @DateToCheck, 120));
         RETURN 10;
     END;
 
-    IF @RuleName = N'LAST_WORKING_DAY_OF_MONTH'
+    IF @NormalizedRuleName = N'LAST_WORKING_DAY_OF_MONTH'
     BEGIN
         IF @IsLastWorkingDayOfMonth = 1
         BEGIN
-            PRINT 'INFO: Reguła LAST_WORKING_DAY_OF_MONTH spełniona.';
+            PRINT CONCAT('INFO: Reguła LAST_WORKING_DAY_OF_MONTH spełniona. Data: ', CONVERT(varchar(10), @DateToCheck, 120));
             RETURN 0;
         END;
 
-        PRINT 'INFO: To nie jest ostatni dzień roboczy miesiąca.';
+        PRINT CONCAT('INFO: To nie jest ostatni dzień roboczy miesiąca. Data: ', CONVERT(varchar(10), @DateToCheck, 120));
         RETURN 10;
     END;
 
-    IF @RuleName = N'NTH_WORKING_DAY_OF_MONTH'
+    IF @NormalizedRuleName = N'NTH_WORKING_DAY_OF_MONTH'
     BEGIN
         IF @WorkingDayNumberInMonth IS NULL OR @WorkingDayNumberInMonth < 1
         BEGIN
             PRINT 'ERROR: Dla reguły NTH_WORKING_DAY_OF_MONTH parametr @WorkingDayNumberInMonth musi być większy od zera.';
+            RETURN 99;
+        END;
+
+        IF @WorkingDayNumberInMonth > ISNULL(@WorkingDaysInMonth, 0)
+        BEGIN
+            PRINT CONCAT('ERROR: Parametr @WorkingDayNumberInMonth jest większy niż liczba dni roboczych w miesiącu. Parametr: ', @WorkingDayNumberInMonth, ', liczba dni roboczych: ', ISNULL(@WorkingDaysInMonth, 0));
             RETURN 99;
         END;
 
@@ -163,48 +162,21 @@ BEGIN
             RETURN 0;
         END;
 
-        PRINT CONCAT('INFO: To nie jest ', @WorkingDayNumberInMonth, '. dzień roboczy miesiąca.');
+        PRINT CONCAT('INFO: To nie jest ', @WorkingDayNumberInMonth, '. dzień roboczy miesiąca. Data: ', CONVERT(varchar(10), @DateToCheck, 120));
         RETURN 10;
     END;
 
     RETURN 99;
 END;
 GO
--- weryfikacja
---msdb.dba.usp_CheckWorkCalendarRuleForSqlAgent
 
---Ona przyjmuje nazwę reguły i zwraca kod.
-
---Obsługiwane reguły to:
-
---ANY_WORKING_DAY
---FIRST_WORKING_DAY_OF_MONTH
---LAST_WORKING_DAY_OF_MONTH
---NTH_WORKING_DAY_OF_MONTH
-
---Kody zwrotne są proste:
-
---0  - reguła spełniona, job może działać
---10 - reguła niespełniona, job powinien zakończyć się kontrolowanie jako sukces
---99 - błąd konfiguracji, na przykład brak daty w kalendarzu
-USE msdb;
-GO
-
+-- Weryfikacja podstawowa
 DECLARE @ReturnCode int;
 
 EXEC @ReturnCode = msdb.dba.usp_CheckWorkCalendarRuleForSqlAgent
     @RuleName = N'ANY_WORKING_DAY';
 
-SELECT @ReturnCode AS ReturnCode;
-GO
-
---Jeżeli dzisiaj jest dzień roboczy, dostaniemy 0.
-
---Jeżeli dzień wolny, dostaniemy 10.
-
---Teraz sprawdzimy regułę: ostatni dzień roboczy miesiąca.
-
-USE msdb;
+SELECT @ReturnCode AS ReturnCodeAnyWorkingDay;
 GO
 
 DECLARE @ReturnCode int;
@@ -212,12 +184,7 @@ DECLARE @ReturnCode int;
 EXEC @ReturnCode = msdb.dba.usp_CheckWorkCalendarRuleForSqlAgent
     @RuleName = N'LAST_WORKING_DAY_OF_MONTH';
 
-SELECT @ReturnCode AS ReturnCode;
-GO
-
---I regułę dla trzeciego dnia roboczego miesiąca.
-
-USE msdb;
+SELECT @ReturnCode AS ReturnCodeLastWorkingDayOfMonth;
 GO
 
 DECLARE @ReturnCode int;
@@ -226,5 +193,5 @@ EXEC @ReturnCode = msdb.dba.usp_CheckWorkCalendarRuleForSqlAgent
     @RuleName = N'NTH_WORKING_DAY_OF_MONTH',
     @WorkingDayNumberInMonth = 3;
 
-SELECT @ReturnCode AS ReturnCode;
+SELECT @ReturnCode AS ReturnCodeThirdWorkingDayOfMonth;
 GO

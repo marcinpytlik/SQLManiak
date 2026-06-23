@@ -1,23 +1,24 @@
-﻿# SQL Agent Work Calendar - kompletne rozwiązanie
+﻿# SQL Agent Work Calendar - kompletne rozwiązanie, wersja poprawiona
 
 Pakiet tworzy centralny kalendarz dni roboczych w `msdb` i pozwala używać go w SQL Agent Jobach.
 
-## Co zawiera
+## Co poprawiono
 
-```text
-sql-agent-work-calendar-complete/
-├── 01_create_work_calendar_table.sql
-├── 02_fill_work_calendar_10_years_poland.sql
-├── 03_create_work_calendar_enriched_view.sql
-├── 04_create_work_calendar_check_procedures.sql
-├── 05_example_job_variant_c_any_working_day.sql
-├── 06_example_job_variant_c_last_working_day.sql
-├── 07_add_schedules_examples.sql
-├── 08_test_work_calendar.sql
-├── 09_manual_company_day_off_example.sql
-├── 10_job_step_templates.sql
-└── README.md
-```
+1. Poprawiono joby przykładowe:
+   - nie ma już `RETURN 0` w krokach T-SQL SQL Agenta,
+   - nie ma już skoków do nieistniejących kroków podczas tworzenia joba,
+   - kroki mają numerację ciągłą `1`, `2`, `3`.
+
+2. Poprawiono widok `dba.vWorkCalendarEnriched`:
+   - usunięto konstrukcje generujące warning:
+     `Null value is eliminated by an aggregate or other SET operation`.
+
+3. Dodano `IsManualOverride`:
+   - ręcznie ustawione dni firmowo wolne nie zostaną nadpisane przez ponowne uruchomienie skryptu wypełniającego kalendarz.
+
+4. Skrypt testowy jest bezpieczny:
+   - nie modyfikuje dzisiejszej daty,
+   - testy na konkretnych datach używają parametru `@CheckDate`.
 
 ## Kolejność uruchamiania
 
@@ -25,12 +26,37 @@ sql-agent-work-calendar-complete/
 2. `02_fill_work_calendar_10_years_poland.sql`
 3. `03_create_work_calendar_enriched_view.sql`
 4. `04_create_work_calendar_check_procedures.sql`
-5. Opcjonalnie:
+5. Test:
+   - `08_test_work_calendar.sql`
+6. Opcjonalnie:
    - `05_example_job_variant_c_any_working_day.sql`
    - `06_example_job_variant_c_last_working_day.sql`
    - `07_add_schedules_examples.sql`
-6. Testy:
-   - `08_test_work_calendar.sql`
+   - `09_manual_company_day_off_example.sql`
+   - `10_job_step_templates.sql`
+
+7. Sprzątanie / wycofanie pakietu:
+   - `99_cleanup_work_calendar.sql`
+
+
+## Sprzątanie środowiska
+
+Jeżeli chcesz całkowicie wycofać pakiet z `msdb`, uruchom:
+
+```sql
+99_cleanup_work_calendar.sql
+```
+
+Skrypt usuwa:
+
+- przykładowe joby SQL Agent,
+- przykładowe harmonogramy,
+- procedury `dba.usp_CheckWorkCalendarForSqlAgent` i `dba.usp_CheckWorkCalendarRuleForSqlAgent`,
+- widok `dba.vWorkCalendarEnriched`,
+- tabelę `dba.WorkCalendar`,
+- schemat `dba`, ale tylko wtedy, gdy po sprzątaniu jest pusty.
+
+Uwaga: skrypt usuwa również dane z kalendarza, ponieważ kasuje tabelę `msdb.dba.WorkCalendar`.
 
 ## Obiekty tworzone w msdb
 
@@ -40,13 +66,14 @@ sql-agent-work-calendar-complete/
 msdb.dba.WorkCalendar
 ```
 
-To jest źródło prawdy.
+Najważniejsze kolumny:
 
 | Kolumna | Znaczenie |
 |---|---|
 | `CalendarDate` | data |
 | `IsWorkingDay` | `1` = dzień roboczy, `0` = dzień wolny |
 | `Description` | opis dnia |
+| `IsManualOverride` | `1` = wpis ręcznie ustawiony i chroniony przed nadpisaniem |
 | `CreatedAt` | data utworzenia wpisu |
 | `ModifiedAt` | data ostatniej modyfikacji |
 
@@ -56,7 +83,7 @@ To jest źródło prawdy.
 msdb.dba.vWorkCalendarEnriched
 ```
 
-Widok dodaje między innymi:
+Widok dodaje:
 
 | Kolumna | Znaczenie |
 |---|---|
@@ -88,7 +115,7 @@ Kody zwrotne:
 |---:|---|
 | `0` | dzień roboczy |
 | `10` | dzień wolny |
-| `99` | brak wpisu w kalendarzu |
+| `99` | brak wpisu w kalendarzu / błąd konfiguracji |
 
 ### Sprawdzenie reguł
 
@@ -116,68 +143,37 @@ EXEC @ReturnCode = msdb.dba.usp_CheckWorkCalendarRuleForSqlAgent
 SELECT @ReturnCode AS ReturnCode;
 ```
 
-Przykład dla trzeciego dnia roboczego miesiąca:
+Przykład testu na konkretnej dacie:
 
 ```sql
 DECLARE @ReturnCode int;
 
 EXEC @ReturnCode = msdb.dba.usp_CheckWorkCalendarRuleForSqlAgent
-    @RuleName = N'NTH_WORKING_DAY_OF_MONTH',
-    @WorkingDayNumberInMonth = 3;
+    @RuleName = N'ANY_WORKING_DAY',
+    @CheckDate = '2026-06-23';
 
 SELECT @ReturnCode AS ReturnCode;
 ```
 
 ## Model joba - wariant C
 
-Struktura:
+Struktura przykładowa:
 
 | Step ID | Nazwa |
 |---:|---|
 | 1 | Check calendar rule |
 | 2 | Decide controlled skip or real failure |
-| 10 | Business step 1 |
-| 20 | Business step 2 |
+| 3 | Business step 1 |
 
 Logika:
 
 | Sytuacja | Efekt |
 |---|---|
-| reguła spełniona | job przechodzi do właściwych kroków |
-| reguła niespełniona | job kończy się kontrolowanie jako sukces |
-| brak daty / błąd kalendarza | job kończy się błędem |
+| reguła spełniona | krok 1 kończy się sukcesem i job przechodzi do kroku 3 |
+| reguła niespełniona | krok 1 celowo zgłasza `CONTROLLED_SKIP`, przechodzi do kroku 2, a cały job kończy się sukcesem |
+| brak daty / błąd kalendarza | krok 2 rozpoznaje błąd i job kończy się błędem |
 
-## Przykłady zastosowania
-
-### Job codzienny, ale wykonuje się tylko w dzień roboczy
-
-Użyj reguły:
-
-```sql
-ANY_WORKING_DAY
-```
-
-### Job miesięczny, ale wykonuje się tylko w ostatni dzień roboczy miesiąca
-
-Użyj reguły:
-
-```sql
-LAST_WORKING_DAY_OF_MONTH
-```
-
-### Job po zamknięciu księgowym, np. trzeci dzień roboczy miesiąca
-
-Użyj reguły:
-
-```sql
-NTH_WORKING_DAY_OF_MONTH
-```
-
-z parametrem:
-
-```sql
-@WorkingDayNumberInMonth = 3
-```
+W historii joba przy controlled skip krok 1 może być czerwony, ponieważ celowo używa `RAISERROR('CONTROLLED_SKIP', 16, 1)`. Ważny jest końcowy status joba: `The job succeeded`.
 
 ## Dni firmowe
 
@@ -198,9 +194,12 @@ UPDATE msdb.dba.WorkCalendar
 SET
     IsWorkingDay = 0,
     Description = N'Dzień wolny firmowy za święto przypadające w sobotę',
+    IsManualOverride = 1,
     ModifiedAt = sysdatetime()
 WHERE CalendarDate = '2026-08-14';
 ```
+
+`IsManualOverride = 1` powoduje, że skrypt `02_fill_work_calendar_10_years_poland.sql` nie nadpisze ręcznej decyzji.
 
 ## Rekomendacja
 
