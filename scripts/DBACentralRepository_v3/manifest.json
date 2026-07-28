@@ -1,0 +1,41 @@
+{
+  "name": "DBACentralRepository v3",
+  "database": "DBACentralRepository",
+  "version": "3.0-reconstructed",
+  "modules": [
+    "dbo",
+    "job",
+    "db",
+    "backup",
+    "capacity",
+    "ha",
+    "maintenance",
+    "patch",
+    "config",
+    "security",
+    "audit",
+    "alert",
+    "report"
+  ],
+  "stage1": [
+    "backup",
+    "capacity",
+    "ha",
+    "maintenance"
+  ],
+  "stage2": [
+    "patch",
+    "config",
+    "security",
+    "audit"
+  ],
+  "audit_compliance": {
+    "owners": true,
+    "proxies": true,
+    "schedules": true,
+    "notifications": true,
+    "disabled_jobs": true,
+    "documentation": true,
+    "change_history": true
+  }
+}
