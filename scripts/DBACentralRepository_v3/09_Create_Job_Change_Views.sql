@@ -142,7 +142,6 @@ LEFT JOIN [dbo].[Environment] AS E
     ON E.[EnvironmentId] = I.[EnvironmentId];
 GO
 
-
 /*=============================================================================
   2. Nowe joby
 =============================================================================*/
@@ -157,7 +156,6 @@ WHERE [NormalizedChangeType] = N'ADDED'
           N'SQL_AGENT_JOB'
       );
 GO
-
 
 /*=============================================================================
   3. Usunięte joby
@@ -174,7 +172,6 @@ WHERE [NormalizedChangeType] = N'REMOVED'
       );
 GO
 
-
 /*=============================================================================
   4. Zmodyfikowane joby
 =============================================================================*/
@@ -185,7 +182,6 @@ FROM [report].[vJobChanges]
 WHERE [NormalizedChangeType] = N'MODIFIED';
 GO
 
-
 /*=============================================================================
   5. Zmiany właścicieli jobów
 =============================================================================*/
@@ -195,7 +191,6 @@ SELECT *
 FROM [report].[vJobChanges]
 WHERE [ChangeArea] = N'OWNER';
 GO
-
 
 /*=============================================================================
   6. Zmiany statusu aktywności jobów
@@ -229,7 +224,6 @@ FROM [report].[vJobChanges]
 WHERE [ChangeArea] = N'STATUS';
 GO
 
-
 /*=============================================================================
   7. Joby włączone
 =============================================================================*/
@@ -240,7 +234,6 @@ FROM [report].[vJobStatusChanges]
 WHERE [NewStatus] = N'ENABLED';
 GO
 
-
 /*=============================================================================
   8. Joby wyłączone
 =============================================================================*/
@@ -250,7 +243,6 @@ SELECT *
 FROM [report].[vJobStatusChanges]
 WHERE [NewStatus] = N'DISABLED';
 GO
-
 
 /*=============================================================================
   9. Zmiany kroków jobów
@@ -266,7 +258,6 @@ WHERE [ChangeArea] = N'STEP'
           N'STEP'
       );
 GO
-
 
 /*=============================================================================
   10. Zmiany komend w krokach jobów
@@ -287,7 +278,6 @@ WHERE [ChangeArea] = N'COMMAND'
    );
 GO
 
-
 /*=============================================================================
   11. Zmiany harmonogramów
 =============================================================================*/
@@ -303,7 +293,6 @@ WHERE [ChangeArea] = N'SCHEDULE'
       );
 GO
 
-
 /*=============================================================================
   12. Zmiany operatorów
 =============================================================================*/
@@ -313,7 +302,6 @@ SELECT *
 FROM [report].[vJobChanges]
 WHERE [ChangeArea] = N'OPERATOR';
 GO
-
 
 /*=============================================================================
   13. Zmiany konfiguracji powiadomień
@@ -325,7 +313,6 @@ FROM [report].[vJobChanges]
 WHERE [ChangeArea] = N'NOTIFICATION';
 GO
 
-
 /*=============================================================================
   14. Zmiany proxy
 =============================================================================*/
@@ -335,7 +322,6 @@ SELECT *
 FROM [report].[vJobChanges]
 WHERE [ChangeArea] = N'PROXY';
 GO
-
 
 /*=============================================================================
   15. Zmiany kategorii
@@ -347,7 +333,6 @@ FROM [report].[vJobChanges]
 WHERE [ChangeArea] = N'CATEGORY';
 GO
 
-
 /*=============================================================================
   16. Zmiany opisów
 =============================================================================*/
@@ -357,7 +342,6 @@ SELECT *
 FROM [report].[vJobChanges]
 WHERE [ChangeArea] = N'DESCRIPTION';
 GO
-
 
 /*=============================================================================
   17. Zmiany autoryzowane
@@ -369,7 +353,6 @@ FROM [report].[vJobChanges]
 WHERE [AuthorizationStatus] = N'AUTHORIZED';
 GO
 
-
 /*=============================================================================
   18. Zmiany nieautoryzowane
 =============================================================================*/
@@ -379,7 +362,6 @@ SELECT *
 FROM [report].[vJobChanges]
 WHERE [AuthorizationStatus] = N'UNAUTHORIZED';
 GO
-
 
 /*=============================================================================
   19. Zmiany niezweryfikowane
@@ -391,7 +373,6 @@ FROM [report].[vJobChanges]
 WHERE [AuthorizationStatus] = N'NOT_REVIEWED';
 GO
 
-
 /*=============================================================================
   20. Zmiany bez numeru zgłoszenia
 =============================================================================*/
@@ -401,7 +382,6 @@ SELECT *
 FROM [report].[vJobChanges]
 WHERE NULLIF(LTRIM(RTRIM([TicketNumber])), N'') IS NULL;
 GO
-
 
 /*=============================================================================
   21. Zmiany z numerem zgłoszenia
@@ -413,7 +393,6 @@ FROM [report].[vJobChanges]
 WHERE NULLIF(LTRIM(RTRIM([TicketNumber])), N'') IS NOT NULL;
 GO
 
-
 /*=============================================================================
   22. Zmiany z ostatnich 24 godzin
 =============================================================================*/
@@ -423,7 +402,6 @@ SELECT *
 FROM [report].[vJobChanges]
 WHERE [DetectedAt] >= DATEADD(hour, -24, SYSDATETIME());
 GO
-
 
 /*=============================================================================
   23. Zmiany z ostatnich 7 dni
@@ -435,7 +413,6 @@ FROM [report].[vJobChanges]
 WHERE [DetectedAt] >= DATEADD(day, -7, SYSDATETIME());
 GO
 
-
 /*=============================================================================
   24. Zmiany z ostatnich 30 dni
 =============================================================================*/
@@ -445,7 +422,6 @@ SELECT *
 FROM [report].[vJobChanges]
 WHERE [DetectedAt] >= DATEADD(day, -30, SYSDATETIME());
 GO
-
 
 /*=============================================================================
   25. Zmiany krytyczne operacyjnie
@@ -492,7 +468,6 @@ WHERE
        );
 GO
 
-
 /*=============================================================================
   26. Zmiany dotyczące jobów aktualnie aktywnych
 =============================================================================*/
@@ -509,7 +484,6 @@ INNER JOIN [report].[vCurrentJobs] AS J
     ON J.[InstanceId] = C.[InstanceId]
    AND J.[JobId] = C.[JobId];
 GO
-
 
 /*=============================================================================
   27. Ostatnia zmiana każdego joba
@@ -531,7 +505,6 @@ SELECT *
 FROM X
 WHERE [rn] = 1;
 GO
-
 
 /*=============================================================================
   28. Joby wielokrotnie zmieniane
@@ -574,7 +547,6 @@ GROUP BY
 HAVING COUNT(*) > 1;
 GO
 
-
 /*=============================================================================
   29. Podsumowanie zmian według rodzaju
 =============================================================================*/
@@ -597,7 +569,6 @@ GROUP BY
     [ChangeArea],
     [AuthorizationStatus];
 GO
-
 
 /*=============================================================================
   30. Dzienne podsumowanie zmian
@@ -644,7 +615,6 @@ GROUP BY
     [ChangeArea];
 GO
 
-
 /*=============================================================================
   31. Podsumowanie zmian według instancji
 =============================================================================*/
@@ -670,7 +640,6 @@ GROUP BY
     [EnvironmentCode];
 GO
 
-
 /*=============================================================================
   32. Dashboard zmian
 =============================================================================*/
@@ -689,7 +658,6 @@ SELECT
     MAX([DetectedAt]) AS [LastDetectedChangeAt]
 FROM [report].[vJobChanges];
 GO
-
 
 /*=============================================================================
   33. Extended properties
@@ -757,7 +725,6 @@ BEGIN
         @Description = N'Jednowierszowe podsumowanie zmian jobów do dashboardu Confluence.';
 END;
 GO
-
 
 /*=============================================================================
   34. Zapytania kontrolne po instalacji

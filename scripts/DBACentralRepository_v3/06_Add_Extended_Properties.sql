@@ -1,4 +1,4 @@
-USE DBACentralRepository;
+﻿USE [DBACentralRepository];
 GO
 
 DECLARE @D TABLE
@@ -27,7 +27,7 @@ INSERT @D VALUES
 (N'ha',N'DatabaseReplicaSnapshot','TABLE',N'Historia stanu baz w Availability Groups.'),
 (N'maintenance',N'CheckDbExecution','TABLE',N'Historia wykonań DBCC CHECKDB.'),
 (N'patch',N'InstanceBuildHistory','TABLE',N'Historia buildów zainstalowanych na instancjach.'),
-(N'config',N'ServerConfigurationSnapshot','TABLE',N'Historia ustawień sys.configurations.'),
+(N'config',N'ServerConfigurationSnapshot','TABLE',N'Historia ustawień [sys].[configurations].'),
 (N'security',N'ServerPrincipalSnapshot','TABLE',N'Historia loginów i principals serwerowych.'),
 (N'security',N'ProxySnapshot','TABLE',N'Historia proxy SQL Server Agent.'),
 (N'security',N'CredentialSnapshot','TABLE',N'Historia credentials bez przechowywania haseł.'),
@@ -47,7 +47,7 @@ FETCH NEXT FROM c INTO @SchemaName,@ObjectName,@ObjectType,@Description;
 
 WHILE @@FETCH_STATUS=0
 BEGIN
-    EXEC dbo.usp_SetDescription
+    EXEC [dbo].[usp_SetDescription]
         @SchemaName=@SchemaName,
         @ObjectName=@ObjectName,
         @ObjectType=@ObjectType,

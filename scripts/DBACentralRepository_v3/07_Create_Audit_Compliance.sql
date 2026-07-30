@@ -1,119 +1,137 @@
-﻿USE DBACentralRepository;
+﻿USE [DBACentralRepository];
 GO
 
-CREATE TABLE audit.ComplianceRule
-(
-    ComplianceRuleId int IDENTITY(1,1) NOT NULL CONSTRAINT PK_ComplianceRule PRIMARY KEY,
-    RuleCode varchar(100) NOT NULL CONSTRAINT UQ_ComplianceRule_RuleCode UNIQUE,
-    ModuleName varchar(30) NOT NULL,
-    RuleName nvarchar(256) NOT NULL,
-    Description nvarchar(2000) NULL,
-    Severity varchar(20) NOT NULL,
-    Recommendation nvarchar(2000) NULL,
-    IsEnabled bit NOT NULL CONSTRAINT DF_ComplianceRule_IsEnabled DEFAULT(1)
-);
+IF OBJECT_ID(N'[audit].[ComplianceRule]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [audit].[ComplianceRule]
+    (
+        ComplianceRuleId int IDENTITY(1,1) NOT NULL CONSTRAINT PK_ComplianceRule PRIMARY KEY,
+        RuleCode varchar(100) NOT NULL CONSTRAINT UQ_ComplianceRule_RuleCode UNIQUE,
+        ModuleName varchar(30) NOT NULL,
+        RuleName nvarchar(256) NOT NULL,
+        Description nvarchar(2000) NULL,
+        Severity varchar(20) NOT NULL,
+        Recommendation nvarchar(2000) NULL,
+        IsEnabled bit NOT NULL CONSTRAINT DF_ComplianceRule_IsEnabled DEFAULT(1)
+    );
+END;
 GO
 
-CREATE TABLE audit.ComplianceException
-(
-    ComplianceExceptionId bigint IDENTITY(1,1) NOT NULL CONSTRAINT PK_ComplianceException PRIMARY KEY,
-    RuleCode varchar(100) NOT NULL,
-    InstanceId bigint NOT NULL,
-    ObjectType varchar(30) NOT NULL,
-    ObjectName nvarchar(512) NOT NULL,
-    Reason nvarchar(max) NOT NULL,
-    ApprovedBy nvarchar(256) NULL,
-    TicketNumber nvarchar(128) NULL,
-    ValidFrom datetime2(0) NOT NULL,
-    ValidTo datetime2(0) NULL,
-    IsActive bit NOT NULL CONSTRAINT DF_ComplianceException_IsActive DEFAULT(1),
-    CONSTRAINT FK_ComplianceException_Instance FOREIGN KEY(InstanceId) REFERENCES dbo.Instance(InstanceId)
-);
+IF OBJECT_ID(N'[audit].[ComplianceException]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [audit].[ComplianceException]
+    (
+        ComplianceExceptionId bigint IDENTITY(1,1) NOT NULL CONSTRAINT PK_ComplianceException PRIMARY KEY,
+        RuleCode varchar(100) NOT NULL,
+        InstanceId bigint NOT NULL,
+        ObjectType varchar(30) NOT NULL,
+        ObjectName nvarchar(512) NOT NULL,
+        Reason nvarchar(max) NOT NULL,
+        ApprovedBy nvarchar(256) NULL,
+        TicketNumber nvarchar(128) NULL,
+        ValidFrom datetime2(0) NOT NULL,
+        ValidTo datetime2(0) NULL,
+        IsActive bit NOT NULL CONSTRAINT DF_ComplianceException_IsActive DEFAULT(1),
+        CONSTRAINT FK_ComplianceException_Instance FOREIGN KEY(InstanceId) REFERENCES [dbo].[Instance](InstanceId)
+    );
+END;
 GO
 
-CREATE TABLE audit.JobDocumentation
-(
-    JobDocumentationId bigint IDENTITY(1,1) NOT NULL CONSTRAINT PK_JobDocumentation PRIMARY KEY,
-    InstanceId bigint NOT NULL,
-    JobId uniqueidentifier NOT NULL,
-    JobName sysname NOT NULL,
-    ConfluencePageId nvarchar(100) NULL,
-    ConfluencePageUrl nvarchar(2000) NULL,
-    TechnicalOwner nvarchar(256) NULL,
-    BusinessOwner nvarchar(256) NULL,
-    Criticality varchar(20) NULL,
-    IsDocumented bit NOT NULL CONSTRAINT DF_JobDocumentation_IsDocumented DEFAULT(0),
-    DocumentationStatus varchar(30) NOT NULL CONSTRAINT DF_JobDocumentation_Status DEFAULT('MISSING'),
-    LastReviewedAt datetime2(0) NULL,
-    ReviewedBy nvarchar(256) NULL,
-    Notes nvarchar(max) NULL,
-    CONSTRAINT FK_JobDocumentation_Instance FOREIGN KEY(InstanceId) REFERENCES dbo.Instance(InstanceId),
-    CONSTRAINT UQ_JobDocumentation UNIQUE(InstanceId,JobId)
-);
+IF OBJECT_ID(N'[audit].[JobDocumentation]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [audit].[JobDocumentation]
+    (
+        JobDocumentationId bigint IDENTITY(1,1) NOT NULL CONSTRAINT PK_JobDocumentation PRIMARY KEY,
+        InstanceId bigint NOT NULL,
+        JobId uniqueidentifier NOT NULL,
+        JobName sysname NOT NULL,
+        ConfluencePageId nvarchar(100) NULL,
+        ConfluencePageUrl nvarchar(2000) NULL,
+        TechnicalOwner nvarchar(256) NULL,
+        BusinessOwner nvarchar(256) NULL,
+        Criticality varchar(20) NULL,
+        IsDocumented bit NOT NULL CONSTRAINT DF_JobDocumentation_IsDocumented DEFAULT(0),
+        DocumentationStatus varchar(30) NOT NULL CONSTRAINT DF_JobDocumentation_Status DEFAULT('MISSING'),
+        LastReviewedAt datetime2(0) NULL,
+        ReviewedBy nvarchar(256) NULL,
+        Notes nvarchar(max) NULL,
+        CONSTRAINT FK_JobDocumentation_Instance FOREIGN KEY(InstanceId) REFERENCES [dbo].[Instance](InstanceId),
+        CONSTRAINT UQ_JobDocumentation UNIQUE(InstanceId,JobId)
+    );
+END;
 GO
 
-CREATE TABLE audit.ComplianceRun
-(
-    ComplianceRunId bigint IDENTITY(1,1) NOT NULL CONSTRAINT PK_ComplianceRun PRIMARY KEY,
-    ScanRunId bigint NULL,
-    StartedAt datetime2(0) NOT NULL CONSTRAINT DF_ComplianceRun_StartedAt DEFAULT(SYSDATETIME()),
-    FinishedAt datetime2(0) NULL,
-    Status varchar(30) NOT NULL CONSTRAINT DF_ComplianceRun_Status DEFAULT('RUNNING'),
-    FindingCount int NOT NULL CONSTRAINT DF_ComplianceRun_FindingCount DEFAULT(0),
-    ErrorMessage nvarchar(max) NULL,
-    CONSTRAINT FK_ComplianceRun_ScanRun FOREIGN KEY(ScanRunId) REFERENCES dbo.ScanRun(ScanRunId)
-);
+IF OBJECT_ID(N'[audit].[ComplianceRun]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [audit].[ComplianceRun]
+    (
+        ComplianceRunId bigint IDENTITY(1,1) NOT NULL CONSTRAINT PK_ComplianceRun PRIMARY KEY,
+        ScanRunId bigint NULL,
+        StartedAt datetime2(0) NOT NULL CONSTRAINT DF_ComplianceRun_StartedAt DEFAULT(SYSDATETIME()),
+        FinishedAt datetime2(0) NULL,
+        Status varchar(30) NOT NULL CONSTRAINT DF_ComplianceRun_Status DEFAULT('RUNNING'),
+        FindingCount int NOT NULL CONSTRAINT DF_ComplianceRun_FindingCount DEFAULT(0),
+        ErrorMessage nvarchar(max) NULL,
+        CONSTRAINT FK_ComplianceRun_ScanRun FOREIGN KEY(ScanRunId) REFERENCES [dbo].[ScanRun](ScanRunId)
+    );
+END;
 GO
 
-CREATE TABLE audit.ComplianceFinding
-(
-    ComplianceFindingId bigint IDENTITY(1,1) NOT NULL CONSTRAINT PK_ComplianceFinding PRIMARY KEY,
-    ComplianceRunId bigint NOT NULL,
-    ScanRunId bigint NULL,
-    RuleCode varchar(100) NOT NULL,
-    InstanceId bigint NOT NULL,
-    ObjectType varchar(30) NOT NULL,
-    ObjectKey nvarchar(512) NULL,
-    ObjectName nvarchar(512) NOT NULL,
-    Severity varchar(20) NOT NULL,
-    CurrentValue nvarchar(max) NULL,
-    ExpectedValue nvarchar(max) NULL,
-    Recommendation nvarchar(max) NULL,
-    FindingStatus varchar(30) NOT NULL,
-    IsExcepted bit NOT NULL CONSTRAINT DF_ComplianceFinding_IsExcepted DEFAULT(0),
-    ComplianceExceptionId bigint NULL,
-    FirstDetectedAt datetime2(0) NOT NULL,
-    LastDetectedAt datetime2(0) NOT NULL,
-    ResolvedAt datetime2(0) NULL,
-    Details nvarchar(max) NULL,
-    CONSTRAINT FK_ComplianceFinding_Run FOREIGN KEY(ComplianceRunId) REFERENCES audit.ComplianceRun(ComplianceRunId),
-    CONSTRAINT FK_ComplianceFinding_Instance FOREIGN KEY(InstanceId) REFERENCES dbo.Instance(InstanceId),
-    CONSTRAINT FK_ComplianceFinding_Exception FOREIGN KEY(ComplianceExceptionId) REFERENCES audit.ComplianceException(ComplianceExceptionId)
-);
+IF OBJECT_ID(N'[audit].[ComplianceFinding]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [audit].[ComplianceFinding]
+    (
+        ComplianceFindingId bigint IDENTITY(1,1) NOT NULL CONSTRAINT PK_ComplianceFinding PRIMARY KEY,
+        ComplianceRunId bigint NOT NULL,
+        ScanRunId bigint NULL,
+        RuleCode varchar(100) NOT NULL,
+        InstanceId bigint NOT NULL,
+        ObjectType varchar(30) NOT NULL,
+        ObjectKey nvarchar(512) NULL,
+        ObjectName nvarchar(512) NOT NULL,
+        Severity varchar(20) NOT NULL,
+        CurrentValue nvarchar(max) NULL,
+        ExpectedValue nvarchar(max) NULL,
+        Recommendation nvarchar(max) NULL,
+        FindingStatus varchar(30) NOT NULL,
+        IsExcepted bit NOT NULL CONSTRAINT DF_ComplianceFinding_IsExcepted DEFAULT(0),
+        ComplianceExceptionId bigint NULL,
+        FirstDetectedAt datetime2(0) NOT NULL,
+        LastDetectedAt datetime2(0) NOT NULL,
+        ResolvedAt datetime2(0) NULL,
+        Details nvarchar(max) NULL,
+        CONSTRAINT FK_ComplianceFinding_Run FOREIGN KEY(ComplianceRunId) REFERENCES [audit].[ComplianceRun](ComplianceRunId),
+        CONSTRAINT FK_ComplianceFinding_Instance FOREIGN KEY(InstanceId) REFERENCES [dbo].[Instance](InstanceId),
+        CONSTRAINT FK_ComplianceFinding_Exception FOREIGN KEY(ComplianceExceptionId) REFERENCES [audit].[ComplianceException](ComplianceExceptionId)
+    );
+END;
 GO
 
-CREATE TABLE audit.JobChange
-(
-    JobChangeId bigint IDENTITY(1,1) NOT NULL CONSTRAINT PK_JobChange PRIMARY KEY,
-    ScanRunId bigint NOT NULL,
-    InstanceId bigint NOT NULL,
-    DetectedAt datetime2(0) NOT NULL CONSTRAINT DF_JobChange_DetectedAt DEFAULT(SYSDATETIME()),
-    JobId uniqueidentifier NULL,
-    JobName sysname NOT NULL,
-    ChangeType varchar(30) NOT NULL,
-    ObjectType varchar(30) NOT NULL,
-    ObjectName nvarchar(512) NULL,
-    PropertyName nvarchar(256) NULL,
-    OldValue nvarchar(max) NULL,
-    NewValue nvarchar(max) NULL,
-    IsAuthorized bit NULL,
-    TicketNumber nvarchar(128) NULL,
-    CONSTRAINT FK_JobChange_ScanRun FOREIGN KEY(ScanRunId) REFERENCES dbo.ScanRun(ScanRunId),
-    CONSTRAINT FK_JobChange_Instance FOREIGN KEY(InstanceId) REFERENCES dbo.Instance(InstanceId)
-);
+IF OBJECT_ID(N'[audit].[JobChange]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [audit].[JobChange]
+    (
+        JobChangeId bigint IDENTITY(1,1) NOT NULL CONSTRAINT PK_JobChange PRIMARY KEY,
+        ScanRunId bigint NOT NULL,
+        InstanceId bigint NOT NULL,
+        DetectedAt datetime2(0) NOT NULL CONSTRAINT DF_JobChange_DetectedAt DEFAULT(SYSDATETIME()),
+        JobId uniqueidentifier NULL,
+        JobName sysname NOT NULL,
+        ChangeType varchar(30) NOT NULL,
+        ObjectType varchar(30) NOT NULL,
+        ObjectName nvarchar(512) NULL,
+        PropertyName nvarchar(256) NULL,
+        OldValue nvarchar(max) NULL,
+        NewValue nvarchar(max) NULL,
+        IsAuthorized bit NULL,
+        TicketNumber nvarchar(128) NULL,
+        CONSTRAINT FK_JobChange_ScanRun FOREIGN KEY(ScanRunId) REFERENCES [dbo].[ScanRun](ScanRunId),
+        CONSTRAINT FK_JobChange_Instance FOREIGN KEY(InstanceId) REFERENCES [dbo].[Instance](InstanceId)
+    );
+END;
 GO
 
-MERGE audit.ComplianceRule AS T
+MERGE [audit].[ComplianceRule] AS T
 USING
 (
     VALUES
@@ -139,62 +157,62 @@ WHEN NOT MATCHED THEN
     VALUES(S.RuleCode,S.ModuleName,S.RuleName,S.Severity,S.Recommendation);
 GO
 
-CREATE OR ALTER VIEW audit.vCurrentJobSteps
+CREATE OR ALTER VIEW [audit].[vCurrentJobSteps]
 AS
 WITH X AS
 (
     SELECT S.*,
            ROW_NUMBER() OVER(PARTITION BY InstanceId,JobId,StepId ORDER BY CapturedAt DESC,JobStepSnapshotId DESC) rn
-    FROM job.JobStepSnapshot S
+    FROM [job].[JobStepSnapshot] S
 )
 SELECT * FROM X WHERE rn=1;
 GO
 
-CREATE OR ALTER VIEW audit.vCurrentJobSchedules
+CREATE OR ALTER VIEW [audit].[vCurrentJobSchedules]
 AS
 WITH X AS
 (
     SELECT S.*,
            ROW_NUMBER() OVER(PARTITION BY InstanceId,JobId,ScheduleId ORDER BY CapturedAt DESC,JobScheduleSnapshotId DESC) rn
-    FROM job.JobScheduleSnapshot S
+    FROM [job].[JobScheduleSnapshot] S
 )
 SELECT * FROM X WHERE rn=1;
 GO
 
-CREATE OR ALTER VIEW audit.vCurrentOperators
+CREATE OR ALTER VIEW [audit].[vCurrentOperators]
 AS
 WITH X AS
 (
     SELECT O.*,
            ROW_NUMBER() OVER(PARTITION BY InstanceId,OperatorId ORDER BY CapturedAt DESC,OperatorSnapshotId DESC) rn
-    FROM job.OperatorSnapshot O
+    FROM [job].[OperatorSnapshot] O
 )
 SELECT * FROM X WHERE rn=1;
 GO
 
-CREATE OR ALTER VIEW audit.vCurrentProxies
+CREATE OR ALTER VIEW [audit].[vCurrentProxies]
 AS
 WITH X AS
 (
     SELECT P.*,
            ROW_NUMBER() OVER(PARTITION BY InstanceId,ProxyId ORDER BY CapturedAt DESC,ProxySnapshotId DESC) rn
-    FROM security.ProxySnapshot P
+    FROM [security].[ProxySnapshot] P
 )
 SELECT * FROM X WHERE rn=1;
 GO
 
-CREATE OR ALTER VIEW audit.vCurrentRoleMembership
+CREATE OR ALTER VIEW [audit].[vCurrentRoleMembership]
 AS
 WITH X AS
 (
     SELECT R.*,
            ROW_NUMBER() OVER(PARTITION BY InstanceId,RoleName,MemberName ORDER BY CapturedAt DESC,ServerRoleMembershipSnapshotId DESC) rn
-    FROM security.ServerRoleMembershipSnapshot R
+    FROM [security].[ServerRoleMembershipSnapshot] R
 )
 SELECT * FROM X WHERE rn=1;
 GO
 
-CREATE OR ALTER PROCEDURE audit.usp_AddFinding
+CREATE OR ALTER PROCEDURE [audit].[usp_AddFinding]
     @ComplianceRunId bigint,
     @ScanRunId bigint,
     @RuleCode varchar(100),
@@ -209,13 +227,13 @@ BEGIN
     DECLARE @Severity varchar(20),@Recommendation nvarchar(max),@ExceptionId bigint,@Status varchar(30)='OPEN';
 
     SELECT @Severity=Severity,@Recommendation=Recommendation
-    FROM audit.ComplianceRule
+    FROM [audit].[ComplianceRule]
     WHERE RuleCode=@RuleCode AND IsEnabled=1;
 
     IF @Severity IS NULL RETURN;
 
     SELECT TOP(1) @ExceptionId=ComplianceExceptionId
-    FROM audit.ComplianceException
+    FROM [audit].[ComplianceException]
     WHERE RuleCode=@RuleCode
       AND InstanceId=@InstanceId
       AND ObjectType=@ObjectType
@@ -227,7 +245,7 @@ BEGIN
 
     IF @ExceptionId IS NOT NULL SET @Status='EXCEPTION';
 
-    INSERT audit.ComplianceFinding
+    INSERT [audit].[ComplianceFinding]
     (
         ComplianceRunId,ScanRunId,RuleCode,InstanceId,ObjectType,ObjectKey,ObjectName,
         Severity,CurrentValue,ExpectedValue,Recommendation,FindingStatus,IsExcepted,
@@ -243,7 +261,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE audit.usp_RunJobComplianceAudit
+CREATE OR ALTER PROCEDURE [audit].[usp_RunJobComplianceAudit]
     @ScanRunId bigint=NULL,
     @ComplianceRunId bigint=NULL OUTPUT
 AS
@@ -252,11 +270,11 @@ BEGIN
 
     IF @ScanRunId IS NULL
         SELECT TOP(1) @ScanRunId=ScanRunId
-        FROM dbo.ScanRun
+        FROM [dbo].[ScanRun]
         WHERE Status IN('SUCCESS','COMPLETED_WITH_ERRORS')
         ORDER BY ScanRunId DESC;
 
-    INSERT audit.ComplianceRun(ScanRunId) VALUES(@ScanRunId);
+    INSERT [audit].[ComplianceRun](ScanRunId) VALUES(@ScanRunId);
     SET @ComplianceRunId=SCOPE_IDENTITY();
 
     BEGIN TRY
@@ -273,7 +291,7 @@ BEGIN
 
         DECLARE C CURSOR LOCAL FAST_FORWARD FOR
         SELECT InstanceId,JobId,JobName,OwnerName,IsEnabled,NotifyLevelEmail,OperatorName
-        FROM report.vCurrentJobs;
+        FROM [report].[vCurrentJobs];
 
         OPEN C;
         FETCH NEXT FROM C
@@ -292,48 +310,48 @@ BEGIN
             SET @NotifyText = CONVERT(nvarchar(20), @Notify);
             IF NOT EXISTS
             (
-                SELECT 1 FROM report.vCurrentServerPrincipals
+                SELECT 1 FROM [report].[vCurrentServerPrincipals]
                 WHERE InstanceId=@InstanceId AND PrincipalName=@OwnerName
             )
-                EXEC audit.usp_AddFinding @ComplianceRunId,@ScanRunId,'JOB_OWNER_MISSING',
+                EXEC [audit].[usp_AddFinding] @ComplianceRunId,@ScanRunId,'JOB_OWNER_MISSING',
                     @InstanceId,'JOB',@ObjectKey,@JobName,@OwnerName,N'Istniejący login techniczny';
 
             IF @OwnerName NOT IN(N'sa',N'DBAJobOwner')
                AND NOT EXISTS
                (
-                   SELECT 1 FROM audit.vCurrentRoleMembership
+                   SELECT 1 FROM [audit].[vCurrentRoleMembership]
                    WHERE InstanceId=@InstanceId AND RoleName=N'sysadmin' AND MemberName=@OwnerName
                )
-                EXEC audit.usp_AddFinding @ComplianceRunId,@ScanRunId,'JOB_OWNER_NOT_STANDARD',
+                EXEC [audit].[usp_AddFinding] @ComplianceRunId,@ScanRunId,'JOB_OWNER_NOT_STANDARD',
                     @InstanceId,'JOB',@ObjectKey,@JobName,@OwnerName,N'sa, DBAJobOwner lub wyjątek';
 
             IF @IsEnabled=0
-                EXEC audit.usp_AddFinding @ComplianceRunId,@ScanRunId,'JOB_DISABLED_WITHOUT_EXCEPTION',
+                EXEC [audit].[usp_AddFinding] @ComplianceRunId,@ScanRunId,'JOB_DISABLED_WITHOUT_EXCEPTION',
                     @InstanceId,'JOB',@ObjectKey,@JobName,N'Wyłączony',N'Aktywny lub zatwierdzony wyjątek';
 
             IF @IsEnabled=1 AND ISNULL(@Notify,0) NOT IN(2,3)
-                EXEC audit.usp_AddFinding @ComplianceRunId,@ScanRunId,'JOB_NO_NOTIFICATION',
+                EXEC [audit].[usp_AddFinding] @ComplianceRunId,@ScanRunId,'JOB_NO_NOTIFICATION',
                     @InstanceId,'JOB',@ObjectKey,@JobName,
                     @NotifyText,N'Powiadomienie po błędzie';
 
             IF @IsEnabled=1 AND NOT EXISTS
             (
-                SELECT 1 FROM audit.vCurrentJobSchedules
+                SELECT 1 FROM [audit].[vCurrentJobSchedules]
                 WHERE InstanceId=@InstanceId AND JobId=@JobId
             )
-                EXEC audit.usp_AddFinding @ComplianceRunId,@ScanRunId,'JOB_NO_SCHEDULE',
+                EXEC [audit].[usp_AddFinding] @ComplianceRunId,@ScanRunId,'JOB_NO_SCHEDULE',
                     @InstanceId,'JOB',@ObjectKey,@JobName,N'Brak',N'Harmonogram lub ON_DEMAND';
 
             IF NOT EXISTS
             (
-                SELECT 1 FROM audit.JobDocumentation
+                SELECT 1 FROM [audit].[JobDocumentation]
                 WHERE InstanceId = @InstanceId
                   AND JobId = @JobId
                   AND IsDocumented = 1
                   AND DocumentationStatus = 'APPROVED'
                   AND NULLIF(ConfluencePageUrl, N'') IS NOT NULL
             )
-                EXEC audit.usp_AddFinding @ComplianceRunId,@ScanRunId,'JOB_NOT_DOCUMENTED',
+                EXEC [audit].[usp_AddFinding] @ComplianceRunId,@ScanRunId,'JOB_NOT_DOCUMENTED',
                     @InstanceId,'JOB',@ObjectKey,@JobName,N'Brak',N'Kompletna dokumentacja';
 
             FETCH NEXT FROM C
@@ -350,14 +368,14 @@ BEGIN
         CLOSE C;
         DEALLOCATE C;
 
-        UPDATE audit.ComplianceRun
+        UPDATE [audit].[ComplianceRun]
         SET FinishedAt=SYSDATETIME(),
             Status='SUCCESS',
-            FindingCount=(SELECT COUNT(*) FROM audit.ComplianceFinding WHERE ComplianceRunId=@ComplianceRunId)
+            FindingCount=(SELECT COUNT(*) FROM [audit].[ComplianceFinding] WHERE ComplianceRunId=@ComplianceRunId)
         WHERE ComplianceRunId=@ComplianceRunId;
     END TRY
     BEGIN CATCH
-        UPDATE audit.ComplianceRun
+        UPDATE [audit].[ComplianceRun]
         SET FinishedAt=SYSDATETIME(),Status='FAILED',ErrorMessage=ERROR_MESSAGE()
         WHERE ComplianceRunId=@ComplianceRunId;
         THROW;
@@ -365,7 +383,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER VIEW report.vLatestJobComplianceFindings
+CREATE OR ALTER VIEW [report].[vLatestJobComplianceFindings]
 AS
 WITH X AS
 (
@@ -375,20 +393,20 @@ WITH X AS
                PARTITION BY InstanceId,RuleCode,ObjectType,ObjectName
                ORDER BY LastDetectedAt DESC,ComplianceFindingId DESC
            ) rn
-    FROM audit.ComplianceFinding F
+    FROM [audit].[ComplianceFinding] F
 )
 SELECT
     I.ServerInstance,E.EnvironmentCode,X.RuleCode,R.RuleName,X.ObjectType,X.ObjectName,
     X.Severity,X.CurrentValue,X.ExpectedValue,X.Recommendation,X.FindingStatus,
     X.IsExcepted,X.FirstDetectedAt,X.LastDetectedAt
 FROM X
-JOIN dbo.Instance I ON I.InstanceId=X.InstanceId
-LEFT JOIN dbo.Environment E ON E.EnvironmentId=I.EnvironmentId
-JOIN audit.ComplianceRule R ON R.RuleCode=X.RuleCode
+JOIN [dbo].[Instance] I ON I.InstanceId=X.InstanceId
+LEFT JOIN [dbo].[Environment] E ON E.EnvironmentId=I.EnvironmentId
+JOIN [audit].[ComplianceRule] R ON R.RuleCode=X.RuleCode
 WHERE X.rn=1;
 GO
 
-CREATE OR ALTER VIEW report.vUndocumentedJobs
+CREATE OR ALTER VIEW [report].[vUndocumentedJobs]
 AS
 SELECT
     J.ServerInstance,J.EnvironmentCode,J.JobId,J.JobName,J.OwnerName,
@@ -401,28 +419,28 @@ SELECT
       WHEN D.LastReviewedAt<DATEADD(month,-12,SYSDATETIME()) THEN 'OUTDATED'
       ELSE 'OK'
     END AuditStatus
-FROM report.vCurrentJobs J
-LEFT JOIN audit.JobDocumentation D
+FROM [report].[vCurrentJobs] J
+LEFT JOIN [audit].[JobDocumentation] D
   ON D.InstanceId=J.InstanceId
  AND D.JobId=J.JobId;
 GO
 
-CREATE OR ALTER PROCEDURE report.usp_JobComplianceSummary
+CREATE OR ALTER PROCEDURE [report].[usp_JobComplianceSummary]
 AS
 BEGIN
     SELECT Severity,FindingStatus,COUNT(*) FindingCount
-    FROM report.vLatestJobComplianceFindings
+    FROM [report].[vLatestJobComplianceFindings]
     GROUP BY Severity,FindingStatus;
 
     SELECT *
-    FROM report.vLatestJobComplianceFindings
+    FROM [report].[vLatestJobComplianceFindings]
     ORDER BY
         CASE Severity WHEN 'CRITICAL' THEN 1 WHEN 'HIGH' THEN 2 WHEN 'MEDIUM' THEN 3 WHEN 'LOW' THEN 4 ELSE 5 END,
         ServerInstance,ObjectName;
 END;
 GO
 
-CREATE OR ALTER PROCEDURE report.usp_JobChanges
+CREATE OR ALTER PROCEDURE [report].[usp_JobChanges]
     @Days int=30
 AS
 BEGIN
@@ -430,28 +448,28 @@ BEGIN
         I.ServerInstance,E.EnvironmentCode,C.DetectedAt,C.JobName,C.ChangeType,
         C.ObjectType,C.ObjectName,C.PropertyName,C.OldValue,C.NewValue,
         C.IsAuthorized,C.TicketNumber
-    FROM audit.JobChange C
-    JOIN dbo.Instance I ON I.InstanceId=C.InstanceId
-    LEFT JOIN dbo.Environment E ON E.EnvironmentId=I.EnvironmentId
+    FROM [audit].[JobChange] C
+    JOIN [dbo].[Instance] I ON I.InstanceId=C.InstanceId
+    LEFT JOIN [dbo].[Environment] E ON E.EnvironmentId=I.EnvironmentId
     WHERE C.DetectedAt>=DATEADD(day,-@Days,SYSDATETIME())
     ORDER BY C.DetectedAt DESC;
 END;
 GO
 
-EXEC dbo.usp_SetDescription N'audit',N'ComplianceRule','TABLE',
+EXEC [dbo].[usp_SetDescription] N'audit',N'ComplianceRule','TABLE',
     N'Słownik reguł audytu zgodności jobów.';
-EXEC dbo.usp_SetDescription N'audit',N'ComplianceException','TABLE',
+EXEC [dbo].[usp_SetDescription] N'audit',N'ComplianceException','TABLE',
     N'Zatwierdzone wyjątki od reguł zgodności.';
-EXEC dbo.usp_SetDescription N'audit',N'JobDocumentation','TABLE',
+EXEC [dbo].[usp_SetDescription] N'audit',N'JobDocumentation','TABLE',
     N'Rejestr dokumentacji jobów i stron Confluence.';
-EXEC dbo.usp_SetDescription N'audit',N'ComplianceRun','TABLE',
+EXEC [dbo].[usp_SetDescription] N'audit',N'ComplianceRun','TABLE',
     N'Historia uruchomień audytu zgodności.';
-EXEC dbo.usp_SetDescription N'audit',N'ComplianceFinding','TABLE',
+EXEC [dbo].[usp_SetDescription] N'audit',N'ComplianceFinding','TABLE',
     N'Wyniki audytu zgodności jobów.';
-EXEC dbo.usp_SetDescription N'audit',N'JobChange','TABLE',
+EXEC [dbo].[usp_SetDescription] N'audit',N'JobChange','TABLE',
     N'Historia wykrytych zmian jobów, kroków i harmonogramów.';
-EXEC dbo.usp_SetDescription N'report',N'vLatestJobComplianceFindings','VIEW',
+EXEC [dbo].[usp_SetDescription] N'report',N'vLatestJobComplianceFindings','VIEW',
     N'Najnowsze findingi zgodności jobów.';
-EXEC dbo.usp_SetDescription N'report',N'vUndocumentedJobs','VIEW',
+EXEC [dbo].[usp_SetDescription] N'report',N'vUndocumentedJobs','VIEW',
     N'Joby bez dokumentacji lub z nieaktualną dokumentacją.';
 GO

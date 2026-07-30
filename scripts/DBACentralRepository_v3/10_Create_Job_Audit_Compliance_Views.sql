@@ -74,7 +74,6 @@ FROM X
 WHERE [rn] = 1;
 GO
 
-
 /*=============================================================================
   2. Ostatnie poprawne uruchomienie audytu globalnie
 =============================================================================*/
@@ -93,7 +92,6 @@ WHERE CR.[Status] = 'SUCCESS'
 ORDER BY
     CR.[ComplianceRunId] DESC;
 GO
-
 
 /*=============================================================================
   3. Pełna historia findingów zgodności
@@ -150,7 +148,6 @@ LEFT JOIN [dbo].[Environment] AS E
     ON E.[EnvironmentId] = I.[EnvironmentId];
 GO
 
-
 /*=============================================================================
   4. Findingi z ostatniego poprawnego audytu
 =============================================================================*/
@@ -163,7 +160,6 @@ INNER JOIN [report].[vLatestSuccessfulComplianceRun] AS LR
     ON LR.[ComplianceRunId] = H.[ComplianceRunId];
 GO
 
-
 /*=============================================================================
   5. Otwarte findingi z ostatniego audytu
 =============================================================================*/
@@ -174,7 +170,6 @@ FROM [report].[vCurrentJobComplianceFindings]
 WHERE [EffectiveFindingStatus] = N'OPEN';
 GO
 
-
 /*=============================================================================
   6. Findingi objęte wyjątkiem
 =============================================================================*/
@@ -184,7 +179,6 @@ SELECT *
 FROM [report].[vCurrentJobComplianceFindings]
 WHERE [EffectiveFindingStatus] = N'EXCEPTION';
 GO
-
 
 /*=============================================================================
   7. Findingi krytyczne i wysokie
@@ -199,7 +193,6 @@ WHERE [Severity] IN
     'HIGH'
 );
 GO
-
 
 /*=============================================================================
   8. Audyt właścicieli jobów
@@ -216,7 +209,6 @@ WHERE [RuleCode] IN
 );
 GO
 
-
 /*=============================================================================
   9. Audyt proxy i credentials
 =============================================================================*/
@@ -231,7 +223,6 @@ WHERE [RuleCode] IN
     'JOB_PROXY_WITHOUT_CREDENTIAL'
 );
 GO
-
 
 /*=============================================================================
   10. Audyt harmonogramów
@@ -248,7 +239,6 @@ WHERE [RuleCode] IN
 );
 GO
 
-
 /*=============================================================================
   11. Audyt operatorów i powiadomień
 =============================================================================*/
@@ -263,7 +253,6 @@ WHERE [RuleCode] IN
 );
 GO
 
-
 /*=============================================================================
   12. Audyt jobów wyłączonych
 =============================================================================*/
@@ -273,7 +262,6 @@ SELECT *
 FROM [report].[vCurrentJobComplianceFindings]
 WHERE [RuleCode] = 'JOB_DISABLED_WITHOUT_EXCEPTION';
 GO
-
 
 /*=============================================================================
   13. Audyt dokumentacji jobów
@@ -288,7 +276,6 @@ WHERE [RuleCode] IN
     'JOB_DOCUMENTATION_OUTDATED'
 );
 GO
-
 
 /*=============================================================================
   14. Rejestr dokumentacji jobów
@@ -338,7 +325,6 @@ LEFT JOIN [audit].[JobDocumentation] AS D
    AND D.[JobId] = J.[JobId];
 GO
 
-
 /*=============================================================================
   15. Joby bez dokumentacji
 =============================================================================*/
@@ -353,7 +339,6 @@ WHERE [AuditStatus] IN
 );
 GO
 
-
 /*=============================================================================
   16. Dokumentacja bez przeglądu
 =============================================================================*/
@@ -363,7 +348,6 @@ SELECT *
 FROM [report].[vJobDocumentationRegistry]
 WHERE [AuditStatus] = N'NOT_REVIEWED';
 GO
-
 
 /*=============================================================================
   17. Dokumentacja nieaktualna
@@ -375,7 +359,6 @@ FROM [report].[vJobDocumentationRegistry]
 WHERE [AuditStatus] = N'OUTDATED';
 GO
 
-
 /*=============================================================================
   18. Kompletna dokumentacja
 =============================================================================*/
@@ -385,7 +368,6 @@ SELECT *
 FROM [report].[vJobDocumentationRegistry]
 WHERE [AuditStatus] = N'OK';
 GO
-
 
 /*=============================================================================
   19. Wszystkie wyjątki zgodności
@@ -437,7 +419,6 @@ LEFT JOIN [dbo].[Environment] AS E
     ON E.[EnvironmentId] = I.[EnvironmentId];
 GO
 
-
 /*=============================================================================
   20. Aktywne wyjątki
 =============================================================================*/
@@ -448,7 +429,6 @@ FROM [report].[vJobComplianceExceptions]
 WHERE [ExceptionStatus] = N'ACTIVE';
 GO
 
-
 /*=============================================================================
   21. Wygasłe wyjątki
 =============================================================================*/
@@ -458,7 +438,6 @@ SELECT *
 FROM [report].[vJobComplianceExceptions]
 WHERE [ExceptionStatus] = N'EXPIRED';
 GO
-
 
 /*=============================================================================
   22. Wyjątki wygasające w ciągu 30 dni
@@ -471,7 +450,6 @@ WHERE [ExceptionStatus] = N'ACTIVE'
   AND [DaysToExpire] BETWEEN 0 AND 30;
 GO
 
-
 /*=============================================================================
   23. Wyjątki bez numeru zgłoszenia
 =============================================================================*/
@@ -481,7 +459,6 @@ SELECT *
 FROM [report].[vJobComplianceExceptions]
 WHERE NULLIF(LTRIM(RTRIM([TicketNumber])), N'') IS NULL;
 GO
-
 
 /*=============================================================================
   24. Reguły audytu
@@ -508,7 +485,6 @@ SELECT
 FROM [audit].[ComplianceRule] AS R;
 GO
 
-
 /*=============================================================================
   25. Wyłączone reguły audytu
 =============================================================================*/
@@ -518,7 +494,6 @@ SELECT *
 FROM [report].[vJobComplianceRules]
 WHERE [IsEnabled] = 0;
 GO
-
 
 /*=============================================================================
   26. Podsumowanie findingów według reguły
@@ -567,7 +542,6 @@ GROUP BY
     F.[Recommendation];
 GO
 
-
 /*=============================================================================
   27. Podsumowanie findingów według ważności
 =============================================================================*/
@@ -606,7 +580,6 @@ GROUP BY
     F.[Severity],
     F.[SeverityOrder];
 GO
-
 
 /*=============================================================================
   28. Podsumowanie findingów według instancji
@@ -686,7 +659,6 @@ GROUP BY
     F.[EnvironmentCode];
 GO
 
-
 /*=============================================================================
   29. Podsumowanie findingów według joba
 =============================================================================*/
@@ -739,7 +711,6 @@ GROUP BY
     F.[ObjectName];
 GO
 
-
 /*=============================================================================
   30. Joby z największą liczbą findingów
 =============================================================================*/
@@ -750,7 +721,6 @@ SELECT
 FROM [report].[vJobComplianceByJob]
 WHERE [OpenCount] > 0;
 GO
-
 
 /*=============================================================================
   31. Historia uruchomień audytu
@@ -780,7 +750,6 @@ LEFT JOIN [dbo].[ScanRun] AS SR
     ON SR.[ScanRunId] = CR.[ScanRunId];
 GO
 
-
 /*=============================================================================
   32. Nieudane uruchomienia audytu
 =============================================================================*/
@@ -790,7 +759,6 @@ SELECT *
 FROM [report].[vJobComplianceRunHistory]
 WHERE [Status] = 'FAILED';
 GO
-
 
 /*=============================================================================
   33. Dashboard zgodności
@@ -877,7 +845,6 @@ GROUP BY
     LR.[FindingCount];
 GO
 
-
 /*=============================================================================
   34. Findingi wymagające działania
 =============================================================================*/
@@ -918,7 +885,6 @@ SELECT
     END AS [RecommendedResolutionTime]
 FROM [report].[vOpenJobComplianceFindings] AS F;
 GO
-
 
 /*=============================================================================
   35. Extended properties
@@ -1016,7 +982,6 @@ BEGIN
         @Description = N'Kolejka otwartych findingów wraz z rekomendowanym czasem realizacji.';
 END;
 GO
-
 
 /*=============================================================================
   36. Zapytania kontrolne po instalacji

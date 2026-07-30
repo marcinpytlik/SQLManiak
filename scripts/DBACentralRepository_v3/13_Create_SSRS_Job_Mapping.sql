@@ -89,7 +89,6 @@ BEGIN
 END;
 GO
 
-
 CREATE OR ALTER VIEW [report].[vCurrentSsrsJobMapping]
 AS
 WITH LatestScan AS
@@ -136,7 +135,6 @@ LEFT JOIN [dbo].[Environment] AS E
     ON E.[EnvironmentId] = I.[EnvironmentId];
 GO
 
-
 CREATE OR ALTER VIEW [report].[vSsrsJobMappingSummary]
 AS
 SELECT
@@ -161,7 +159,6 @@ GROUP BY
     [ServerInstance],
     [ReportServerDatabase];
 GO
-
 
 CREATE OR ALTER VIEW [report].[vJobsWithFriendlyName]
 AS
@@ -223,7 +220,6 @@ LEFT JOIN SsrsAggregate AS S
    AND S.[SqlAgentJobId] = J.[JobId];
 GO
 
-
 CREATE OR ALTER VIEW [report].[vSsrsJobs]
 AS
 SELECT
@@ -232,7 +228,6 @@ FROM [report].[vJobsWithFriendlyName] AS J
 WHERE J.[JobSource] = N'SSRS';
 GO
 
-
 CREATE OR ALTER VIEW [report].[vUnresolvedGuidJobs]
 AS
 SELECT
@@ -240,7 +235,6 @@ SELECT
 FROM [report].[vJobsWithFriendlyName] AS J
 WHERE J.[JobSource] = N'GUID_UNRESOLVED';
 GO
-
 
 CREATE OR ALTER VIEW [report].[vSsrsJobDocumentationDetails]
 AS
@@ -269,7 +263,6 @@ SELECT
 FROM [report].[vCurrentSsrsJobMapping] AS M;
 GO
 
-
 /*
     Aktualizacja nazwy rekomendacji. Nie zmieniamy samego mechanizmu findingu.
 */
@@ -279,7 +272,6 @@ SET
         N'Utwórz automatyczną stronę techniczną joba, opublikuj ją w Confluence, uzupełnij właścicieli i krytyczność, a następnie zatwierdź dokumentację. Dla jobów SSRS użyj przyjaznej nazwy raportu i subskrypcji.'
 WHERE [RuleCode] = 'JOB_NOT_DOCUMENTED';
 GO
-
 
 IF OBJECT_ID(N'[dbo].[usp_SetDescription]', N'P') IS NOT NULL
 BEGIN
@@ -302,7 +294,6 @@ BEGIN
         @Description = N'Joby z nazwą GUID, dla których nie znaleziono mapowania SSRS.';
 END;
 GO
-
 
 SELECT *
 FROM [report].[vSsrsJobMappingSummary]

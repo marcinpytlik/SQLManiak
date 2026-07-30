@@ -26,50 +26,49 @@ Ważne:
 
 
 /*=============================================================================
-  1. Rozszerzenie audit.JobDocumentation
+  1. Rozszerzenie [audit].[JobDocumentation]
 =============================================================================*/
-IF COL_LENGTH(N'audit.JobDocumentation', N'GeneratedFilePath') IS NULL
+IF COL_LENGTH(N'[audit].[JobDocumentation]', N'GeneratedFilePath') IS NULL
 BEGIN
     ALTER TABLE [audit].[JobDocumentation]
         ADD [GeneratedFilePath] nvarchar(2000) NULL;
 END;
 GO
 
-IF COL_LENGTH(N'audit.JobDocumentation', N'GeneratedAt') IS NULL
+IF COL_LENGTH(N'[audit].[JobDocumentation]', N'GeneratedAt') IS NULL
 BEGIN
     ALTER TABLE [audit].[JobDocumentation]
         ADD [GeneratedAt] datetime2(0) NULL;
 END;
 GO
 
-IF COL_LENGTH(N'audit.JobDocumentation', N'PublishedAt') IS NULL
+IF COL_LENGTH(N'[audit].[JobDocumentation]', N'PublishedAt') IS NULL
 BEGIN
     ALTER TABLE [audit].[JobDocumentation]
         ADD [PublishedAt] datetime2(0) NULL;
 END;
 GO
 
-IF COL_LENGTH(N'audit.JobDocumentation', N'RetiredAt') IS NULL
+IF COL_LENGTH(N'[audit].[JobDocumentation]', N'RetiredAt') IS NULL
 BEGIN
     ALTER TABLE [audit].[JobDocumentation]
         ADD [RetiredAt] datetime2(0) NULL;
 END;
 GO
 
-IF COL_LENGTH(N'audit.JobDocumentation', N'LastTechnicalSyncAt') IS NULL
+IF COL_LENGTH(N'[audit].[JobDocumentation]', N'LastTechnicalSyncAt') IS NULL
 BEGIN
     ALTER TABLE [audit].[JobDocumentation]
         ADD [LastTechnicalSyncAt] datetime2(0) NULL;
 END;
 GO
 
-IF COL_LENGTH(N'audit.JobDocumentation', N'PageTitle') IS NULL
+IF COL_LENGTH(N'[audit].[JobDocumentation]', N'PageTitle') IS NULL
 BEGIN
     ALTER TABLE [audit].[JobDocumentation]
         ADD [PageTitle] nvarchar(512) NULL;
 END;
 GO
-
 
 /*=============================================================================
   2. Synchronizacja rejestru dokumentacji z aktualnymi jobami
@@ -183,7 +182,6 @@ BEGIN
 END;
 GO
 
-
 /*=============================================================================
   3. Oznaczenie wygenerowania pliku HTML
 =============================================================================*/
@@ -221,12 +219,11 @@ BEGIN
     IF @@ROWCOUNT = 0
     BEGIN
         THROW 51001,
-              'Nie znaleziono joba w audit.JobDocumentation. Uruchom najpierw usp_SyncJobDocumentationRegistry.',
+              'Nie znaleziono joba w [audit].[JobDocumentation]. Uruchom najpierw usp_SyncJobDocumentationRegistry.',
               1;
     END;
 END;
 GO
-
 
 /*=============================================================================
   4. Rejestracja opublikowanej strony Confluence
@@ -265,7 +262,6 @@ BEGIN
     END;
 END;
 GO
-
 
 /*=============================================================================
   5. Zatwierdzenie kompletnej dokumentacji
@@ -326,7 +322,6 @@ BEGIN
 END;
 GO
 
-
 /*=============================================================================
   6. Oznaczenie dokumentacji jako nieaktualnej
 =============================================================================*/
@@ -357,7 +352,6 @@ BEGIN
         THROW 51008, 'Nie znaleziono joba w rejestrze dokumentacji.', 1;
 END;
 GO
-
 
 /*=============================================================================
   7. Widok rejestru stron dokumentacyjnych
@@ -423,7 +417,6 @@ LEFT JOIN [audit].[JobDocumentation] AS D
    AND D.[JobId] = J.[JobId];
 GO
 
-
 /*=============================================================================
   8. Widok danych technicznych do generatora stron
 =============================================================================*/
@@ -438,7 +431,6 @@ LEFT JOIN [report].[vJobCategoryMembership] AS C
     ON C.[InstanceId] = P.[InstanceId]
    AND C.[JobId] = P.[JobId];
 GO
-
 
 /*=============================================================================
   9. Podsumowanie cyklu życia dokumentacji
@@ -456,7 +448,6 @@ GROUP BY
     [ServerInstance],
     [EffectiveDocumentationStatus];
 GO
-
 
 /*=============================================================================
   10. Reguła JOB_NOT_DOCUMENTED — zaostrzenie kryterium
@@ -482,7 +473,6 @@ WHERE
     OR P.[DocumentationStatus] <> 'APPROVED'
     OR NULLIF(P.[ConfluencePageUrl], N'') IS NULL;
 GO
-
 
 /*=============================================================================
   11. Opisy obiektów
@@ -520,7 +510,6 @@ BEGIN
         @Description = N'Rejestr stron dokumentujących poszczególne joby SQL Server Agent.';
 END;
 GO
-
 
 /*=============================================================================
   12. Pierwsza synchronizacja i test

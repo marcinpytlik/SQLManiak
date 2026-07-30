@@ -5,8 +5,8 @@ GO
 ===============================================================================
 Plik: 10_Create_Job_Category_Views.sql
 Cel: Widoki raportowe dla kategorii jobów SQL Server Agent.
-Wymagania: report.vCurrentJobs, audit.vCurrentJobSteps,
-           audit.vCurrentJobSchedules, audit.JobDocumentation.
+Wymagania: [report].[vCurrentJobs], [audit].[vCurrentJobSteps],
+           [audit].[vCurrentJobSchedules], [audit].[JobDocumentation].
 ===============================================================================
 */
 
@@ -77,29 +77,37 @@ GO
 CREATE OR ALTER VIEW [report].[vActiveJobs] AS
 SELECT * FROM [report].[vJobInventory] WHERE [IsEnabled]=1;
 GO
+
 CREATE OR ALTER VIEW [report].[vDisabledJobs] AS
 SELECT * FROM [report].[vJobInventory] WHERE [IsEnabled]=0;
 GO
+
 CREATE OR ALTER VIEW [report].[vJobsWithoutSchedule] AS
 SELECT * FROM [report].[vJobInventory] WHERE [ScheduleCount]=0;
 GO
+
 CREATE OR ALTER VIEW [report].[vOnDemandJobs] AS
 SELECT * FROM [report].[vJobInventory] WHERE [ExecutionMode]=N'ON_DEMAND';
 GO
+
 CREATE OR ALTER VIEW [report].[vJobsWithDisabledSchedule] AS
 SELECT * FROM [report].[vJobInventory]
 WHERE [ScheduleCount]>0 AND [EnabledScheduleCount]=0;
 GO
+
 CREATE OR ALTER VIEW [report].[vJobsWithoutNotification] AS
 SELECT * FROM [report].[vJobInventory]
 WHERE [IsEnabled]=1 AND [HasFailureNotification]=0;
 GO
+
 CREATE OR ALTER VIEW [report].[vUndocumentedJobInventory] AS
 SELECT * FROM [report].[vJobInventory] WHERE [IsDocumented]=0;
 GO
+
 CREATE OR ALTER VIEW [report].[vMultiStepJobs] AS
 SELECT * FROM [report].[vJobInventory] WHERE [StepCount]>1;
 GO
+
 CREATE OR ALTER VIEW [report].[vMultiScheduleJobs] AS
 SELECT * FROM [report].[vJobInventory] WHERE [ScheduleCount]>1;
 GO
@@ -107,12 +115,15 @@ GO
 CREATE OR ALTER VIEW [report].[vTsqlJobs] AS
 SELECT * FROM [report].[vJobStepInventory] WHERE [Subsystem]=N'TSQL';
 GO
+
 CREATE OR ALTER VIEW [report].[vPowerShellJobs] AS
 SELECT * FROM [report].[vJobStepInventory] WHERE [Subsystem]=N'PowerShell';
 GO
+
 CREATE OR ALTER VIEW [report].[vCmdExecJobs] AS
 SELECT * FROM [report].[vJobStepInventory] WHERE [Subsystem]=N'CmdExec';
 GO
+
 CREATE OR ALTER VIEW [report].[vSsisJobs] AS
 SELECT * FROM [report].[vJobStepInventory] WHERE [Subsystem]=N'SSIS';
 GO
@@ -272,8 +283,8 @@ WHERE [JobNameUpper] LIKE N'%SECURITY%'
    OR [JobNameUpper] LIKE N'%PERMISSION%'
    OR [CommandTextUpper] LIKE N'%SERVER_AUDIT%'
    OR [CommandTextUpper] LIKE N'%DATABASE_AUDIT%'
-   OR [CommandTextUpper] LIKE N'%SYS.SERVER_PRINCIPALS%'
-   OR [CommandTextUpper] LIKE N'%SYS.DATABASE_PRINCIPALS%';
+   OR [CommandTextUpper] LIKE N'%[sys].[SERVER_PRINCIPALS]%'
+   OR [CommandTextUpper] LIKE N'%[sys].[DATABASE_PRINCIPALS]%';
 GO
 
 CREATE OR ALTER VIEW [report].[vDatabaseMailJobs] AS

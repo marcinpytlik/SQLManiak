@@ -1,4 +1,4 @@
-USE master;
+﻿USE master;
 GO
 
 IF DB_ID(N'DBACentralRepository') IS NULL
@@ -8,7 +8,7 @@ GO
 ALTER DATABASE DBACentralRepository SET RECOVERY SIMPLE;
 GO
 
-USE DBACentralRepository;
+USE [DBACentralRepository];
 GO
 
 DECLARE @Schemas TABLE
@@ -42,24 +42,24 @@ FETCH NEXT FROM c INTO @SchemaName, @Description;
 
 WHILE @@FETCH_STATUS = 0
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = @SchemaName)
+    IF NOT EXISTS (SELECT 1 FROM [sys].[schemas] WHERE name = @SchemaName)
     BEGIN
         SET @Sql = N'CREATE SCHEMA ' + QUOTENAME(@SchemaName) + N' AUTHORIZATION dbo;';
-        EXEC sys.sp_executesql @Sql;
+        EXEC [sys].[sp_executesql] @Sql;
     END;
 
     IF EXISTS
     (
-        SELECT 1 FROM sys.extended_properties
+        SELECT 1 FROM [sys].[extended_properties]
         WHERE class = 3
           AND major_id = SCHEMA_ID(@SchemaName)
           AND name = N'MS_Description'
     )
-        EXEC sys.sp_updateextendedproperty
+        EXEC [sys].[sp_updateextendedproperty]
             @name=N'MS_Description', @value=@Description,
             @level0type=N'SCHEMA', @level0name=@SchemaName;
     ELSE
-        EXEC sys.sp_addextendedproperty
+        EXEC [sys].[sp_addextendedproperty]
             @name=N'MS_Description', @value=@Description,
             @level0type=N'SCHEMA', @level0name=@SchemaName;
 

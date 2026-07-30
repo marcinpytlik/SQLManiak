@@ -18,15 +18,15 @@ mapowanie technicznych jobów SSRS o nazwach GUID.
 | 04 | `04_Create_Stage2_Modules.sql` | patch, config, security, audit |
 | 05 | `05_Create_Report_Objects.sql` | podstawowe widoki raportowe |
 | 06 | `06_Add_Extended_Properties.sql` | opisy obiektów |
-| 07 | `07_Create_Agent_Jobs.sql` | dzienny pipeline SQL Server Agent |
-| 08 | `08_Useful_Queries.sql` | zapytania pomocnicze |
-| 09 | `09_Create_Audit_Compliance.sql` | reguły i findingi zgodności |
-| 10 | `10_Create_Job_Category_Views.sql` | kategorie jobów |
-| 11 | `11_Create_Job_Change_Views.sql` | strony zmian |
-| 12 | `12_Create_Job_Audit_Compliance_Views.sql` | strony audytu i zgodności |
-| 13 | `13_Create_Job_Operational_Report_Procedures.sql` | raport dzienny, tygodniowy i miesięczny |
-| 14 | `14_Create_Job_Documentation_Lifecycle.sql` | cykl życia dokumentacji jobów |
-| 15 | `15_Create_SSRS_Job_Mapping.sql` | mapowanie GUID jobów SSRS |
+| 07 | `14_Create_Agent_Jobs.sql` | dzienny pipeline SQL Server Agent |
+| 08 | `99_Useful_Queries.sql` | zapytania pomocnicze |
+| 09 | `07_Create_Audit_Compliance.sql` | reguły i findingi zgodności |
+| 10 | `08_Create_Job_Category_Views.sql` | kategorie jobów |
+| 11 | `09_Create_Job_Change_Views.sql` | strony zmian |
+| 12 | `10_Create_Job_Audit_Compliance_Views.sql` | strony audytu i zgodności |
+| 13 | `11_Create_Job_Operational_Report_Procedures.sql` | raport dzienny, tygodniowy i miesięczny |
+| 14 | `12_Create_Job_Documentation_Lifecycle.sql` | cykl życia dokumentacji jobów |
+| 15 | `13_Create_SSRS_Job_Mapping.sql` | mapowanie GUID jobów SSRS |
 
 ### Skrypty PowerShell
 
@@ -52,28 +52,17 @@ mapowanie technicznych jobów SSRS o nazwach GUID.
 
 ## Kolejność instalacji
 
-Uruchom w SSMS kolejno:
+Pełna kolejność znajduje się w `INSTALL_ORDER.md`. Najważniejsza zmiana: `99_Useful_Queries.sql` jest uruchamiany dopiero po utworzeniu wszystkich obiektów.
 
 ```text
-00_Create_Database_And_Schemas.sql
-01_Create_Core_Objects.sql
-02_Create_Job_And_Database_Modules.sql
-03_Create_Stage1_Modules.sql
-04_Create_Stage2_Modules.sql
-05_Create_Report_Objects.sql
-06_Add_Extended_Properties.sql
-09_Create_Audit_Compliance.sql
-10_Create_Job_Category_Views.sql
-11_Create_Job_Change_Views.sql
-12_Create_Job_Audit_Compliance_Views.sql
-13_Create_Job_Operational_Report_Procedures.sql
-14_Create_Job_Documentation_Lifecycle.sql
-15_Create_SSRS_Job_Mapping.sql
-08_Useful_Queries.sql
+00–06  Fundament repozytorium
+07–13  Audyt, raporty, dokumentacja i SSRS
+14     Automatyzacja SQL Server Agent
+98     Walidacja instalacji
+99     Zapytania użytkowe
 ```
 
-`07_Create_Agent_Jobs.sql` uruchom na końcu, po skopiowaniu całej paczki
-na serwer i zmianie wartości konfiguracyjnych na początku skryptu.
+Wszystkie skrypty tworzące obiekty są idempotentne. Obowiązuje konwencja `[schemat].[Obiekt]`, np. `[backup].[BackupHistory]`.
 
 ## Konfiguracja Servers.csv
 
@@ -169,7 +158,7 @@ Raport miesięczny.html
 
 ## Automatyzacja SQL Server Agent
 
-Skrypt `07_Create_Agent_Jobs.sql` tworzy jeden pipeline:
+Skrypt `14_Create_Agent_Jobs.sql` tworzy jeden pipeline:
 
 ```text
 01 - Collect repository

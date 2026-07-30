@@ -193,7 +193,7 @@ BEGIN
             N'; Start=', COALESCE(CONVERT(nvarchar(19), @LatestScanStartedAt, 120), N'BRAK'),
             N'; Koniec=', COALESCE(CONVERT(nvarchar(19), @LatestScanFinishedAt, 120), N'BRAK')
         ),
-        N'Sprawdź historię dbo.ScanRun oraz dbo.ScanError.'
+        N'Sprawdź historię [dbo].[ScanRun] oraz [dbo].[ScanError].'
     ),
     (
         20,
@@ -287,7 +287,7 @@ BEGIN
         CASE WHEN @MissingDocumentation = 0 THEN 'OK' ELSE 'WARNING' END,
         @MissingDocumentation,
         CONCAT(N'Liczba jobów: ', @MissingDocumentation),
-        N'Uzupełnij audit.JobDocumentation oraz stronę Confluence.'
+        N'Uzupełnij [audit].[JobDocumentation] oraz stronę Confluence.'
     ),
     (
         110,
@@ -355,7 +355,6 @@ BEGIN
         [CheckOrder];
 END;
 GO
-
 
 /*=============================================================================
   2. Raport tygodniowy
@@ -677,7 +676,6 @@ BEGIN
         [CheckOrder];
 END;
 GO
-
 
 /*=============================================================================
   3. Raport miesięczny — audyt konfiguracji jobów
@@ -1072,7 +1070,6 @@ BEGIN
 END;
 GO
 
-
 /*=============================================================================
   4. Extended properties
 =============================================================================*/
@@ -1097,7 +1094,6 @@ BEGIN
         @Description = N'Miesięczny audyt konfiguracji jobów SQL Server Agent.';
 END;
 GO
-
 
 /*=============================================================================
   5. Testy po instalacji

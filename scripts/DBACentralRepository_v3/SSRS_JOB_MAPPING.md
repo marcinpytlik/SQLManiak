@@ -21,7 +21,7 @@ Nie zmienia nazw jobów w `msdb`.
 Uruchom:
 
 ```sql
-15_Create_SSRS_Job_Mapping.sql
+13_Create_SSRS_Job_Mapping.sql
 ```
 
 ## Kolekcja

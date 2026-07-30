@@ -5,7 +5,7 @@
 1. Uruchom:
 
 ```sql
-14_Create_Job_Documentation_Lifecycle.sql
+12_Create_Job_Documentation_Lifecycle.sql
 ```
 
 2. Uruchom generator:

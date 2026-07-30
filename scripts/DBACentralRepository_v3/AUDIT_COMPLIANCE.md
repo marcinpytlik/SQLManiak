@@ -1,4 +1,4 @@
-# Audyt i zgodność jobów
+﻿# Audyt i zgodność jobów
 
 Moduł obejmuje:
 

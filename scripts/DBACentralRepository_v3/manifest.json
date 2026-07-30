@@ -1,92 +1,97 @@
 {
   "package": "DBACentralRepository_v3",
-  "edition": "Complete-ModularPowerShell-2026-07-30",
-  "file_count": 29,
+  "edition": "Ordered-Idempotent-2026-07-30",
+  "file_count": 32,
   "files": [
     {
       "name": "00_Create_Database_And_Schemas.sql",
-      "size_bytes": 2419,
-      "sha256": "8d445085966a3473252e1046f3d40408fb25637ba995e5926c3c99be5a949740"
+      "size_bytes": 2444,
+      "sha256": "9ad0adda535fc992943056f28de44265470a84dff81017d4c5b9bda05d49dd71"
     },
     {
       "name": "01_Create_Core_Objects.sql",
-      "size_bytes": 9013,
-      "sha256": "464e5c0101ee2b01488b4b731d80cc86414046fa2008d3b9032a63f7e9a7604e"
+      "size_bytes": 9727,
+      "sha256": "f8c77c3b04b3c87f817b0fa9125267fb0460db00158b0f2228da665d238d3658"
     },
     {
       "name": "02_Create_Job_And_Database_Modules.sql",
-      "size_bytes": 8068,
-      "sha256": "99ef808cd52293f3de84842094a0eea5b1426d86df58f8bf45b9bd98a51a9b40"
+      "size_bytes": 9945,
+      "sha256": "575eaf96f4db0821b86fcac7d971b307751843bdb414547983756f04ce134a08"
     },
     {
       "name": "03_Create_Stage1_Modules.sql",
-      "size_bytes": 9550,
-      "sha256": "f7f1e734f7f47aac6d3d954c7e4a13854b5b61d3ceb5817623dc1c796f373284"
+      "size_bytes": 11584,
+      "sha256": "8231dfb9af770eeb8f7baac175a748c744d3eba5eafeb97a1c574b8f66a9f4b8"
     },
     {
       "name": "04_Create_Stage2_Modules.sql",
-      "size_bytes": 12155,
-      "sha256": "2a642b0756efb38e41968033603e2799277a048f8f5c221ff44693bb9fa18ae9"
+      "size_bytes": 14920,
+      "sha256": "b30a99c7f159c8bcf3a70d7b1621aa7c6f6c96814506475a3e8339873ef09808"
     },
     {
       "name": "05_Create_Report_Objects.sql",
-      "size_bytes": 5534,
-      "sha256": "72511c02deefe30ffb215bf0d7538fa32be2f8e54d8667d7a22cd48f535859d8"
+      "size_bytes": 5675,
+      "sha256": "5e75c4aef970dad7473bcbb2293ddf8a5da05eb79f0f06349718da4c6937ab66"
     },
     {
       "name": "06_Add_Extended_Properties.sql",
-      "size_bytes": 2917,
-      "sha256": "0b165a96d5035b362560f8a5a525bc18c4e3656b0c1eecdd92a791dabe376867"
+      "size_bytes": 2930,
+      "sha256": "95ea4fb57783a4e242c12a52b540cf4639d540389690fb080af21991a4ab9e39"
     },
     {
-      "name": "07_Create_Agent_Jobs.sql",
+      "name": "07_Create_Audit_Compliance.sql",
+      "size_bytes": 18365,
+      "sha256": "234b0ef48d21005cba759c2af79c3e4737f8ffb6d4e7ebc9041037436a5be428"
+    },
+    {
+      "name": "08_Create_Job_Category_Views.sql",
+      "size_bytes": 17895,
+      "sha256": "63277e963be7fa8d5f907607bec988b773720f491eccf955dfcef965f8b5e84d"
+    },
+    {
+      "name": "09_Create_Job_Change_Views.sql",
+      "size_bytes": 22965,
+      "sha256": "f8612be3a23113f4d95c7899477333f6e015dc4003498e00cf70be8338bb9181"
+    },
+    {
+      "name": "10_Create_Job_Audit_Compliance_Views.sql",
+      "size_bytes": 29084,
+      "sha256": "f5d8717a9ea40908c5293efea5f4a977d67890efa05ad7e9b4009787da6ec3e7"
+    },
+    {
+      "name": "11_Create_Job_Operational_Report_Procedures.sql",
+      "size_bytes": 32742,
+      "sha256": "f3ea060fd733deecae0199082ef0d6e1c801f13e3477a985057bf23fefb714a0"
+    },
+    {
+      "name": "12_Create_Job_Documentation_Lifecycle.sql",
+      "size_bytes": 16633,
+      "sha256": "e1a724604c697ee6b46528921d3ab623bf01f8a5ef484e87b6a659ea94e2c4f2"
+    },
+    {
+      "name": "13_Create_SSRS_Job_Mapping.sql",
+      "size_bytes": 8789,
+      "sha256": "de28c7cfe190a80600eec30731ecb44c220402e4cee558f39c0d9db59d76eaaf"
+    },
+    {
+      "name": "14_Create_Agent_Jobs.sql",
       "size_bytes": 4096,
       "sha256": "832180167d25a1ae99d6ca262025df033c6656ce658496cc92e0927e80141399"
     },
     {
-      "name": "08_Useful_Queries.sql",
-      "size_bytes": 992,
-      "sha256": "f7cabfdd5c8feeae2529eb68de259a865ac1fcbd8d9cb2801ee6a6413bb66de7"
+      "name": "98_Verify_Installation.sql",
+      "size_bytes": 1230,
+      "sha256": "fe34293bd651f5a89e1180f91b8d56164838d769f6a7fd542dc22f465d31b385"
     },
     {
-      "name": "09_Create_Audit_Compliance.sql",
-      "size_bytes": 17281,
-      "sha256": "7765407b11276c76b8479dc273d44bd1ce9fe9ce3ec1b6837485d4bfab73a8b6"
-    },
-    {
-      "name": "10_Create_Job_Category_Views.sql",
-      "size_bytes": 17860,
-      "sha256": "c79ffe1889850fab3f3792ed905c1cbca6efe76e73575bd112cdb4e48aee49c3"
-    },
-    {
-      "name": "11_Create_Job_Change_Views.sql",
-      "size_bytes": 22998,
-      "sha256": "dc8b19478a04ca24592a5c8203480c2c83fda6ece3d85b484c87318a8b4366a1"
-    },
-    {
-      "name": "12_Create_Job_Audit_Compliance_Views.sql",
-      "size_bytes": 29119,
-      "sha256": "7277c760777c39d2774908c0e64f7cc25d3e708c0ebf312e7f48d45bd4ae72f7"
-    },
-    {
-      "name": "13_Create_Job_Operational_Report_Procedures.sql",
-      "size_bytes": 32734,
-      "sha256": "5f4c236bb1ad987be9ee2bcc31e5b8a02f5e1ccabffe02b366694353ef5fe4bf"
-    },
-    {
-      "name": "14_Create_Job_Documentation_Lifecycle.sql",
-      "size_bytes": 16612,
-      "sha256": "751a0387d47010298d7b9a7d6499e44a08e76eee4206cf9c2360e6f6c41fc51f"
-    },
-    {
-      "name": "15_Create_SSRS_Job_Mapping.sql",
-      "size_bytes": 8798,
-      "sha256": "a9954cccab0c6f278c40f4b8e3346893b781018778bbc7f59ecbaf841f8419a8"
+      "name": "99_Useful_Queries.sql",
+      "size_bytes": 1347,
+      "sha256": "1de540a2775bd5b435b217f6b944f36a4377f118355e1cefcbf25ae5d99c7392"
     },
     {
       "name": "AUDIT_COMPLIANCE.md",
-      "size_bytes": 500,
-      "sha256": "f581f340fa536a030c2524b83ae75a0fbbdcbb4a33cb8390b5e3a51e1927ac05"
+      "size_bytes": 503,
+      "sha256": "665192c5720f2f1008d49d12741b7e8a569786f08b9a6867c051dfeab9e60a42"
     },
     {
       "name": "Collect-DBACentralRepository.ps1",
@@ -109,9 +114,14 @@
       "sha256": "eade338226e66144545787237f846519780f7566941a0eae2a28b95f3b2b4ee7"
     },
     {
+      "name": "INSTALL_ORDER.md",
+      "size_bytes": 1109,
+      "sha256": "b5a1834bab72995b19682dd9e26a5148d2169d014ef993eca2720d0d904781c9"
+    },
+    {
       "name": "JOB_DOCUMENTATION.md",
       "size_bytes": 2007,
-      "sha256": "078c4ac5e601a24ee8697a93299721b9637892dce8d089969c0463f9713f6313"
+      "sha256": "7175de8b00f0ce5e7a0522040a78eee212424f24d379d21da6adab9e4dd6c577"
     },
     {
       "name": "POWERSHELL_MODULE.md",
@@ -120,23 +130,23 @@
     },
     {
       "name": "README.md",
-      "size_bytes": 9109,
-      "sha256": "b0c6007aafce7d1d0e0d93da4264cc296055b18f4643815d837e9a3a07c0abe5"
+      "size_bytes": 8906,
+      "sha256": "a61a438d4f7382b3b6528bc0d074c892e03975c1a9602abc1dce893c0add8017"
+    },
+    {
+      "name": "SQL_REFACTOR_REPORT.md",
+      "size_bytes": 424,
+      "sha256": "e009c96e22af5a94e983f5f2a9509559cf0dea4bfaacdc4f15b9ce2c90821d4a"
     },
     {
       "name": "SSRS_JOB_MAPPING.md",
       "size_bytes": 3007,
-      "sha256": "92e56403927edc00d98f527513b87b87e0cc7fc59ae050c4991e97238f501b6d"
+      "sha256": "1861ee5684313d5b360df165786f9dc94a17901278e73a51b82ab5efde33da84"
     },
     {
       "name": "Servers.csv",
       "size_bytes": 316,
       "sha256": "4f22b3230a401602d25f925d7b1bd0a662be1fd82111fbc8d29d794d54004f73"
-    },
-    {
-      "name": "manifest.json",
-      "size_bytes": 4342,
-      "sha256": "4bd938a2d0e2bbe6eb3e0d7d3730d5aee1835674550c9fd7c3aec514d4e0e9c0"
     },
     {
       "name": "modules/DBACentralRepository.Common/DBACentralRepository.Common.psd1",

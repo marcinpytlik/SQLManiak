@@ -1,18 +1,21 @@
-USE DBACentralRepository;
+﻿USE [DBACentralRepository];
 GO
 
-CREATE TABLE dbo.Environment
-(
-    EnvironmentId int IDENTITY(1,1) NOT NULL CONSTRAINT PK_Environment PRIMARY KEY,
-    EnvironmentCode varchar(20) NOT NULL CONSTRAINT UQ_Environment_Code UNIQUE,
-    EnvironmentName nvarchar(100) NOT NULL,
-    SortOrder int NOT NULL,
-    IsProduction bit NOT NULL,
-    IsEnabled bit NOT NULL CONSTRAINT DF_Environment_IsEnabled DEFAULT(1)
-);
+IF OBJECT_ID(N'[dbo].[Environment]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[Environment]
+    (
+        EnvironmentId int IDENTITY(1,1) NOT NULL CONSTRAINT PK_Environment PRIMARY KEY,
+        EnvironmentCode varchar(20) NOT NULL CONSTRAINT UQ_Environment_Code UNIQUE,
+        EnvironmentName nvarchar(100) NOT NULL,
+        SortOrder int NOT NULL,
+        IsProduction bit NOT NULL,
+        IsEnabled bit NOT NULL CONSTRAINT DF_Environment_IsEnabled DEFAULT(1)
+    );
+END;
 GO
 
-INSERT dbo.Environment(EnvironmentCode,EnvironmentName,SortOrder,IsProduction)
+INSERT [dbo].[Environment](EnvironmentCode,EnvironmentName,SortOrder,IsProduction)
 SELECT *
 FROM (VALUES
 ('PROD',N'Produkcja',1,1),
@@ -23,82 +26,94 @@ FROM (VALUES
 ) V(EnvironmentCode,EnvironmentName,SortOrder,IsProduction)
 WHERE NOT EXISTS
 (
-    SELECT 1 FROM dbo.Environment E
+    SELECT 1 FROM [dbo].[Environment] E
     WHERE E.EnvironmentCode=V.EnvironmentCode
 );
 GO
 
-CREATE TABLE dbo.ScanRun
-(
-    ScanRunId bigint IDENTITY(1,1) NOT NULL CONSTRAINT PK_ScanRun PRIMARY KEY,
-    ScanType varchar(30) NOT NULL,
-    ScanStartedAt datetime2(0) NOT NULL CONSTRAINT DF_ScanRun_Started DEFAULT(SYSDATETIME()),
-    ScanFinishedAt datetime2(0) NULL,
-    CollectorHost nvarchar(256) NULL,
-    CollectorUser nvarchar(256) NULL,
-    RepositoryServer nvarchar(256) NULL,
-    Status varchar(30) NOT NULL CONSTRAINT DF_ScanRun_Status DEFAULT('RUNNING'),
-    InstanceCount int NOT NULL CONSTRAINT DF_ScanRun_InstanceCount DEFAULT(0),
-    ObjectCount int NOT NULL CONSTRAINT DF_ScanRun_ObjectCount DEFAULT(0),
-    ErrorCount int NOT NULL CONSTRAINT DF_ScanRun_ErrorCount DEFAULT(0)
-);
+IF OBJECT_ID(N'[dbo].[ScanRun]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[ScanRun]
+    (
+        ScanRunId bigint IDENTITY(1,1) NOT NULL CONSTRAINT PK_ScanRun PRIMARY KEY,
+        ScanType varchar(30) NOT NULL,
+        ScanStartedAt datetime2(0) NOT NULL CONSTRAINT DF_ScanRun_Started DEFAULT(SYSDATETIME()),
+        ScanFinishedAt datetime2(0) NULL,
+        CollectorHost nvarchar(256) NULL,
+        CollectorUser nvarchar(256) NULL,
+        RepositoryServer nvarchar(256) NULL,
+        Status varchar(30) NOT NULL CONSTRAINT DF_ScanRun_Status DEFAULT('RUNNING'),
+        InstanceCount int NOT NULL CONSTRAINT DF_ScanRun_InstanceCount DEFAULT(0),
+        ObjectCount int NOT NULL CONSTRAINT DF_ScanRun_ObjectCount DEFAULT(0),
+        ErrorCount int NOT NULL CONSTRAINT DF_ScanRun_ErrorCount DEFAULT(0)
+    );
+END;
 GO
 
-CREATE TABLE dbo.Instance
-(
-    InstanceId bigint IDENTITY(1,1) NOT NULL CONSTRAINT PK_Instance PRIMARY KEY,
-    ServerInstance nvarchar(256) NOT NULL CONSTRAINT UQ_Instance_ServerInstance UNIQUE,
-    EnvironmentId int NULL,
-    Description nvarchar(500) NULL,
-    MachineName nvarchar(256) NULL,
-    ServerName nvarchar(256) NULL,
-    InstanceName nvarchar(256) NULL,
-    ProductVersion nvarchar(128) NULL,
-    ProductLevel nvarchar(128) NULL,
-    Edition nvarchar(256) NULL,
-    EngineEdition int NULL,
-    ProductMajorVersion int NULL,
-    IsClustered bit NULL,
-    IsHadrEnabled bit NULL,
-    IsEnabled bit NOT NULL CONSTRAINT DF_Instance_IsEnabled DEFAULT(1),
-    IsReachable bit NOT NULL CONSTRAINT DF_Instance_IsReachable DEFAULT(0),
-    LastSeenAt datetime2(0) NULL,
-    LastScanRunId bigint NULL,
-    LastError nvarchar(max) NULL,
-    CONSTRAINT FK_Instance_Environment FOREIGN KEY(EnvironmentId) REFERENCES dbo.Environment(EnvironmentId),
-    CONSTRAINT FK_Instance_LastScanRun FOREIGN KEY(LastScanRunId) REFERENCES dbo.ScanRun(ScanRunId)
-);
+IF OBJECT_ID(N'[dbo].[Instance]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[Instance]
+    (
+        InstanceId bigint IDENTITY(1,1) NOT NULL CONSTRAINT PK_Instance PRIMARY KEY,
+        ServerInstance nvarchar(256) NOT NULL CONSTRAINT UQ_Instance_ServerInstance UNIQUE,
+        EnvironmentId int NULL,
+        Description nvarchar(500) NULL,
+        MachineName nvarchar(256) NULL,
+        ServerName nvarchar(256) NULL,
+        InstanceName nvarchar(256) NULL,
+        ProductVersion nvarchar(128) NULL,
+        ProductLevel nvarchar(128) NULL,
+        Edition nvarchar(256) NULL,
+        EngineEdition int NULL,
+        ProductMajorVersion int NULL,
+        IsClustered bit NULL,
+        IsHadrEnabled bit NULL,
+        IsEnabled bit NOT NULL CONSTRAINT DF_Instance_IsEnabled DEFAULT(1),
+        IsReachable bit NOT NULL CONSTRAINT DF_Instance_IsReachable DEFAULT(0),
+        LastSeenAt datetime2(0) NULL,
+        LastScanRunId bigint NULL,
+        LastError nvarchar(max) NULL,
+        CONSTRAINT FK_Instance_Environment FOREIGN KEY(EnvironmentId) REFERENCES [dbo].[Environment](EnvironmentId),
+        CONSTRAINT FK_Instance_LastScanRun FOREIGN KEY(LastScanRunId) REFERENCES [dbo].[ScanRun](ScanRunId)
+    );
+END;
 GO
 
-CREATE TABLE dbo.ScanError
-(
-    ScanErrorId bigint IDENTITY(1,1) NOT NULL CONSTRAINT PK_ScanError PRIMARY KEY,
-    ScanRunId bigint NOT NULL,
-    InstanceId bigint NULL,
-    ModuleName varchar(30) NOT NULL,
-    ObjectName nvarchar(512) NULL,
-    StageName nvarchar(128) NULL,
-    ErrorNumber int NULL,
-    ErrorMessage nvarchar(max) NOT NULL,
-    ErrorAt datetime2(0) NOT NULL CONSTRAINT DF_ScanError_ErrorAt DEFAULT(SYSDATETIME()),
-    CONSTRAINT FK_ScanError_ScanRun FOREIGN KEY(ScanRunId) REFERENCES dbo.ScanRun(ScanRunId),
-    CONSTRAINT FK_ScanError_Instance FOREIGN KEY(InstanceId) REFERENCES dbo.Instance(InstanceId)
-);
+IF OBJECT_ID(N'[dbo].[ScanError]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[ScanError]
+    (
+        ScanErrorId bigint IDENTITY(1,1) NOT NULL CONSTRAINT PK_ScanError PRIMARY KEY,
+        ScanRunId bigint NOT NULL,
+        InstanceId bigint NULL,
+        ModuleName varchar(30) NOT NULL,
+        ObjectName nvarchar(512) NULL,
+        StageName nvarchar(128) NULL,
+        ErrorNumber int NULL,
+        ErrorMessage nvarchar(max) NOT NULL,
+        ErrorAt datetime2(0) NOT NULL CONSTRAINT DF_ScanError_ErrorAt DEFAULT(SYSDATETIME()),
+        CONSTRAINT FK_ScanError_ScanRun FOREIGN KEY(ScanRunId) REFERENCES [dbo].[ScanRun](ScanRunId),
+        CONSTRAINT FK_ScanError_Instance FOREIGN KEY(InstanceId) REFERENCES [dbo].[Instance](InstanceId)
+    );
+END;
 GO
 
-CREATE TABLE dbo.RetentionPolicy
-(
-    RetentionPolicyId int IDENTITY(1,1) NOT NULL CONSTRAINT PK_RetentionPolicy PRIMARY KEY,
-    SchemaName sysname NOT NULL,
-    TableName sysname NOT NULL,
-    DateColumnName sysname NOT NULL,
-    RetentionDays int NOT NULL,
-    IsEnabled bit NOT NULL CONSTRAINT DF_RetentionPolicy_IsEnabled DEFAULT(1),
-    CONSTRAINT UQ_RetentionPolicy UNIQUE(SchemaName,TableName)
-);
+IF OBJECT_ID(N'[dbo].[RetentionPolicy]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[RetentionPolicy]
+    (
+        RetentionPolicyId int IDENTITY(1,1) NOT NULL CONSTRAINT PK_RetentionPolicy PRIMARY KEY,
+        SchemaName sysname NOT NULL,
+        TableName sysname NOT NULL,
+        DateColumnName sysname NOT NULL,
+        RetentionDays int NOT NULL,
+        IsEnabled bit NOT NULL CONSTRAINT DF_RetentionPolicy_IsEnabled DEFAULT(1),
+        CONSTRAINT UQ_RetentionPolicy UNIQUE(SchemaName,TableName)
+    );
+END;
 GO
 
-CREATE OR ALTER PROCEDURE dbo.usp_SetDescription
+CREATE OR ALTER PROCEDURE [dbo].[usp_SetDescription]
     @SchemaName sysname,
     @ObjectName sysname = NULL,
     @ObjectType varchar(20) = 'SCHEMA',
@@ -111,14 +126,14 @@ BEGIN
     BEGIN
         IF EXISTS
         (
-            SELECT 1 FROM sys.extended_properties
+            SELECT 1 FROM [sys].[extended_properties]
             WHERE class=3 AND major_id=SCHEMA_ID(@SchemaName) AND name=N'MS_Description'
         )
-            EXEC sys.sp_updateextendedproperty
+            EXEC [sys].[sp_updateextendedproperty]
                 @name=N'MS_Description',@value=@Description,
                 @level0type=N'SCHEMA',@level0name=@SchemaName;
         ELSE
-            EXEC sys.sp_addextendedproperty
+            EXEC [sys].[sp_addextendedproperty]
                 @name=N'MS_Description',@value=@Description,
                 @level0type=N'SCHEMA',@level0name=@SchemaName;
         RETURN;
@@ -132,26 +147,26 @@ BEGIN
     IF EXISTS
     (
         SELECT 1
-        FROM sys.extended_properties EP
-        JOIN sys.objects O ON O.object_id=EP.major_id
+        FROM [sys].[extended_properties] EP
+        JOIN [sys].[objects] O ON O.object_id=EP.major_id
         WHERE EP.class=1
           AND EP.name=N'MS_Description'
           AND O.schema_id=SCHEMA_ID(@SchemaName)
           AND O.name=@ObjectName
     )
-        EXEC sys.sp_updateextendedproperty
+        EXEC [sys].[sp_updateextendedproperty]
             @name=N'MS_Description',@value=@Description,
             @level0type=N'SCHEMA',@level0name=@SchemaName,
             @level1type=@Level1Type,@level1name=@ObjectName;
     ELSE
-        EXEC sys.sp_addextendedproperty
+        EXEC [sys].[sp_addextendedproperty]
             @name=N'MS_Description',@value=@Description,
             @level0type=N'SCHEMA',@level0name=@SchemaName,
             @level1type=@Level1Type,@level1name=@ObjectName;
 END;
 GO
 
-CREATE OR ALTER PROCEDURE dbo.usp_StartScan
+CREATE OR ALTER PROCEDURE [dbo].[usp_StartScan]
     @ScanType varchar(30),
     @CollectorHost nvarchar(256),
     @CollectorUser nvarchar(256),
@@ -160,13 +175,13 @@ CREATE OR ALTER PROCEDURE dbo.usp_StartScan
 AS
 BEGIN
     SET NOCOUNT ON;
-    INSERT dbo.ScanRun(ScanType,CollectorHost,CollectorUser,RepositoryServer)
+    INSERT [dbo].[ScanRun](ScanType,CollectorHost,CollectorUser,RepositoryServer)
     VALUES(@ScanType,@CollectorHost,@CollectorUser,@RepositoryServer);
     SET @ScanRunId=SCOPE_IDENTITY();
 END;
 GO
 
-CREATE OR ALTER PROCEDURE dbo.usp_FinishScan
+CREATE OR ALTER PROCEDURE [dbo].[usp_FinishScan]
     @ScanRunId bigint,
     @Status varchar(30),
     @InstanceCount int,
@@ -174,7 +189,7 @@ CREATE OR ALTER PROCEDURE dbo.usp_FinishScan
     @ErrorCount int
 AS
 BEGIN
-    UPDATE dbo.ScanRun
+    UPDATE [dbo].[ScanRun]
     SET ScanFinishedAt=SYSDATETIME(),
         Status=@Status,
         InstanceCount=@InstanceCount,
@@ -184,7 +199,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE dbo.usp_LogScanError
+CREATE OR ALTER PROCEDURE [dbo].[usp_LogScanError]
     @ScanRunId bigint,
     @InstanceId bigint=NULL,
     @ModuleName varchar(30),
@@ -194,7 +209,7 @@ CREATE OR ALTER PROCEDURE dbo.usp_LogScanError
     @ErrorMessage nvarchar(max)
 AS
 BEGIN
-    INSERT dbo.ScanError
+    INSERT [dbo].[ScanError]
     (
         ScanRunId,InstanceId,ModuleName,ObjectName,StageName,ErrorNumber,ErrorMessage
     )
@@ -205,7 +220,7 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE dbo.usp_UpsertInstance
+CREATE OR ALTER PROCEDURE [dbo].[usp_UpsertInstance]
     @ServerInstance nvarchar(256),
     @EnvironmentCode varchar(20),
     @Description nvarchar(500)=NULL,
@@ -229,15 +244,15 @@ BEGIN
 
     DECLARE @EnvironmentId int=
     (
-        SELECT EnvironmentId FROM dbo.Environment
+        SELECT EnvironmentId FROM [dbo].[Environment]
         WHERE EnvironmentCode=@EnvironmentCode
     );
 
     IF @EnvironmentId IS NULL
         SELECT @EnvironmentId=EnvironmentId
-        FROM dbo.Environment WHERE EnvironmentCode='OTHER';
+        FROM [dbo].[Environment] WHERE EnvironmentCode='OTHER';
 
-    MERGE dbo.Instance AS T
+    MERGE [dbo].[Instance] AS T
     USING (SELECT @ServerInstance ServerInstance) AS S
        ON T.ServerInstance=S.ServerInstance
     WHEN MATCHED THEN UPDATE SET
@@ -271,7 +286,7 @@ BEGIN
     );
 
     SELECT @InstanceId=InstanceId
-    FROM dbo.Instance
+    FROM [dbo].[Instance]
     WHERE ServerInstance=@ServerInstance;
 END;
 GO
