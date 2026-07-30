@@ -287,7 +287,7 @@ CREATE TABLE security.SecurityFinding
 );
 GO
 
-CREATE TABLE [alert].[Rule]
+CREATE TABLE alert.Rule
 (
     RuleId int IDENTITY(1,1) NOT NULL CONSTRAINT PK_AlertRule PRIMARY KEY,
     RuleCode varchar(100) NOT NULL CONSTRAINT UQ_AlertRule_Code UNIQUE,
@@ -309,7 +309,7 @@ CREATE TABLE alert.Finding
     LastDetectedAt datetime2(0) NOT NULL,
     FindingStatus varchar(30) NOT NULL,
     Details nvarchar(max) NULL,
-    CONSTRAINT FK_AlertFinding_Rule FOREIGN KEY(RuleId) REFERENCES alert.[Rule](RuleId),
+    CONSTRAINT FK_AlertFinding_Rule FOREIGN KEY(RuleId) REFERENCES alert.Rule(RuleId),
     CONSTRAINT FK_AlertFinding_Instance FOREIGN KEY(InstanceId) REFERENCES dbo.Instance(InstanceId)
 );
 GO

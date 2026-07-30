@@ -1,7 +1,7 @@
 USE DBACentralRepository;
 GO
 
-CREATE TABLE [backup].BackupHistory
+CREATE TABLE backup.BackupHistory
 (
     BackupHistoryId bigint IDENTITY(1,1) NOT NULL CONSTRAINT PK_BackupHistory PRIMARY KEY,
     ScanRunId bigint NOT NULL,
@@ -30,7 +30,7 @@ CREATE TABLE [backup].BackupHistory
 );
 GO
 
-CREATE TABLE [backup].BackupFile
+CREATE TABLE backup.BackupFile
 (
     BackupFileId bigint IDENTITY(1,1) NOT NULL CONSTRAINT PK_BackupFile PRIMARY KEY,
     BackupHistoryId bigint NOT NULL,
@@ -39,11 +39,11 @@ CREATE TABLE [backup].BackupFile
     DeviceType int NULL,
     FamilySequenceNumber int NULL,
     Mirror int NULL,
-    CONSTRAINT FK_BackupFile_History FOREIGN KEY(BackupHistoryId) REFERENCES [backup].BackupHistory(BackupHistoryId)
+    CONSTRAINT FK_BackupFile_History FOREIGN KEY(BackupHistoryId) REFERENCES backup.BackupHistory(BackupHistoryId)
 );
 GO
 
-CREATE TABLE [backup].BackupPolicy
+CREATE TABLE backup.BackupPolicy
 (
     BackupPolicyId int IDENTITY(1,1) NOT NULL CONSTRAINT PK_BackupPolicy PRIMARY KEY,
     EnvironmentCode varchar(20) NULL,
@@ -57,7 +57,7 @@ CREATE TABLE [backup].BackupPolicy
 );
 GO
 
-CREATE TABLE [backup].RestoreTest
+CREATE TABLE backup.RestoreTest
 (
     RestoreTestId bigint IDENTITY(1,1) NOT NULL CONSTRAINT PK_RestoreTest PRIMARY KEY,
     InstanceId bigint NOT NULL,

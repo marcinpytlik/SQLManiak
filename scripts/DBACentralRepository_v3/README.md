@@ -259,3 +259,56 @@ EXEC [audit].[usp_ApproveJobDocumentation]
 - Pierwszy skan stanowi punkt odniesienia; pełne raportowanie zmian wymaga
   co najmniej dwóch poprawnych skanów.
 - Wdrożenie najpierw wykonaj na instancji testowej.
+
+
+## Poprawka kolektora DataTable
+
+W tej wersji `Invoke-Table` zwraca obiekt `DataTable` przez:
+
+```powershell
+Write-Output -NoEnumerate $table
+```
+
+Zapobiega to automatycznemu rozwinięciu tabeli do `DataRow[]` i błędom:
+
+```text
+The property 'Rows' cannot be found on this object
+Cannot convert System.Object[] to System.Data.DataTable
+```
+
+
+## Wspólny moduł PowerShell
+
+Wspólne funkcje zostały przeniesione do:
+
+```text
+modules
+└── DBACentralRepository.Common
+    ├── DBACentralRepository.Common.psd1
+    └── DBACentralRepository.Common.psm1
+```
+
+Moduł zawiera:
+
+- tworzenie połączeń SQL,
+- wykonywanie zapytań zwracających `DataTable`,
+- `ExecuteScalar` i `ExecuteNonQuery`,
+- `SqlBulkCopy`,
+- dodawanie kolumn `ScanRunId`, `InstanceId` i `CapturedAt`,
+- konwersję `DataTable` do obiektów PowerShell,
+- kodowanie HTML,
+- bezpieczne nazwy plików i folderów.
+
+Każdy skrypt ładuje moduł względem `$PSScriptRoot`, dlatego nie trzeba
+instalować go globalnie. Należy kopiować cały katalog projektu razem
+z folderem `modules`.
+
+Przykład:
+
+```powershell
+$modulePath = Join-Path `
+    $PSScriptRoot `
+    'modules\DBACentralRepository.Common\DBACentralRepository.Common.psd1'
+
+Import-Module -Name $modulePath -Force -ErrorAction Stop
+```

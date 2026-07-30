@@ -1,4 +1,4 @@
-USE DBACentralRepository;
+﻿USE DBACentralRepository;
 GO
 
 CREATE TABLE audit.ComplianceRule

@@ -1,7 +1,7 @@
 {
   "package": "DBACentralRepository_v3",
-  "edition": "Complete-2026-07-29",
-  "file_count": 26,
+  "edition": "Complete-ModularPowerShell-2026-07-30",
+  "file_count": 29,
   "files": [
     {
       "name": "00_Create_Database_And_Schemas.sql",
@@ -50,8 +50,8 @@
     },
     {
       "name": "09_Create_Audit_Compliance.sql",
-      "size_bytes": 16824,
-      "sha256": "1169c21d79968b5f1066534594e53c15b9782545b82e9820e3fd982f21b40034"
+      "size_bytes": 17281,
+      "sha256": "7765407b11276c76b8479dc273d44bd1ce9fe9ce3ec1b6837485d4bfab73a8b6"
     },
     {
       "name": "10_Create_Job_Category_Views.sql",
@@ -90,23 +90,23 @@
     },
     {
       "name": "Collect-DBACentralRepository.ps1",
-      "size_bytes": 19666,
-      "sha256": "d2157f273450d551fdca15d9d869b6eccf474b1f030c414fc73afbcc7fa84c01"
+      "size_bytes": 18649,
+      "sha256": "380aab603943d795035e901d4e5f3103d56635d8ccbb8290116c6c3b7568b1af"
     },
     {
       "name": "Collect-SsrsJobMappings.ps1",
-      "size_bytes": 15480,
-      "sha256": "9badefad162cf441cd04a0dd1b317503ea4eefcfd2ee4ce6587405e4449769fb"
+      "size_bytes": 11827,
+      "sha256": "fdf1ecb06532ca22c310a298c23df1292a879d755bcc6ead7fca7a9a1c0b85cf"
     },
     {
       "name": "Export-ConfluenceReports.ps1",
-      "size_bytes": 41793,
-      "sha256": "75b1e000b70d1491d264926ba6bceb2a424c5638ce8397cbcb7460a78095d33c"
+      "size_bytes": 39602,
+      "sha256": "8e299486aa19430eacf35fcb79923a56b0659e6d44fcfb086728165702a6c269"
     },
     {
       "name": "Export-JobDocumentationPages.ps1",
-      "size_bytes": 17705,
-      "sha256": "e024a0542ffdeb3d99ffe2842f5f240022a0a5960b9cb503cc03e51f48a6a105"
+      "size_bytes": 15363,
+      "sha256": "eade338226e66144545787237f846519780f7566941a0eae2a28b95f3b2b4ee7"
     },
     {
       "name": "JOB_DOCUMENTATION.md",
@@ -114,9 +114,14 @@
       "sha256": "078c4ac5e601a24ee8697a93299721b9637892dce8d089969c0463f9713f6313"
     },
     {
+      "name": "POWERSHELL_MODULE.md",
+      "size_bytes": 952,
+      "sha256": "c052d1a1f049deeec877e67218f3cb5e996fe87a11fa08fc771524e273eb59d2"
+    },
+    {
       "name": "README.md",
-      "size_bytes": 7833,
-      "sha256": "02542730e958ace9bb6a7c4898093d326fda38a74ea8fed423e52519cfaf6794"
+      "size_bytes": 9109,
+      "sha256": "b0c6007aafce7d1d0e0d93da4264cc296055b18f4643815d837e9a3a07c0abe5"
     },
     {
       "name": "SSRS_JOB_MAPPING.md",
@@ -130,8 +135,18 @@
     },
     {
       "name": "manifest.json",
-      "size_bytes": 656,
-      "sha256": "9322960d21b9286e57327deda8b4cad020cb062e0a0e64762659f9b77accc684"
+      "size_bytes": 4342,
+      "sha256": "4bd938a2d0e2bbe6eb3e0d7d3730d5aee1835674550c9fd7c3aec514d4e0e9c0"
+    },
+    {
+      "name": "modules/DBACentralRepository.Common/DBACentralRepository.Common.psd1",
+      "size_bytes": 1146,
+      "sha256": "70c4bd577b2f93ba26bc134ef9f1023fa5b22cfdd68963ca46c641fac64eeba7"
+    },
+    {
+      "name": "modules/DBACentralRepository.Common/DBACentralRepository.Common.psm1",
+      "size_bytes": 11567,
+      "sha256": "54c1dc650dfbb3435595baff64a64e26c0d0fd46e0de93770b749087f698d22a"
     }
   ]
 }
