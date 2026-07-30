@@ -137,7 +137,7 @@ BEGIN
                MAX(CASE WHEN BackupType='D' AND IsCopyOnly=0 THEN BackupFinishDate END) LastFull,
                MAX(CASE WHEN BackupType='I' THEN BackupFinishDate END) LastDiff,
                MAX(CASE WHEN BackupType='L' THEN BackupFinishDate END) LastLog
-        FROM backup.BackupHistory
+        FROM [backup].BackupHistory
         GROUP BY InstanceId,DatabaseName
     )
     SELECT

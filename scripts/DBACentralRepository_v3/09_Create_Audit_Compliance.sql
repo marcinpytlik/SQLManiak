@@ -260,25 +260,43 @@ BEGIN
     SET @ComplianceRunId=SCOPE_IDENTITY();
 
     BEGIN TRY
-        DECLARE @InstanceId bigint,@JobId uniqueidentifier,@JobName sysname,@OwnerName sysname,
-                @IsEnabled bit,@Notify int,@Operator sysname;
+        DECLARE
+            @InstanceId bigint,
+            @JobId uniqueidentifier,
+            @JobName sysname,
+            @OwnerName sysname,
+            @IsEnabled bit,
+            @Notify int,
+            @Operator sysname,
+            @ObjectKey nvarchar(36),
+            @NotifyText nvarchar(20);
 
         DECLARE C CURSOR LOCAL FAST_FORWARD FOR
         SELECT InstanceId,JobId,JobName,OwnerName,IsEnabled,NotifyLevelEmail,OperatorName
         FROM report.vCurrentJobs;
 
         OPEN C;
-        FETCH NEXT FROM C INTO @InstanceId,@JobId,@JobName,@OwnerName,@IsEnabled,@Notify,@Operator;
+        FETCH NEXT FROM C
+        INTO
+            @InstanceId,
+            @JobId,
+            @JobName,
+            @OwnerName,
+            @IsEnabled,
+            @Notify,
+            @Operator;
 
-        WHILE @@FETCH_STATUS=0
+        WHILE @@FETCH_STATUS = 0
         BEGIN
+            SET @ObjectKey = CONVERT(nvarchar(36), @JobId);
+            SET @NotifyText = CONVERT(nvarchar(20), @Notify);
             IF NOT EXISTS
             (
                 SELECT 1 FROM report.vCurrentServerPrincipals
                 WHERE InstanceId=@InstanceId AND PrincipalName=@OwnerName
             )
                 EXEC audit.usp_AddFinding @ComplianceRunId,@ScanRunId,'JOB_OWNER_MISSING',
-                    @InstanceId,'JOB',CONVERT(nvarchar(36),@JobId),@JobName,@OwnerName,N'Istniejący login techniczny';
+                    @InstanceId,'JOB',@ObjectKey,@JobName,@OwnerName,N'Istniejący login techniczny';
 
             IF @OwnerName NOT IN(N'sa',N'DBAJobOwner')
                AND NOT EXISTS
@@ -287,16 +305,16 @@ BEGIN
                    WHERE InstanceId=@InstanceId AND RoleName=N'sysadmin' AND MemberName=@OwnerName
                )
                 EXEC audit.usp_AddFinding @ComplianceRunId,@ScanRunId,'JOB_OWNER_NOT_STANDARD',
-                    @InstanceId,'JOB',CONVERT(nvarchar(36),@JobId),@JobName,@OwnerName,N'sa, DBAJobOwner lub wyjątek';
+                    @InstanceId,'JOB',@ObjectKey,@JobName,@OwnerName,N'sa, DBAJobOwner lub wyjątek';
 
             IF @IsEnabled=0
                 EXEC audit.usp_AddFinding @ComplianceRunId,@ScanRunId,'JOB_DISABLED_WITHOUT_EXCEPTION',
-                    @InstanceId,'JOB',CONVERT(nvarchar(36),@JobId),@JobName,N'Wyłączony',N'Aktywny lub zatwierdzony wyjątek';
+                    @InstanceId,'JOB',@ObjectKey,@JobName,N'Wyłączony',N'Aktywny lub zatwierdzony wyjątek';
 
             IF @IsEnabled=1 AND ISNULL(@Notify,0) NOT IN(2,3)
                 EXEC audit.usp_AddFinding @ComplianceRunId,@ScanRunId,'JOB_NO_NOTIFICATION',
-                    @InstanceId,'JOB',CONVERT(nvarchar(36),@JobId),@JobName,
-                    CONVERT(nvarchar(20),@Notify),N'Powiadomienie po błędzie';
+                    @InstanceId,'JOB',@ObjectKey,@JobName,
+                    @NotifyText,N'Powiadomienie po błędzie';
 
             IF @IsEnabled=1 AND NOT EXISTS
             (
@@ -304,19 +322,29 @@ BEGIN
                 WHERE InstanceId=@InstanceId AND JobId=@JobId
             )
                 EXEC audit.usp_AddFinding @ComplianceRunId,@ScanRunId,'JOB_NO_SCHEDULE',
-                    @InstanceId,'JOB',CONVERT(nvarchar(36),@JobId),@JobName,N'Brak',N'Harmonogram lub ON_DEMAND';
+                    @InstanceId,'JOB',@ObjectKey,@JobName,N'Brak',N'Harmonogram lub ON_DEMAND';
 
             IF NOT EXISTS
             (
                 SELECT 1 FROM audit.JobDocumentation
-                WHERE InstanceId=@InstanceId AND JobId=@JobId
-                  AND IsDocumented=1
-                  AND NULLIF(ConfluencePageUrl,N'') IS NOT NULL
+                WHERE InstanceId = @InstanceId
+                  AND JobId = @JobId
+                  AND IsDocumented = 1
+                  AND DocumentationStatus = 'APPROVED'
+                  AND NULLIF(ConfluencePageUrl, N'') IS NOT NULL
             )
                 EXEC audit.usp_AddFinding @ComplianceRunId,@ScanRunId,'JOB_NOT_DOCUMENTED',
-                    @InstanceId,'JOB',CONVERT(nvarchar(36),@JobId),@JobName,N'Brak',N'Kompletna dokumentacja';
+                    @InstanceId,'JOB',@ObjectKey,@JobName,N'Brak',N'Kompletna dokumentacja';
 
-            FETCH NEXT FROM C INTO @InstanceId,@JobId,@JobName,@OwnerName,@IsEnabled,@Notify,@Operator;
+            FETCH NEXT FROM C
+            INTO
+                @InstanceId,
+                @JobId,
+                @JobName,
+                @OwnerName,
+                @IsEnabled,
+                @Notify,
+                @Operator;
         END;
 
         CLOSE C;

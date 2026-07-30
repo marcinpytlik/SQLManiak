@@ -1,3 +1,15 @@
+USE [master]
+GO
+ALTER DATABASE [DBACentralRepository] SET  SINGLE_USER WITH ROLLBACK IMMEDIATE
+GO
+USE [master]
+GO
+/****** Object:  Database [DBACentralRepository]    Script Date: 30.07.2026 08:07:16 ******/
+DROP DATABASE [DBACentralRepository]
+GO
+EXEC msdb.dbo.sp_delete_database_backuphistory @database_name = N'DBACentralRepository'
+GO
+
 USE master;
 GO
 
