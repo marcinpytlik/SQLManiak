@@ -212,7 +212,7 @@ CREATE TABLE db.LargestTableSnapshot
     DatabaseName sysname NOT NULL,
     SchemaName sysname NOT NULL,
     TableName sysname NOT NULL,
-    [RowCount] bigint NULL,
+    RowCount bigint NULL,
     ReservedMB decimal(19,2) NULL,
     DataMB decimal(19,2) NULL,
     IndexMB decimal(19,2) NULL,

@@ -243,303 +243,95 @@ BEGIN
 END;
 GO
 
-CREATE OR ALTER PROCEDURE [audit].[usp_RunJobComplianceAudit]
-    @ScanRunId bigint = NULL,
-    @ComplianceRunId bigint = NULL OUTPUT
+CREATE OR ALTER PROCEDURE audit.usp_RunJobComplianceAudit
+    @ScanRunId bigint=NULL,
+    @ComplianceRunId bigint=NULL OUTPUT
 AS
 BEGIN
     SET NOCOUNT ON;
-    SET XACT_ABORT ON;
 
     IF @ScanRunId IS NULL
-    BEGIN
-        SELECT TOP (1)
-            @ScanRunId = SR.ScanRunId
-        FROM [dbo].[ScanRun] AS SR
-        WHERE SR.Status IN
-        (
-            'SUCCESS',
-            'COMPLETED_WITH_ERRORS'
-        )
-        ORDER BY SR.ScanRunId DESC;
-    END;
+        SELECT TOP(1) @ScanRunId=ScanRunId
+        FROM dbo.ScanRun
+        WHERE Status IN('SUCCESS','COMPLETED_WITH_ERRORS')
+        ORDER BY ScanRunId DESC;
 
-    INSERT [audit].[ComplianceRun]
-    (
-        ScanRunId
-    )
-    VALUES
-    (
-        @ScanRunId
-    );
-
-    SET @ComplianceRunId = SCOPE_IDENTITY();
+    INSERT audit.ComplianceRun(ScanRunId) VALUES(@ScanRunId);
+    SET @ComplianceRunId=SCOPE_IDENTITY();
 
     BEGIN TRY
-        DECLARE
-            @InstanceId bigint,
-            @JobId uniqueidentifier,
-            @JobName sysname,
-            @OwnerName sysname,
-            @IsEnabled bit,
-            @NotifyLevelEmail int,
-            @OperatorName sysname,
-            @ObjectKey nvarchar(512);
+        DECLARE @InstanceId bigint,@JobId uniqueidentifier,@JobName sysname,@OwnerName sysname,
+                @IsEnabled bit,@Notify int,@Operator sysname;
 
-        DECLARE JobCursor CURSOR LOCAL FAST_FORWARD
-        FOR
-        SELECT
-            J.InstanceId,
-            J.JobId,
-            J.JobName,
-            J.OwnerName,
-            J.IsEnabled,
-            J.NotifyLevelEmail,
-            J.OperatorName
-        FROM [report].[vCurrentJobs] AS J;
+        DECLARE C CURSOR LOCAL FAST_FORWARD FOR
+        SELECT InstanceId,JobId,JobName,OwnerName,IsEnabled,NotifyLevelEmail,OperatorName
+        FROM report.vCurrentJobs;
 
-        OPEN JobCursor;
+        OPEN C;
+        FETCH NEXT FROM C INTO @InstanceId,@JobId,@JobName,@OwnerName,@IsEnabled,@Notify,@Operator;
 
-        FETCH NEXT FROM JobCursor
-        INTO
-            @InstanceId,
-            @JobId,
-            @JobName,
-            @OwnerName,
-            @IsEnabled,
-            @NotifyLevelEmail,
-            @OperatorName;
-
-        WHILE @@FETCH_STATUS = 0
+        WHILE @@FETCH_STATUS=0
         BEGIN
-            SET @ObjectKey =
-                CONVERT(nvarchar(36), @JobId);
-
-            /*
-                Audyt właściciela joba
-            */
             IF NOT EXISTS
             (
-                SELECT 1
-                FROM [report].[vCurrentServerPrincipals] AS P
-                WHERE P.InstanceId = @InstanceId
-                  AND P.PrincipalName = @OwnerName
+                SELECT 1 FROM report.vCurrentServerPrincipals
+                WHERE InstanceId=@InstanceId AND PrincipalName=@OwnerName
             )
-            BEGIN
-                EXEC [audit].[usp_AddFinding]
-                    @ComplianceRunId = @ComplianceRunId,
-                    @ScanRunId = @ScanRunId,
-                    @RuleCode = 'JOB_OWNER_MISSING',
-                    @InstanceId = @InstanceId,
-                    @ObjectType = 'JOB',
-                    @ObjectKey = @ObjectKey,
-                    @ObjectName = @JobName,
-                    @CurrentValue = @OwnerName,
-                    @ExpectedValue =
-                        N'Istniejący login techniczny';
-            END;
+                EXEC audit.usp_AddFinding @ComplianceRunId,@ScanRunId,'JOB_OWNER_MISSING',
+                    @InstanceId,'JOB',CONVERT(nvarchar(36),@JobId),@JobName,@OwnerName,N'Istniejący login techniczny';
 
-            /*
-                Audyt zgodności właściciela ze standardem
-            */
-            IF ISNULL(@OwnerName, N'') NOT IN
-            (
-                N'sa',
-                N'DBAJobOwner'
-            )
-            AND NOT EXISTS
-            (
-                SELECT 1
-                FROM [audit].[vCurrentRoleMembership] AS RM
-                WHERE RM.InstanceId = @InstanceId
-                  AND RM.RoleName = N'sysadmin'
-                  AND RM.MemberName = @OwnerName
-            )
-            BEGIN
-                EXEC [audit].[usp_AddFinding]
-                    @ComplianceRunId = @ComplianceRunId,
-                    @ScanRunId = @ScanRunId,
-                    @RuleCode = 'JOB_OWNER_NOT_STANDARD',
-                    @InstanceId = @InstanceId,
-                    @ObjectType = 'JOB',
-                    @ObjectKey = @ObjectKey,
-                    @ObjectName = @JobName,
-                    @CurrentValue = @OwnerName,
-                    @ExpectedValue =
-                        N'sa, DBAJobOwner lub zatwierdzony wyjątek';
-            END;
-
-            /*
-                Audyt wyłączonych jobów
-            */
-            IF @IsEnabled = 0
-            BEGIN
-                EXEC [audit].[usp_AddFinding]
-                    @ComplianceRunId = @ComplianceRunId,
-                    @ScanRunId = @ScanRunId,
-                    @RuleCode =
-                        'JOB_DISABLED_WITHOUT_EXCEPTION',
-                    @InstanceId = @InstanceId,
-                    @ObjectType = 'JOB',
-                    @ObjectKey = @ObjectKey,
-                    @ObjectName = @JobName,
-                    @CurrentValue = N'Job wyłączony',
-                    @ExpectedValue =
-                        N'Job aktywny albo zatwierdzony wyjątek';
-            END;
-
-            /*
-                Audyt powiadomień
-            */
-            IF @IsEnabled = 1
-               AND ISNULL(@NotifyLevelEmail, 0) NOT IN
-               (
-                   2,
-                   3
-               )
-            BEGIN
-                DECLARE @NotificationCurrentValue nvarchar(100);
-
-                SET @NotificationCurrentValue =
-                    N'NotifyLevelEmail='
-                    + ISNULL
-                      (
-                          CONVERT
-                          (
-                              nvarchar(20),
-                              @NotifyLevelEmail
-                          ),
-                          N'NULL'
-                      )
-                    + N'; Operator='
-                    + ISNULL(@OperatorName, N'NULL');
-
-                EXEC [audit].[usp_AddFinding]
-                    @ComplianceRunId = @ComplianceRunId,
-                    @ScanRunId = @ScanRunId,
-                    @RuleCode = 'JOB_NO_NOTIFICATION',
-                    @InstanceId = @InstanceId,
-                    @ObjectType = 'JOB',
-                    @ObjectKey = @ObjectKey,
-                    @ObjectName = @JobName,
-                    @CurrentValue =
-                        @NotificationCurrentValue,
-                    @ExpectedValue =
-                        N'Powiadomienie po błędzie do aktywnego operatora';
-            END;
-
-            /*
-                Audyt harmonogramów
-            */
-            IF @IsEnabled = 1
+            IF @OwnerName NOT IN(N'sa',N'DBAJobOwner')
                AND NOT EXISTS
                (
-                   SELECT 1
-                   FROM [audit].[vCurrentJobSchedules] AS S
-                   WHERE S.InstanceId = @InstanceId
-                     AND S.JobId = @JobId
+                   SELECT 1 FROM audit.vCurrentRoleMembership
+                   WHERE InstanceId=@InstanceId AND RoleName=N'sysadmin' AND MemberName=@OwnerName
                )
-            BEGIN
-                EXEC [audit].[usp_AddFinding]
-                    @ComplianceRunId = @ComplianceRunId,
-                    @ScanRunId = @ScanRunId,
-                    @RuleCode = 'JOB_NO_SCHEDULE',
-                    @InstanceId = @InstanceId,
-                    @ObjectType = 'JOB',
-                    @ObjectKey = @ObjectKey,
-                    @ObjectName = @JobName,
-                    @CurrentValue =
-                        N'Brak harmonogramu',
-                    @ExpectedValue =
-                        N'Aktywny harmonogram albo udokumentowany tryb ON_DEMAND';
-            END;
+                EXEC audit.usp_AddFinding @ComplianceRunId,@ScanRunId,'JOB_OWNER_NOT_STANDARD',
+                    @InstanceId,'JOB',CONVERT(nvarchar(36),@JobId),@JobName,@OwnerName,N'sa, DBAJobOwner lub wyjątek';
 
-            /*
-                Audyt dokumentacji
-            */
+            IF @IsEnabled=0
+                EXEC audit.usp_AddFinding @ComplianceRunId,@ScanRunId,'JOB_DISABLED_WITHOUT_EXCEPTION',
+                    @InstanceId,'JOB',CONVERT(nvarchar(36),@JobId),@JobName,N'Wyłączony',N'Aktywny lub zatwierdzony wyjątek';
+
+            IF @IsEnabled=1 AND ISNULL(@Notify,0) NOT IN(2,3)
+                EXEC audit.usp_AddFinding @ComplianceRunId,@ScanRunId,'JOB_NO_NOTIFICATION',
+                    @InstanceId,'JOB',CONVERT(nvarchar(36),@JobId),@JobName,
+                    CONVERT(nvarchar(20),@Notify),N'Powiadomienie po błędzie';
+
+            IF @IsEnabled=1 AND NOT EXISTS
+            (
+                SELECT 1 FROM audit.vCurrentJobSchedules
+                WHERE InstanceId=@InstanceId AND JobId=@JobId
+            )
+                EXEC audit.usp_AddFinding @ComplianceRunId,@ScanRunId,'JOB_NO_SCHEDULE',
+                    @InstanceId,'JOB',CONVERT(nvarchar(36),@JobId),@JobName,N'Brak',N'Harmonogram lub ON_DEMAND';
+
             IF NOT EXISTS
             (
-                SELECT 1
-                FROM [audit].[JobDocumentation] AS D
-                WHERE D.InstanceId = @InstanceId
-                  AND D.JobId = @JobId
-                  AND D.IsDocumented = 1
-                  AND NULLIF
-                      (
-                          D.ConfluencePageUrl,
-                          N''
-                      ) IS NOT NULL
+                SELECT 1 FROM audit.JobDocumentation
+                WHERE InstanceId=@InstanceId AND JobId=@JobId
+                  AND IsDocumented=1
+                  AND NULLIF(ConfluencePageUrl,N'') IS NOT NULL
             )
-            BEGIN
-                EXEC [audit].[usp_AddFinding]
-                    @ComplianceRunId = @ComplianceRunId,
-                    @ScanRunId = @ScanRunId,
-                    @RuleCode = 'JOB_NOT_DOCUMENTED',
-                    @InstanceId = @InstanceId,
-                    @ObjectType = 'JOB',
-                    @ObjectKey = @ObjectKey,
-                    @ObjectName = @JobName,
-                    @CurrentValue =
-                        N'Brak kompletnej dokumentacji',
-                    @ExpectedValue =
-                        N'Wpis w audit.JobDocumentation oraz strona Confluence';
-            END;
+                EXEC audit.usp_AddFinding @ComplianceRunId,@ScanRunId,'JOB_NOT_DOCUMENTED',
+                    @InstanceId,'JOB',CONVERT(nvarchar(36),@JobId),@JobName,N'Brak',N'Kompletna dokumentacja';
 
-            FETCH NEXT FROM JobCursor
-            INTO
-                @InstanceId,
-                @JobId,
-                @JobName,
-                @OwnerName,
-                @IsEnabled,
-                @NotifyLevelEmail,
-                @OperatorName;
+            FETCH NEXT FROM C INTO @InstanceId,@JobId,@JobName,@OwnerName,@IsEnabled,@Notify,@Operator;
         END;
 
-        CLOSE JobCursor;
-        DEALLOCATE JobCursor;
+        CLOSE C;
+        DEALLOCATE C;
 
-        UPDATE [audit].[ComplianceRun]
-        SET
-            FinishedAt = SYSDATETIME(),
-            Status = 'SUCCESS',
-            FindingCount =
-            (
-                SELECT COUNT(*)
-                FROM [audit].[ComplianceFinding] AS F
-                WHERE F.ComplianceRunId =
-                      @ComplianceRunId
-            )
-        WHERE ComplianceRunId =
-              @ComplianceRunId;
+        UPDATE audit.ComplianceRun
+        SET FinishedAt=SYSDATETIME(),
+            Status='SUCCESS',
+            FindingCount=(SELECT COUNT(*) FROM audit.ComplianceFinding WHERE ComplianceRunId=@ComplianceRunId)
+        WHERE ComplianceRunId=@ComplianceRunId;
     END TRY
     BEGIN CATCH
-        IF CURSOR_STATUS
-        (
-            'local',
-            'JobCursor'
-        ) >= 0
-        BEGIN
-            CLOSE JobCursor;
-        END;
-
-        IF CURSOR_STATUS
-        (
-            'local',
-            'JobCursor'
-        ) > -3
-        BEGIN
-            DEALLOCATE JobCursor;
-        END;
-
-        UPDATE [audit].[ComplianceRun]
-        SET
-            FinishedAt = SYSDATETIME(),
-            Status = 'FAILED',
-            ErrorMessage = ERROR_MESSAGE()
-        WHERE ComplianceRunId =
-              @ComplianceRunId;
-
+        UPDATE audit.ComplianceRun
+        SET FinishedAt=SYSDATETIME(),Status='FAILED',ErrorMessage=ERROR_MESSAGE()
+        WHERE ComplianceRunId=@ComplianceRunId;
         THROW;
     END CATCH;
 END;
