@@ -70,8 +70,8 @@ Przykład:
 
 ```csv
 ServerInstance,EnvironmentCode,IsActive,CollectSecurity
-sql31.mbank.pl,1520,PROD,1,1
-sql32.mbank.pl,1520,PROD,1,1
+serwer,port,PROD,1,1
+serwerv2,port,1520,PROD,1,1
 ```
 
 Zachowaj format zgodny z używanym już plikiem. W nazwie instancji z portem
@@ -80,7 +80,7 @@ w cudzysłów, jeżeli parser CSV tego wymaga:
 
 ```csv
 ServerInstance,EnvironmentCode,IsActive,CollectSecurity
-"sql31.mbank.pl,1520",PROD,1,1
+"serwer,port",PROD,1,1
 ```
 
 ## Pierwsze uruchomienie ręczne
@@ -90,7 +90,7 @@ ServerInstance,EnvironmentCode,IsActive,CollectSecurity
 ```powershell
 .\Collect-DBACentralRepository.ps1 `
     -ServerListPath '.\Servers.csv' `
-    -RepositoryServerInstance 'scrambler\sql2022' `
+    -RepositoryServerInstance 'serwer' `
     -RepositoryDatabase 'DBACentralRepository' `
     -CollectionMode Full
 ```
@@ -102,7 +102,7 @@ drugiego audytu w tym samym przebiegu.
 
 ```powershell
 .\Collect-SsrsJobMappings.ps1 `
-    -RepositoryServerInstance 'scrambler\sql2022' `
+    -RepositoryServerInstance 'serwer' `
     -RepositoryDatabase 'DBACentralRepository'
 ```
 
@@ -114,7 +114,7 @@ katalogowych SSRS.
 
 ```powershell
 .\Export-JobDocumentationPages.ps1 `
-    -RepositoryServerInstance 'scrambler\sql2022' `
+    -RepositoryServerInstance 'serwer`
     -RepositoryDatabase 'DBACentralRepository' `
     -OutputPath '.\ConfluenceExport\03. Dokumentacja jobów'
 ```
@@ -131,7 +131,7 @@ IsDocumented = 1
 
 ```powershell
 .\Export-ConfluenceReports.ps1 `
-    -RepositoryServerInstance 'scrambler\sql2022' `
+    -RepositoryServerInstance 'serwer' `
     -RepositoryDatabase 'DBACentralRepository' `
     -OutputPath '.\ConfluenceExport'
 ```

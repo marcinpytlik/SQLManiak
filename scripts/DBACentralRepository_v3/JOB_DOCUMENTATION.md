@@ -22,7 +22,7 @@
 ```text
 03. Dokumentacja jobów
 ├── PROD
-│   └── sql31.mbank.pl,1520
+│   └── serwer
 │       ├── Backup FULL.html
 │       └── Backup LOG.html
 ├── TEST
