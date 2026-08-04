@@ -139,36 +139,58 @@ Invoke-RepositoryNonQuery `
 
 $jobs = Invoke-RepositoryDataTable -Sql @'
 SELECT
-    [InstanceId],
-    [ServerInstance],
-    [EnvironmentCode],
-    [JobId],
-    [JobName],
-    [CategoryName],
-    [OwnerName],
-    [Description],
-    [IsEnabled],
-    [DateCreated],
-    [DateModified],
-    [OperatorName],
-    [NotifyLevelEmail],
-    [StepCount],
-    [ScheduleCount],
-    [ExecutionMode],
-    [PageTitle],
-    [ConfluencePageUrl],
-    [TechnicalOwner],
-    [BusinessOwner],
-    [Criticality],
-    [DocumentationStatus],
-    [LastReviewedAt],
-    [ReviewedBy],
-    [Notes]
-FROM [report].[vJobDocumentationPages]
+    D.[InstanceId],
+    D.[ServerInstance],
+    D.[EnvironmentCode],
+    D.[JobId],
+    D.[JobName],
+    D.[CategoryName],
+    D.[OwnerName],
+    D.[Description],
+    D.[IsEnabled],
+    D.[DateCreated],
+    D.[DateModified],
+    D.[OperatorName],
+    D.[NotifyLevelEmail],
+    D.[StepCount],
+    D.[ScheduleCount],
+    D.[ExecutionMode],
+    D.[PageTitle],
+    D.[ConfluencePageUrl],
+    D.[TechnicalOwner],
+    D.[BusinessOwner],
+    D.[Criticality],
+    D.[DocumentationStatus],
+    D.[LastReviewedAt],
+    D.[ReviewedBy],
+    D.[Notes],
+
+    COALESCE(F.[JobSource], N'SQL_AGENT') AS [JobSource],
+    COALESCE(NULLIF(F.[FriendlyJobName], N''), D.[JobName])
+        AS [FriendlyJobName],
+    F.[ReportServerDatabase],
+    F.[ReportName],
+    F.[ReportPath],
+    F.[SubscriptionDescription],
+    F.[SubscriptionOwner],
+    F.[DeliveryExtension],
+    F.[SsrsLastStatus],
+    F.[SsrsLastRunTime],
+    F.[SsrsMappingCount],
+    F.[SsrsSubscriptionCount],
+    F.[SsrsReportCount]
+FROM [report].[vJobDocumentationPages] AS D
+LEFT JOIN [report].[vJobsWithFriendlyName] AS F
+    ON F.[InstanceId] = D.[InstanceId]
+   AND F.[JobId] = D.[JobId]
 ORDER BY
-    [EnvironmentCode],
-    [ServerInstance],
-    [JobName];
+    D.[EnvironmentCode],
+    D.[ServerInstance],
+    CASE
+        WHEN F.[JobSource] = N'SSRS'
+            THEN F.[FriendlyJobName]
+        ELSE D.[JobName]
+    END;
 '@
 
 
@@ -182,6 +204,13 @@ foreach ($job in $jobs.Rows) {
     $environmentCode = Get-DBACentralDataRowValue $job 'EnvironmentCode'
     $serverInstance = Get-DBACentralDataRowValue $job 'ServerInstance'
     $jobName = Get-DBACentralDataRowValue $job 'JobName'
+    $jobSource = Get-DBACentralDataRowValue $job 'JobSource'
+    $friendlyJobName =
+        Get-DBACentralDataRowValue $job 'FriendlyJobName'
+
+    $isSsrs =
+        $jobSource -eq 'SSRS' -and
+        -not [string]::IsNullOrWhiteSpace($friendlyJobName)
 
     if ([string]::IsNullOrWhiteSpace($environmentCode)) {
         $environmentCode = 'UNASSIGNED'
@@ -193,18 +222,33 @@ foreach ($job in $jobs.Rows) {
     $instanceFolder =
         ConvertTo-DBACentralSafePathName -Name $serverInstance
 
+    # Dla SSRS nazwa przyjazna ma pierwszeństwo przed tytułem zapisanym
+    # wcześniej w rejestrze dokumentacji, ponieważ ten mógł być GUID-em.
     $pageTitle =
-        if ([string]::IsNullOrWhiteSpace(
+        if ($isSsrs) {
+            $friendlyJobName
+        }
+        elseif (-not [string]::IsNullOrWhiteSpace(
             (Get-DBACentralDataRowValue $job 'PageTitle')
         )) {
-            $jobName
-        }
-        else {
             Get-DBACentralDataRowValue $job 'PageTitle'
         }
+        else {
+            $jobName
+        }
+
+    # Krótki fragment JobId zabezpiecza przed kolizją nazw, gdy dwa raporty
+    # mają taką samą nazwę lub po oczyszczeniu dają ten sam plik.
+    $shortJobId =
+        $jobId.ToString('N').Substring(0, 8).ToUpperInvariant()
+
+    $fileBaseName =
+        ConvertTo-DBACentralSafePathName `
+            -Name $pageTitle `
+            -MaximumLength 150
 
     $fileName =
-        (ConvertTo-DBACentralSafePathName -Name $jobName) + '.html'
+        '{0}__{1}.html' -f $fileBaseName, $shortJobId
 
     $folderPath =
         Join-Path `
@@ -350,6 +394,43 @@ WHERE [InstanceId] = @InstanceId
 ORDER BY [RunAt] DESC;
 '@
 
+        $ssrsDetails = Invoke-RepositoryDataTable `
+            -Parameters $parameters `
+            -Sql @'
+SELECT
+    [ReportServerDatabase],
+    [ReportName],
+    [ReportPath],
+    [SubscriptionId],
+    [SubscriptionDescription],
+    [SubscriptionOwner],
+    [DeliveryExtension],
+    [LastStatus],
+    [LastRunTime],
+    [ScheduleId],
+    [ScheduleName],
+    [ScheduleNextRunTime],
+    [ScheduleLastRunTime],
+    [SsrsJobType],
+    [TechnicalJobName],
+    [FriendlyJobName]
+FROM [report].[vSsrsJobDocumentationDetails]
+WHERE [InstanceId] = @InstanceId
+  AND [JobId] = @JobId
+ORDER BY
+    [ReportPath],
+    [SubscriptionDescription],
+    [ScheduleName];
+'@
+
+        $ssrsDetailsHtml =
+            if ($isSsrs) {
+                Convert-TableToHtml -Table $ssrsDetails
+            }
+            else {
+                '<div class="empty">Job nie pochodzi z SQL Server Reporting Services.</div>'
+            }
+
         $categoriesHtml =
             Convert-TableToHtml -Table $categories
 
@@ -385,6 +466,10 @@ ORDER BY [RunAt] DESC;
         $encodedJobName = ConvertTo-DBACentralHtml $jobName
         $encodedServer = ConvertTo-DBACentralHtml $serverInstance
         $encodedEnvironment = ConvertTo-DBACentralHtml $environmentCode
+        $encodedFriendlyJobName =
+            ConvertTo-DBACentralHtml $friendlyJobName
+        $encodedJobSource =
+            ConvertTo-DBACentralHtml $jobSource
 
         $statusText =
             if ([bool]$job['IsEnabled']) {
@@ -461,7 +546,9 @@ code, pre {
 <div class="metadata">
 <strong>Środowisko:</strong> $encodedEnvironment<br />
 <strong>Instancja:</strong> $encodedServer<br />
-<strong>Job:</strong> $encodedJobName<br />
+<strong>Źródło joba:</strong> $encodedJobSource<br />
+<strong>Nazwa prezentacyjna:</strong> $encodedFriendlyJobName<br />
+<strong>Nazwa techniczna SQL Agent:</strong> $encodedJobName<br />
 <strong>JobId:</strong> $(ConvertTo-DBACentralHtml $jobId)<br />
 <strong>Status:</strong> $(ConvertTo-DBACentralHtml $statusText)<br />
 <strong>Właściciel SQL Agent:</strong> $(ConvertTo-DBACentralHtml $job['OwnerName'])<br />
@@ -489,31 +576,34 @@ code, pre {
 <h2>2. Opis joba</h2>
 <p>$(ConvertTo-DBACentralHtml $job['Description'])</p>
 
-<h2>3. Kategorie techniczne i funkcjonalne</h2>
+<h2>3. Szczegóły SQL Server Reporting Services</h2>
+$ssrsDetailsHtml
+
+<h2>4. Kategorie techniczne i funkcjonalne</h2>
 $categoriesHtml
 
-<h2>4. Kroki joba</h2>
+<h2>5. Kroki joba</h2>
 $stepsHtml
 
-<h2>5. Harmonogramy</h2>
+<h2>6. Harmonogramy</h2>
 $schedulesHtml
 
-<h2>6. Powiadomienia</h2>
+<h2>7. Powiadomienia</h2>
 <table>
 <tr><th>Operator</th><td>$(ConvertTo-DBACentralHtml $job['OperatorName'])</td></tr>
 <tr><th>NotifyLevelEmail</th><td>$(ConvertTo-DBACentralHtml $job['NotifyLevelEmail'])</td></tr>
 </table>
 
-<h2>7. Wyniki audytu zgodności</h2>
+<h2>8. Wyniki audytu zgodności</h2>
 $findingsHtml
 
-<h2>8. Ostatnie zmiany</h2>
+<h2>9. Ostatnie zmiany</h2>
 $changesHtml
 
-<h2>9. Ostatnie wykonania</h2>
+<h2>10. Ostatnie wykonania</h2>
 $executionsHtml
 
-<h2>10. Status dokumentacji</h2>
+<h2>11. Status dokumentacji</h2>
 <table>
 <tr><th>Status</th><td>$(ConvertTo-DBACentralHtml $job['DocumentationStatus'])</td></tr>
 <tr><th>Strona Confluence</th><td>$(ConvertTo-DBACentralHtml $job['ConfluencePageUrl'])</td></tr>
@@ -553,6 +643,8 @@ EXEC [audit].[usp_MarkJobDocumentationGenerated]
                 InstanceId = $instanceId
                 JobId = $jobId
                 JobName = $jobName
+                JobSource = $jobSource
+                FriendlyJobName = $friendlyJobName
                 PageTitle = $pageTitle
                 FilePath = $htmlPath
                 DocumentationStatus = 'GENERATED'
@@ -573,6 +665,8 @@ EXEC [audit].[usp_MarkJobDocumentationGenerated]
                 InstanceId = $instanceId
                 JobId = $jobId
                 JobName = $jobName
+                JobSource = $jobSource
+                FriendlyJobName = $friendlyJobName
                 PageTitle = $pageTitle
                 FilePath = $htmlPath
                 DocumentationStatus =

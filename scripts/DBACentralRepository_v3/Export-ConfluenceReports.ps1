@@ -42,6 +42,189 @@ function Invoke-RepositoryQuery {
         -ApplicationName 'DBACentralRepository Confluence Export'
 }
 
+
+$script:SsrsJobNameMap = $null
+
+function Initialize-SsrsJobNameMap {
+    if ($null -ne $script:SsrsJobNameMap) {
+        return
+    }
+
+    $script:SsrsJobNameMap = @{}
+
+    try {
+        $mappingTable = Invoke-RepositoryQuery -Sql @'
+SELECT
+    [InstanceId],
+    [SqlAgentJobId] AS [JobId],
+    [FriendlyJobName],
+    [ReportName],
+    [ReportPath],
+    [SubscriptionDescription]
+FROM [report].[vCurrentSsrsJobMapping]
+WHERE NULLIF([FriendlyJobName], N'') IS NOT NULL;
+'@
+
+        foreach ($mappingRow in $mappingTable.Rows) {
+            $instanceId = [long]$mappingRow['InstanceId']
+            $jobId = ([guid]$mappingRow['JobId']).ToString('D').ToUpperInvariant()
+            $key = '{0}|{1}' -f $instanceId, $jobId
+
+            # Jeden job może mieć kilka mapowań. Pierwsza przyjazna nazwa
+            # jest używana jako nazwa prezentacyjna w raportach zbiorczych.
+            if (-not $script:SsrsJobNameMap.ContainsKey($key)) {
+                $script:SsrsJobNameMap[$key] = [pscustomobject]@{
+                    FriendlyJobName =
+                        [string]$mappingRow['FriendlyJobName']
+                    ReportName =
+                        [string]$mappingRow['ReportName']
+                    ReportPath =
+                        [string]$mappingRow['ReportPath']
+                    SubscriptionDescription =
+                        [string]$mappingRow['SubscriptionDescription']
+                }
+            }
+        }
+
+        Write-Host (
+            'Załadowano mapowania nazw SSRS: {0}' -f
+            $script:SsrsJobNameMap.Count
+        ) -ForegroundColor DarkGray
+    }
+    catch {
+        Write-Warning (
+            'Nie udało się załadować mapowań nazw SSRS. ' +
+            'Eksport będzie używał nazw technicznych jobów. ' +
+            $_.Exception.Message
+        )
+
+        $script:SsrsJobNameMap = @{}
+    }
+}
+
+function Set-FriendlySsrsJobNames {
+    param(
+        [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
+        [object[]]$Rows
+    )
+
+    if ($null -eq $Rows -or $Rows.Count -eq 0) {
+        return @()
+    }
+
+    Initialize-SsrsJobNameMap
+
+    foreach ($row in $Rows) {
+        $propertyNames = @($row.PSObject.Properties.Name)
+
+        if (
+            $propertyNames -notcontains 'InstanceId' -or
+            $propertyNames -notcontains 'JobId'
+        ) {
+            continue
+        }
+
+        $instanceValue = $row.InstanceId
+        $jobIdValue = $row.JobId
+
+        if (
+            $null -eq $instanceValue -or
+            $null -eq $jobIdValue -or
+            [string]::IsNullOrWhiteSpace([string]$jobIdValue)
+        ) {
+            continue
+        }
+
+        $parsedJobId = [guid]::Empty
+
+        if (-not [guid]::TryParse([string]$jobIdValue, [ref]$parsedJobId)) {
+            continue
+        }
+
+        $key = '{0}|{1}' -f `
+            ([long]$instanceValue), `
+            $parsedJobId.ToString('D').ToUpperInvariant()
+
+        if (-not $script:SsrsJobNameMap.ContainsKey($key)) {
+            continue
+        }
+
+        $mapping = $script:SsrsJobNameMap[$key]
+
+        $technicalJobName =
+            if ($propertyNames -contains 'TechnicalJobName') {
+                [string]$row.TechnicalJobName
+            }
+            elseif ($propertyNames -contains 'JobName') {
+                [string]$row.JobName
+            }
+            else {
+                $parsedJobId.ToString('D')
+            }
+
+        if ($propertyNames -contains 'JobName') {
+            $row.JobName = $mapping.FriendlyJobName
+        }
+        else {
+            $row |
+                Add-Member `
+                    -MemberType NoteProperty `
+                    -Name 'JobName' `
+                    -Value $mapping.FriendlyJobName
+        }
+
+        if ($propertyNames -contains 'FriendlyJobName') {
+            $row.FriendlyJobName = $mapping.FriendlyJobName
+        }
+        else {
+            $row |
+                Add-Member `
+                    -MemberType NoteProperty `
+                    -Name 'FriendlyJobName' `
+                    -Value $mapping.FriendlyJobName
+        }
+
+        if ($propertyNames -contains 'TechnicalJobName') {
+            $row.TechnicalJobName = $technicalJobName
+        }
+        else {
+            $row |
+                Add-Member `
+                    -MemberType NoteProperty `
+                    -Name 'TechnicalJobName' `
+                    -Value $technicalJobName
+        }
+
+        if ($propertyNames -contains 'JobSource') {
+            $row.JobSource = 'SSRS'
+        }
+        else {
+            $row |
+                Add-Member `
+                    -MemberType NoteProperty `
+                    -Name 'JobSource' `
+                    -Value 'SSRS'
+        }
+
+        foreach ($property in @(
+            'ReportName',
+            'ReportPath',
+            'SubscriptionDescription'
+        )) {
+            if ($row.PSObject.Properties.Name -notcontains $property) {
+                $row |
+                    Add-Member `
+                        -MemberType NoteProperty `
+                        -Name $property `
+                        -Value $mapping.$property
+            }
+        }
+    }
+
+    return $Rows
+}
+
 function Write-EmptyHtmlReport {
     param(
         [Parameter(Mandatory)]
@@ -224,6 +407,12 @@ function Export-ConfluencePage {
             ConvertFrom-DBACentralDataTable `
                 -DataTable $table
         )
+
+        if ($rows.Count -gt 0) {
+            $rows = @(
+                Set-FriendlySsrsJobNames -Rows $rows
+            )
+        }
 
         if (-not $SkipCsv) {
             if ($rows.Count -gt 0) {

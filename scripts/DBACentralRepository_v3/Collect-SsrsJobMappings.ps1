@@ -204,7 +204,6 @@ SELECT
     [InstanceId],
     [ServerInstance]
 FROM [dbo].[Instance]
-WHERE [IsActive] = 1
 ORDER BY [ServerInstance];
 '@
 }
