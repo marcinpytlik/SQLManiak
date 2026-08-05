@@ -51,31 +51,3 @@ JOIN [dbo].[ScanRun] S ON S.ScanRunId=E.ScanRunId
 LEFT JOIN [dbo].[Instance] I ON I.InstanceId=E.InstanceId
 ORDER BY E.ErrorAt DESC;
 GO
-
-
--- Dokumentacja baz
-SELECT *
-FROM [report].[vDatabaseDocumentationPages]
-ORDER BY [EnvironmentCode],[ServerInstance],[DatabaseName];
-
--- Bazy bez zatwierdzonej dokumentacji
-SELECT *
-FROM [report].[vDatabasesStillNotDocumented]
-ORDER BY [EnvironmentCode],[ServerInstance],[DatabaseName];
-
--- Zmiany struktury między dwoma ostatnimi poprawnymi skanami
-SELECT *
-FROM [report].[vDatabaseSchemaChanges]
-ORDER BY
-    [InstanceId],
-    [DatabaseName],
-    [ChangeType],
-    [SchemaName],
-    [ObjectName],
-    [ChildName];
-
--- Status skanów struktury
-SELECT *
-FROM [report].[vDatabaseSchemaCollectionStatus]
-ORDER BY [ScanRunId] DESC,[ServerInstance],[DatabaseName];
-GO
