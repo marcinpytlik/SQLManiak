@@ -280,6 +280,94 @@ WHERE O.[is_ms_shipped] = 0
 ORDER BY S.[name],O.[name],C.[column_id];
 '@
 
+
+    $fileSql = @'
+SELECT
+    DF.[file_id] AS [FileId],
+    DF.[name] AS [LogicalName],
+    DF.[type_desc] AS [FileTypeDesc],
+    FG.[name] AS [FilegroupName],
+    DF.[physical_name] AS [PhysicalName],
+    CONVERT(decimal(19,2),DF.[size] / 128.0) AS [SizeMB],
+    CONVERT(bigint,DF.[growth]) AS [GrowthValue],
+    CASE
+        WHEN DF.[is_percent_growth] = 1
+            THEN 'PERCENT'
+        ELSE 'PAGES'
+    END AS [GrowthUnit],
+    CASE
+        WHEN DF.[max_size] = -1
+            THEN NULL
+        ELSE CONVERT(decimal(19,2),DF.[max_size] / 128.0)
+    END AS [MaxSizeMB],
+    DF.[is_percent_growth] AS [IsPercentGrowth],
+    DF.[is_read_only] AS [IsReadOnly],
+    DF.[is_sparse] AS [IsSparse]
+FROM [sys].[database_files] AS DF
+LEFT JOIN [sys].[filegroups] AS FG
+    ON FG.[data_space_id] = DF.[data_space_id]
+ORDER BY DF.[file_id];
+'@
+
+    $largestTableSql = @'
+SELECT
+    S.[name] AS [SchemaName],
+    T.[name] AS [TableName],
+    SUM
+    (
+        CASE
+            WHEN P.[index_id] IN (0,1)
+                THEN P.[row_count]
+            ELSE 0
+        END
+    ) AS [RowCount],
+    CONVERT
+    (
+        decimal(19,2),
+        SUM(P.[reserved_page_count]) / 128.0
+    ) AS [ReservedMB],
+    CONVERT
+    (
+        decimal(19,2),
+        SUM
+        (
+            CASE
+                WHEN P.[index_id] IN (0,1)
+                    THEN
+                        P.[in_row_data_page_count]
+                        + P.[lob_used_page_count]
+                        + P.[row_overflow_used_page_count]
+                ELSE 0
+            END
+        ) / 128.0
+    ) AS [DataMB],
+    CONVERT
+    (
+        decimal(19,2),
+        SUM
+        (
+            CASE
+                WHEN P.[index_id] > 1
+                    THEN P.[used_page_count]
+                ELSE 0
+            END
+        ) / 128.0
+    ) AS [IndexMB]
+FROM [sys].[tables] AS T
+INNER JOIN [sys].[schemas] AS S
+    ON S.[schema_id] = T.[schema_id]
+INNER JOIN [sys].[dm_db_partition_stats] AS P
+    ON P.[object_id] = T.[object_id]
+WHERE T.[is_ms_shipped] = 0
+GROUP BY
+    S.[name],
+    T.[name]
+ORDER BY
+    [ReservedMB] DESC,
+    S.[name],
+    T.[name];
+'@
+
     foreach ($instance in $instances.Rows) {
         $instanceCount++
         $instanceId = [long]$instance['InstanceId']
@@ -375,6 +463,21 @@ VALUES
                     -CommandTimeoutSeconds $CommandTimeoutSeconds `
                     -Sql $columnSql
 
+
+                $files = Invoke-DBACentralDataTable `
+                    -ServerInstance $serverInstance `
+                    -DatabaseName $databaseName `
+                    -Credential $SourceSqlCredential `
+                    -CommandTimeoutSeconds $CommandTimeoutSeconds `
+                    -Sql $fileSql
+
+                $largestTables = Invoke-DBACentralDataTable `
+                    -ServerInstance $serverInstance `
+                    -DatabaseName $databaseName `
+                    -Credential $SourceSqlCredential `
+                    -CommandTimeoutSeconds $CommandTimeoutSeconds `
+                    -Sql $largestTableSql
+
                 $objects = Add-SnapshotColumns `
                     -Table $objects `
                     -ScanRunId $scanRunId `
@@ -383,6 +486,19 @@ VALUES
 
                 $columns = Add-SnapshotColumns `
                     -Table $columns `
+                    -ScanRunId $scanRunId `
+                    -InstanceId $instanceId `
+                    -DatabaseName $databaseName
+
+
+                $files = Add-SnapshotColumns `
+                    -Table $files `
+                    -ScanRunId $scanRunId `
+                    -InstanceId $instanceId `
+                    -DatabaseName $databaseName
+
+                $largestTables = Add-SnapshotColumns `
+                    -Table $largestTables `
                     -ScanRunId $scanRunId `
                     -InstanceId $instanceId `
                     -DatabaseName $databaseName
@@ -403,7 +519,28 @@ VALUES
                     -Credential $RepositorySqlCredential `
                     -CommandTimeoutSeconds $CommandTimeoutSeconds)
 
-                $objectCount += $objects.Rows.Count + $columns.Rows.Count
+
+                [void](Write-DBACentralBulkCopy `
+                    -DataTable $files `
+                    -DestinationTable '[db].[DatabaseFileSnapshot]' `
+                    -ServerInstance $RepositoryServerInstance `
+                    -DatabaseName $RepositoryDatabase `
+                    -Credential $RepositorySqlCredential `
+                    -CommandTimeoutSeconds $CommandTimeoutSeconds)
+
+                [void](Write-DBACentralBulkCopy `
+                    -DataTable $largestTables `
+                    -DestinationTable '[db].[LargestTableSnapshot]' `
+                    -ServerInstance $RepositoryServerInstance `
+                    -DatabaseName $RepositoryDatabase `
+                    -Credential $RepositorySqlCredential `
+                    -CommandTimeoutSeconds $CommandTimeoutSeconds)
+
+                $objectCount +=
+                    $objects.Rows.Count +
+                    $columns.Rows.Count +
+                    $files.Rows.Count +
+                    $largestTables.Rows.Count
 
                 Invoke-RepositoryNonQuery `
                     -Sql @'
@@ -427,8 +564,12 @@ WHERE [ScanRunId]=@ScanRunId
                     }
 
                 Write-Host (
-                    "  $databaseName: obiekty=$($objects.Rows.Count), " +
-                    "kolumny=$($columns.Rows.Count)"
+                    '  {0}: obiekty={1}, kolumny={2}, pliki={3}, tabele={4}' -f
+                    $databaseName,
+                    $objects.Rows.Count,
+                    $columns.Rows.Count,
+                    $files.Rows.Count,
+                    $largestTables.Rows.Count
                 ) -ForegroundColor Green
             }
             catch {
@@ -463,7 +604,9 @@ EXEC [dbo].[usp_LogScanError]
                     }
 
                 Write-Warning (
-                    "Błąd skanowania $serverInstance/$databaseName: " +
+                    'Błąd skanowania {0}/{1}: {2}' -f
+                    $serverInstance,
+                    $databaseName,
                     $_.Exception.Message
                 )
             }

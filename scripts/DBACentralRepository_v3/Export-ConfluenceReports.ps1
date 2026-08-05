@@ -1809,6 +1809,362 @@ ORDER BY
     [TotalChangeCount] DESC,
     [ServerInstance];
 '@
+    },
+
+    # =========================================================================
+    # 11. Rejestr baz danych
+    # =========================================================================
+    @{
+        Section = '11. Rejestr baz danych'
+        PageTitle = 'Wszystkie bazy danych'
+        Description = 'Bieżący rejestr baz danych z konfiguracją i rozmiarem.'
+        Sql = @'
+SELECT *
+FROM [report].[vCurrentDatabases]
+ORDER BY
+    [EnvironmentCode],
+    [ServerInstance],
+    [DatabaseName];
+'@
+    },
+    @{
+        Section = '11. Rejestr baz danych'
+        PageTitle = 'Bazy danych według środowiska'
+        Description = 'Podsumowanie liczby i rozmiaru baz według środowiska i instancji.'
+        Sql = @'
+SELECT
+    [EnvironmentCode],
+    [ServerInstance],
+    COUNT_BIG(*) AS [DatabaseCount],
+    SUM([DataSizeMB]) AS [DataSizeMB],
+    SUM([LogSizeMB]) AS [LogSizeMB],
+    SUM([TotalSizeMB]) AS [TotalSizeMB]
+FROM [report].[vCurrentDatabases]
+GROUP BY
+    [EnvironmentCode],
+    [ServerInstance]
+ORDER BY
+    [EnvironmentCode],
+    [ServerInstance];
+'@
+    },
+    @{
+        Section = '11. Rejestr baz danych'
+        PageTitle = 'Bazy inne niż ONLINE'
+        Description = 'Bazy, których aktualny stan jest inny niż ONLINE.'
+        Sql = @'
+SELECT *
+FROM [report].[vCurrentDatabases]
+WHERE [StateDesc] <> N'ONLINE'
+ORDER BY
+    [EnvironmentCode],
+    [ServerInstance],
+    [DatabaseName];
+'@
+    },
+    @{
+        Section = '11. Rejestr baz danych'
+        PageTitle = 'Pliki baz danych'
+        Description = 'Bieżąca konfiguracja plików danych i logu.'
+        Sql = @'
+SELECT *
+FROM [report].[vCurrentDatabaseFiles]
+ORDER BY
+    [EnvironmentCode],
+    [ServerInstance],
+    [DatabaseName],
+    [FileTypeDesc],
+    [FileId];
+'@
+    },
+    @{
+        Section = '11. Rejestr baz danych'
+        PageTitle = 'Największe tabele'
+        Description = 'Największe tabele zebrane ze wszystkich monitorowanych baz.'
+        Sql = @'
+SELECT *
+FROM [report].[vCurrentLargestTables]
+ORDER BY
+    [ReservedMB] DESC,
+    [EnvironmentCode],
+    [ServerInstance],
+    [DatabaseName],
+    [SchemaName],
+    [TableName];
+'@
+    },
+
+    # =========================================================================
+    # 12. Dokumentacja baz
+    # =========================================================================
+    @{
+        Section = '12. Dokumentacja baz'
+        PageTitle = 'Rejestr dokumentacji baz'
+        Description = 'Status dokumentacji, właściciele, krytyczność, RPO i RTO.'
+        Sql = @'
+SELECT
+    [EnvironmentCode],
+    [ServerInstance],
+    [DatabaseName],
+    [DocumentationStatus],
+    [IsDocumented],
+    [ApplicationName],
+    [TechnicalOwner],
+    [BusinessOwner],
+    [SupportGroup],
+    [Criticality],
+    [RpoMinutes],
+    [RtoMinutes],
+    [ConfluencePageUrl],
+    [GeneratedAt],
+    [PublishedAt],
+    [LastReviewedAt],
+    [ReviewedBy]
+FROM [report].[vDatabaseDocumentationPages]
+ORDER BY
+    [EnvironmentCode],
+    [ServerInstance],
+    [DatabaseName];
+'@
+    },
+    @{
+        Section = '12. Dokumentacja baz'
+        PageTitle = 'Bazy bez zatwierdzonej dokumentacji'
+        Description = 'Bazy bez strony Confluence lub bez statusu APPROVED.'
+        Sql = @'
+SELECT *
+FROM [report].[vDatabasesStillNotDocumented]
+ORDER BY
+    [EnvironmentCode],
+    [ServerInstance],
+    [DatabaseName];
+'@
+    },
+    @{
+        Section = '12. Dokumentacja baz'
+        PageTitle = 'Cykl życia dokumentacji baz'
+        Description = 'Liczba baz według środowiska i statusu dokumentacji.'
+        Sql = @'
+SELECT *
+FROM [report].[vDatabaseDocumentationLifecycleSummary]
+ORDER BY
+    [EnvironmentCode],
+    [DocumentationStatus];
+'@
+    },
+
+    # =========================================================================
+    # 13. Struktura baz
+    # =========================================================================
+    @{
+        Section = '13. Struktura baz'
+        PageTitle = 'Tabele i widoki'
+        Description = 'Bieżący snapshot tabel i widoków monitorowanych baz.'
+        Sql = @'
+SELECT
+    I.[ServerInstance],
+    E.[EnvironmentCode],
+    O.[DatabaseName],
+    O.[SchemaName],
+    O.[ObjectName],
+    O.[ObjectType],
+    O.[ObjectTypeDesc],
+    O.[CreateDate],
+    O.[ModifyDate],
+    O.[ScanRunId],
+    O.[CapturedAt]
+FROM [report].[vCurrentDatabaseObjects] AS O
+INNER JOIN [dbo].[Instance] AS I
+    ON I.[InstanceId] = O.[InstanceId]
+LEFT JOIN [dbo].[Environment] AS E
+    ON E.[EnvironmentId] = I.[EnvironmentId]
+ORDER BY
+    E.[EnvironmentCode],
+    I.[ServerInstance],
+    O.[DatabaseName],
+    O.[ObjectTypeDesc],
+    O.[SchemaName],
+    O.[ObjectName];
+'@
+    },
+    @{
+        Section = '13. Struktura baz'
+        PageTitle = 'Kolumny tabel i widoków'
+        Description = 'Bieżący snapshot kolumn wraz z typami danych.'
+        Sql = @'
+SELECT
+    I.[ServerInstance],
+    E.[EnvironmentCode],
+    C.[DatabaseName],
+    C.[SchemaName],
+    C.[ObjectName],
+    C.[ObjectType],
+    C.[ColumnId],
+    C.[ColumnName],
+    C.[DataTypeName],
+    C.[MaxLength],
+    C.[PrecisionValue],
+    C.[ScaleValue],
+    C.[IsNullable],
+    C.[IsIdentity],
+    C.[IsComputed],
+    C.[ScanRunId],
+    C.[CapturedAt]
+FROM [report].[vCurrentDatabaseColumns] AS C
+INNER JOIN [dbo].[Instance] AS I
+    ON I.[InstanceId] = C.[InstanceId]
+LEFT JOIN [dbo].[Environment] AS E
+    ON E.[EnvironmentId] = I.[EnvironmentId]
+ORDER BY
+    E.[EnvironmentCode],
+    I.[ServerInstance],
+    C.[DatabaseName],
+    C.[SchemaName],
+    C.[ObjectName],
+    C.[ColumnId];
+'@
+    },
+    @{
+        Section = '13. Struktura baz'
+        PageTitle = 'Status skanów struktury'
+        Description = 'Historia poprawnych i błędnych skanów struktury baz.'
+        Sql = @'
+SELECT *
+FROM [report].[vDatabaseSchemaCollectionStatus]
+ORDER BY
+    [ScanRunId] DESC,
+    [EnvironmentCode],
+    [ServerInstance],
+    [DatabaseName];
+'@
+    },
+
+    # =========================================================================
+    # 14. Zmiany struktury baz
+    # =========================================================================
+    @{
+        Section = '14. Zmiany struktury baz'
+        PageTitle = 'Wszystkie ostatnie zmiany struktury'
+        Description = 'Różnice między dwoma ostatnimi poprawnymi snapshotami każdej bazy.'
+        Sql = @'
+SELECT
+    I.[ServerInstance],
+    E.[EnvironmentCode],
+    C.[DatabaseName],
+    C.[EntityType],
+    C.[SchemaName],
+    C.[ObjectName],
+    C.[ChildName],
+    C.[ChangeType],
+    C.[ObjectTypeDesc],
+    C.[OldValue],
+    C.[NewValue],
+    C.[PreviousScanRunId],
+    C.[CurrentScanRunId]
+FROM [report].[vDatabaseSchemaChanges] AS C
+INNER JOIN [dbo].[Instance] AS I
+    ON I.[InstanceId] = C.[InstanceId]
+LEFT JOIN [dbo].[Environment] AS E
+    ON E.[EnvironmentId] = I.[EnvironmentId]
+ORDER BY
+    E.[EnvironmentCode],
+    I.[ServerInstance],
+    C.[DatabaseName],
+    C.[ChangeType],
+    C.[SchemaName],
+    C.[ObjectName],
+    C.[ChildName];
+'@
+    },
+    @{
+        Section = '14. Zmiany struktury baz'
+        PageTitle = 'Podsumowanie zmian struktury'
+        Description = 'Liczba zmian struktury według instancji, bazy i rodzaju zmiany.'
+        Sql = @'
+SELECT *
+FROM [report].[vDatabaseSchemaChangeSummary]
+ORDER BY
+    [EnvironmentCode],
+    [ServerInstance],
+    [DatabaseName],
+    [ChangeType];
+'@
+    },
+    @{
+        Section = '14. Zmiany struktury baz'
+        PageTitle = 'Dodane obiekty'
+        Description = 'Tabele i widoki dodane pomiędzy dwoma ostatnimi skanami.'
+        Sql = @'
+SELECT
+    I.[ServerInstance],
+    E.[EnvironmentCode],
+    C.*
+FROM [report].[vDatabaseSchemaChanges] AS C
+INNER JOIN [dbo].[Instance] AS I
+    ON I.[InstanceId] = C.[InstanceId]
+LEFT JOIN [dbo].[Environment] AS E
+    ON E.[EnvironmentId] = I.[EnvironmentId]
+WHERE C.[ChangeType] = N'OBJECT_ADDED'
+ORDER BY
+    E.[EnvironmentCode],
+    I.[ServerInstance],
+    C.[DatabaseName],
+    C.[SchemaName],
+    C.[ObjectName];
+'@
+    },
+    @{
+        Section = '14. Zmiany struktury baz'
+        PageTitle = 'Usunięte obiekty'
+        Description = 'Tabele i widoki usunięte pomiędzy dwoma ostatnimi skanami.'
+        Sql = @'
+SELECT
+    I.[ServerInstance],
+    E.[EnvironmentCode],
+    C.*
+FROM [report].[vDatabaseSchemaChanges] AS C
+INNER JOIN [dbo].[Instance] AS I
+    ON I.[InstanceId] = C.[InstanceId]
+LEFT JOIN [dbo].[Environment] AS E
+    ON E.[EnvironmentId] = I.[EnvironmentId]
+WHERE C.[ChangeType] = N'OBJECT_REMOVED'
+ORDER BY
+    E.[EnvironmentCode],
+    I.[ServerInstance],
+    C.[DatabaseName],
+    C.[SchemaName],
+    C.[ObjectName];
+'@
+    },
+    @{
+        Section = '14. Zmiany struktury baz'
+        PageTitle = 'Zmiany kolumn'
+        Description = 'Dodane, usunięte oraz zmodyfikowane kolumny.'
+        Sql = @'
+SELECT
+    I.[ServerInstance],
+    E.[EnvironmentCode],
+    C.*
+FROM [report].[vDatabaseSchemaChanges] AS C
+INNER JOIN [dbo].[Instance] AS I
+    ON I.[InstanceId] = C.[InstanceId]
+LEFT JOIN [dbo].[Environment] AS E
+    ON E.[EnvironmentId] = I.[EnvironmentId]
+WHERE C.[ChangeType] IN
+(
+    N'COLUMN_ADDED',
+    N'COLUMN_REMOVED',
+    N'COLUMN_CHANGED'
+)
+ORDER BY
+    E.[EnvironmentCode],
+    I.[ServerInstance],
+    C.[DatabaseName],
+    C.[ChangeType],
+    C.[SchemaName],
+    C.[ObjectName],
+    C.[ChildName];
+'@
     }
 )
 
