@@ -301,22 +301,3 @@ $modulePath = Join-Path `
 
 Import-Module -Name $modulePath -Force -ErrorAction Stop
 ```
-
-
-## Dokumentacja baz i śledzenie zmian schematu
-
-Repozytorium rozszerzono o:
-
-```text
-15_Create_Database_Report_Views.sql
-16_Create_Database_Documentation_Lifecycle.sql
-17_Create_Database_Schema_Change_Tracking.sql
-18_Create_Database_Documentation_Agent_Job.sql
-Collect-DatabaseSchema.ps1
-Export-DatabaseDocumentationPages.ps1
-Publish-ConfluencePages.ps1
-DATABASE_DOCUMENTATION.md
-```
-
-Wersja bazowa pochodzi bezpośrednio z działającego `OLD.zip`. Istniejące
-skrypty `00–14` oraz działające kolektory nie zostały zastąpione.

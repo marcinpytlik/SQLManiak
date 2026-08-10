@@ -1,4 +1,0 @@
-ServerInstance;Enabled;Environment;Description;CollectJobs;CollectDatabases;CollectBackup;CollectCapacity;CollectHA;CollectMaintenance;CollectPatch;CollectConfig;CollectSecurity
-SQLPROD01;1;PROD;Produkcja;1;1;1;1;1;1;1;1;1
-SQLTEST01\SQL2022;1;TEST;Test;1;1;1;1;0;1;1;1;0
-SQLDEV01;0;DEV;Wyłączony;0;0;0;0;0;0;0;0;0

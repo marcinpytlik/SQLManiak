@@ -1,4 +1,6 @@
-﻿# Kolejność instalacji
+﻿# Kolejność instalacji SQL
+
+Uruchamiaj pliki rosnąco według numeru:
 
 ```text
 00_Create_Database_And_Schemas.sql
@@ -16,13 +18,13 @@
 12_Create_Job_Documentation_Lifecycle.sql
 13_Create_SSRS_Job_Mapping.sql
 14_Create_Agent_Jobs.sql
-15_Create_Database_Report_Views.sql
-16_Create_Database_Documentation_Lifecycle.sql
-17_Create_Database_Schema_Change_Tracking.sql
-18_Create_Database_Documentation_Agent_Job.sql   # opcjonalnie
-98_Verify_Installation.sql
 99_Useful_Queries.sql
 ```
 
-Plik `18` tworzy job wyłączony. Przed jego włączeniem trzeba zmienić ścieżki,
-konto uruchomieniowe i sposób przechowywania sekretów.
+## Zasady
+
+- Pliki `00–14` tworzą lub aktualizują obiekty.
+- `99_Useful_Queries.sql` zawiera tylko zapytania kontrolne i raportowe.
+- Wszystkie skrypty można uruchomić ponownie. Tabele i indeksy są chronione przez test istnienia, a procedury i widoki korzystają z `CREATE OR ALTER`.
+- Nazwy obiektów są zapisywane w konwencji `[schemat].[Obiekt]`, np. `[backup].[BackupHistory]`.
+- `14_Create_Agent_Jobs.sql` uruchom po skopiowaniu skryptów PowerShell na serwer i ustawieniu ścieżek.

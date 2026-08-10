@@ -46,39 +46,3 @@ ORDER BY
     [t].[name],
     [i].[index_id];
 GO
-
-
-PRINT N'Weryfikacja modułu dokumentacji baz i zmian schematu';
-
-SELECT
-    [ObjectName] = V.[name],
-    [ObjectType] = V.[type_desc]
-FROM [sys].[objects] AS V
-WHERE V.[object_id] IN
-(
-    OBJECT_ID(N'[report].[vCurrentDatabaseFiles]'),
-    OBJECT_ID(N'[report].[vCurrentLargestTables]'),
-    OBJECT_ID(N'[db].[DatabaseDocumentation]'),
-    OBJECT_ID(N'[db].[DatabaseSchemaCollectionStatus]'),
-    OBJECT_ID(N'[db].[DatabaseObjectSnapshot]'),
-    OBJECT_ID(N'[db].[DatabaseColumnSnapshot]'),
-    OBJECT_ID(N'[report].[vDatabaseDocumentationPages]'),
-    OBJECT_ID(N'[report].[vDatabaseSchemaChanges]')
-)
-ORDER BY V.[type_desc],V.[name];
-
-IF OBJECT_ID(N'[report].[vCurrentDatabaseFiles]') IS NULL
-    THROW 51000,'Brak [report].[vCurrentDatabaseFiles].',1;
-
-IF OBJECT_ID(N'[report].[vCurrentLargestTables]') IS NULL
-    THROW 51000,'Brak [report].[vCurrentLargestTables].',1;
-
-IF OBJECT_ID(N'[db].[DatabaseDocumentation]') IS NULL
-    THROW 51000,'Brak [db].[DatabaseDocumentation].',1;
-
-IF OBJECT_ID(N'[db].[DatabaseObjectSnapshot]') IS NULL
-    THROW 51000,'Brak [db].[DatabaseObjectSnapshot].',1;
-
-IF OBJECT_ID(N'[report].[vDatabaseSchemaChanges]') IS NULL
-    THROW 51000,'Brak [report].[vDatabaseSchemaChanges].',1;
-GO
