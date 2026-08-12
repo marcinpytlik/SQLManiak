@@ -1,4 +1,4 @@
-﻿# Kolejność instalacji SQL
+# Kolejność instalacji SQL
 
 Uruchamiaj pliki rosnąco według numeru:
 
@@ -18,13 +18,28 @@ Uruchamiaj pliki rosnąco według numeru:
 12_Create_Job_Documentation_Lifecycle.sql
 13_Create_SSRS_Job_Mapping.sql
 14_Create_Agent_Jobs.sql
+15_Create_Database_Report_Views.sql
+16_Create_Database_Documentation_Lifecycle.sql
+17_Create_Database_Schema_Change_Tracking.sql
+18_Create_Database_Documentation_Agent_Job.sql
+19_Create_Patch_Audit_Lifecycle.sql
+20_Create_Perf_Module.sql
+21_Create_Perf_Retention.sql
+22_Create_Grafana_Views.sql
+23_Create_Perf_Agent_Job.sql
+98_Verify_Installation.sql
 99_Useful_Queries.sql
 ```
 
 ## Zasady
 
-- Pliki `00–14` tworzą lub aktualizują obiekty.
+- Pliki `00–23` tworzą lub aktualizują obiekty.
+- `20–21` dodają historyczny moduł `perf`.
+- `22` jest stabilną warstwą prezentacji dla Grafany (`report.vGrafana*`).
+- `23` tworzy niezależny job collectora wydajności, domyślnie co 5 minut.
+- `14` i `18` pozostają bez zmian, więc istniejąca automatyzacja Confluence nadal działa. Można ją wyłączyć później, po zaakceptowaniu dashboardów Grafana.
+- `98_Verify_Installation.sql` służy do kontroli instalacji.
 - `99_Useful_Queries.sql` zawiera tylko zapytania kontrolne i raportowe.
-- Wszystkie skrypty można uruchomić ponownie. Tabele i indeksy są chronione przez test istnienia, a procedury i widoki korzystają z `CREATE OR ALTER`.
-- Nazwy obiektów są zapisywane w konwencji `[schemat].[Obiekt]`, np. `[backup].[BackupHistory]`.
-- `14_Create_Agent_Jobs.sql` uruchom po skopiowaniu skryptów PowerShell na serwer i ustawieniu ścieżek.
+- Tabele i indeksy są chronione testami istnienia, a procedury i widoki korzystają z `CREATE OR ALTER` tam, gdzie jest to możliwe.
+- Nazwy obiektów są zapisywane w konwencji `[schemat].[Obiekt]`.
+- Przed uruchomieniem `14`, `18` i `23` ustaw ścieżki, konto właściciela i nazwę instancji repozytorium.

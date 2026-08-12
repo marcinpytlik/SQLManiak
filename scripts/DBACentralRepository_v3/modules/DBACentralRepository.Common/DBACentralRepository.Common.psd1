@@ -26,7 +26,7 @@
     AliasesToExport = @()
     PrivateData = @{
         PSData = @{
-            Tags = @('SQLServer', 'DBA', 'Repository', 'Confluence')
+            Tags = @('SQLServer', 'DBA', 'Repository', 'Grafana', 'Confluence')
             ProjectUri = 'https://github.com/marcinpytlik'
         }
     }

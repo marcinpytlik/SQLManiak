@@ -1,12 +1,12 @@
 {
   "package": "DBACentralRepository_v3",
-  "edition": "Ordered-Idempotent-2026-07-30",
-  "file_count": 32,
+  "edition": "Grafana-PERF-Integrated-2026-08-12",
+  "file_count": 56,
   "files": [
     {
       "name": "00_Create_Database_And_Schemas.sql",
-      "size_bytes": 2444,
-      "sha256": "9ad0adda535fc992943056f28de44265470a84dff81017d4c5b9bda05d49dd71"
+      "size_bytes": 2554,
+      "sha256": "1f7d572d58f694edd6d5c8ed73d8f0b1dfb5d4a7cea8855152330d40553de96b"
     },
     {
       "name": "01_Create_Core_Objects.sql",
@@ -15,8 +15,8 @@
     },
     {
       "name": "02_Create_Job_And_Database_Modules.sql",
-      "size_bytes": 9945,
-      "sha256": "575eaf96f4db0821b86fcac7d971b307751843bdb414547983756f04ce134a08"
+      "size_bytes": 9947,
+      "sha256": "6b829658fb04002e068a6bed14dcd7c29ffbfca72bd8ab4b284840d4d6e91525"
     },
     {
       "name": "03_Create_Stage1_Modules.sql",
@@ -79,9 +79,54 @@
       "sha256": "832180167d25a1ae99d6ca262025df033c6656ce658496cc92e0927e80141399"
     },
     {
+      "name": "15_Create_Database_Report_Views.sql",
+      "size_bytes": 1747,
+      "sha256": "62ef688fac41520fcdc6c3af40b262dc4e20e3aab403a2cfb311422975b38939"
+    },
+    {
+      "name": "16_Create_Database_Documentation_Lifecycle.sql",
+      "size_bytes": 10616,
+      "sha256": "084518b2934e7ed2aeec667e12b75cbfab52f91087c94fa0ef47ec20a2f0b385"
+    },
+    {
+      "name": "17_Create_Database_Schema_Change_Tracking.sql",
+      "size_bytes": 13113,
+      "sha256": "4d538392d5bf2b82640f6bb9082bd6e9893f8401d2dfb182fbaa41987ff90c7f"
+    },
+    {
+      "name": "18_Create_Database_Documentation_Agent_Job.sql",
+      "size_bytes": 2140,
+      "sha256": "3e23719a40a5552b85c5fb19e10458b2410099abf0757f2db1a8542baaa9050b"
+    },
+    {
+      "name": "19_Create_Patch_Audit_Lifecycle.sql",
+      "size_bytes": 24724,
+      "sha256": "6e999cd41b74ec47aeacccb927f6c78e574f484b075b9e43fd8ea309f87c1db7"
+    },
+    {
+      "name": "20_Create_Perf_Module.sql",
+      "size_bytes": 39579,
+      "sha256": "4bcea5c2fb4f6cfd11844a11973d17f56dbe263075c521d134cc1430ab7e2506"
+    },
+    {
+      "name": "21_Create_Perf_Retention.sql",
+      "size_bytes": 1950,
+      "sha256": "7d97cf7ed37e0c6d171412f4dd5e7742c760a7e4bdda26b1a02c08b6cb8033bc"
+    },
+    {
+      "name": "22_Create_Grafana_Views.sql",
+      "size_bytes": 7085,
+      "sha256": "0b82cf37633cb78bbaf08bfe5b9452b732936e619f974d3f84a1dd62c7a20299"
+    },
+    {
+      "name": "23_Create_Perf_Agent_Job.sql",
+      "size_bytes": 1822,
+      "sha256": "08c7bd6afde5e11a0a391e01dee5e8d2b5e75646ca4e165bf90f844e25653c18"
+    },
+    {
       "name": "98_Verify_Installation.sql",
-      "size_bytes": 1230,
-      "sha256": "fe34293bd651f5a89e1180f91b8d56164838d769f6a7fd542dc22f465d31b385"
+      "size_bytes": 1257,
+      "sha256": "5c588e69b6491bc2d186b0bc6a3edf535e458f1d95e69afa7a7e776e4f4efe93"
     },
     {
       "name": "99_Useful_Queries.sql",
@@ -99,29 +144,74 @@
       "sha256": "380aab603943d795035e901d4e5f3103d56635d8ccbb8290116c6c3b7568b1af"
     },
     {
+      "name": "Collect-DatabasePerformance.ps1",
+      "size_bytes": 18301,
+      "sha256": "f748b46063dce7fcafc4a0741ad1b796e2a634666079aecedaf3041cc7e73f74"
+    },
+    {
+      "name": "Collect-DatabaseSchema.ps1",
+      "size_bytes": 19293,
+      "sha256": "2b871061c590be4e2f8ef9897cfcc8ac6997581b5001ca7c6805b4c102bf8b1e"
+    },
+    {
       "name": "Collect-SsrsJobMappings.ps1",
-      "size_bytes": 11827,
-      "sha256": "fdf1ecb06532ca22c310a298c23df1292a879d755bcc6ead7fca7a9a1c0b85cf"
+      "size_bytes": 11806,
+      "sha256": "e997825738e042bcac3146516636a90e785ec2fc225af117f0a73c4a9a441732"
+    },
+    {
+      "name": "Confluence_Structure_Jobs_and_Databases.md",
+      "size_bytes": 18848,
+      "sha256": "f42a63ce82bcace063f45090415309e62fc166f910d7fca1df0b98b29054b4bf"
+    },
+    {
+      "name": "DATABASE_DOCUMENTATION.md",
+      "size_bytes": 1417,
+      "sha256": "682a6ea850a78330d23fdee2f6ef5c9ce06a47c4a41882a1d195bf8ff4711850"
     },
     {
       "name": "Export-ConfluenceReports.ps1",
-      "size_bytes": 39602,
-      "sha256": "8e299486aa19430eacf35fcb79923a56b0659e6d44fcfb086728165702a6c269"
+      "size_bytes": 44885,
+      "sha256": "01042c2e0ce40805567c950ffbd24ddf304021e4f1fadc01d44ac4efae388610"
+    },
+    {
+      "name": "Export-DatabaseDocumentationPages.ps1",
+      "size_bytes": 11629,
+      "sha256": "472381e4a1bccba9d40d4102086d2574716bac37f74ed0eb401f5472f9f8cc18"
     },
     {
       "name": "Export-JobDocumentationPages.ps1",
-      "size_bytes": 15363,
-      "sha256": "eade338226e66144545787237f846519780f7566941a0eae2a28b95f3b2b4ee7"
+      "size_bytes": 18373,
+      "sha256": "ae024666d04c5ce1aa454d31c6996c1375e5a2643305ee64357db04d125e8c6f"
+    },
+    {
+      "name": "GRAFANA.md",
+      "size_bytes": 2282,
+      "sha256": "8555bba283de4a609a5349a473cef7c28be7e1a00e0c9a0b1bf3093501218373"
     },
     {
       "name": "INSTALL_ORDER.md",
-      "size_bytes": 1109,
-      "sha256": "b5a1834bab72995b19682dd9e26a5148d2169d014ef993eca2720d0d904781c9"
+      "size_bytes": 1839,
+      "sha256": "7c82a4b5eecf8eaa44cd00273447552958a300525d1dbf976bcc4b5799a88d88"
     },
     {
       "name": "JOB_DOCUMENTATION.md",
-      "size_bytes": 2007,
-      "sha256": "7175de8b00f0ce5e7a0522040a78eee212424f24d379d21da6adab9e4dd6c577"
+      "size_bytes": 1994,
+      "sha256": "46c010deb7b77d8ade324a415e849acf786d71f43bb9df48f52e37bd37a94b7c"
+    },
+    {
+      "name": "PATCH_AUDIT_V2.md",
+      "size_bytes": 2358,
+      "sha256": "a704d8cdf5bac143d615815907b89b7ec69e6b31e02ff34f88e63652023e7734"
+    },
+    {
+      "name": "PATCH_V2_COMPARISON.md",
+      "size_bytes": 1641,
+      "sha256": "5f5b17024de5a682d4262c96079fe7f90d708fc847da0ee10d6b8bd0e9098b23"
+    },
+    {
+      "name": "PERF_MODULE.md",
+      "size_bytes": 2581,
+      "sha256": "ab00adc2e29b2e1db8c93a2a612d1d6d6496abe431fd01a9fa6ac61c703cc236"
     },
     {
       "name": "POWERSHELL_MODULE.md",
@@ -129,14 +219,24 @@
       "sha256": "c052d1a1f049deeec877e67218f3cb5e996fe87a11fa08fc771524e273eb59d2"
     },
     {
+      "name": "Publish-ConfluencePages.ps1",
+      "size_bytes": 23067,
+      "sha256": "c5e4a33bbedf8d487ac4f80cdacf78741b077c38d65b21d01c62ce71dda296b6"
+    },
+    {
       "name": "README.md",
-      "size_bytes": 8906,
-      "sha256": "a61a438d4f7382b3b6528bc0d074c892e03975c1a9602abc1dce893c0add8017"
+      "size_bytes": 9616,
+      "sha256": "01d09f8304820a37d4ced71e2ae389313195dcda39d180e0e227c0ce96a3df16"
     },
     {
       "name": "SQL_REFACTOR_REPORT.md",
       "size_bytes": 424,
       "sha256": "e009c96e22af5a94e983f5f2a9509559cf0dea4bfaacdc4f15b9ce2c90821d4a"
+    },
+    {
+      "name": "SQL_Server_Databases_13_Checklists_16_Standards.md",
+      "size_bytes": 15385,
+      "sha256": "a5886385c40dfcfe63801cf7a7496c0a59df9616163d86521bf500806197bd6e"
     },
     {
       "name": "SSRS_JOB_MAPPING.md",
@@ -149,9 +249,29 @@
       "sha256": "4f22b3230a401602d25f925d7b1bd0a662be1fd82111fbc8d29d794d54004f73"
     },
     {
+      "name": "grafana/DBACentralRepository-Database-Workload.json",
+      "size_bytes": 5966,
+      "sha256": "9ed8f68b2ede4accfbe4121799061cce24ad3e31fecc46500c5eb3b0162ece09"
+    },
+    {
+      "name": "grafana/DBACentralRepository-Fleet-Overview.json",
+      "size_bytes": 4994,
+      "sha256": "5240934516bb5291b149a17bcbc985584c604b8eb758cbd0b7bfffc961efaa9a"
+    },
+    {
+      "name": "grafana/DBACentralRepository-Instance-Workload.json",
+      "size_bytes": 5414,
+      "sha256": "df30f6d161c627997b9db4c2863d0fd26ea684829c73d7710b4fc6af6f3d1393"
+    },
+    {
+      "name": "grafana/DBACentralRepository-Operations.json",
+      "size_bytes": 3751,
+      "sha256": "f06a5dc780e692c9385c797586f4e17e653466cb12f8ee3c8170731f9cb0ec64"
+    },
+    {
       "name": "modules/DBACentralRepository.Common/DBACentralRepository.Common.psd1",
-      "size_bytes": 1146,
-      "sha256": "70c4bd577b2f93ba26bc134ef9f1023fa5b22cfdd68963ca46c641fac64eeba7"
+      "size_bytes": 1157,
+      "sha256": "b7b40238e7c3948b15f3dec1a97439e715aa059a7ee08016e8c6259691754c56"
     },
     {
       "name": "modules/DBACentralRepository.Common/DBACentralRepository.Common.psm1",

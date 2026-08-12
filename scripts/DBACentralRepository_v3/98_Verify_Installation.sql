@@ -14,7 +14,7 @@ INNER JOIN [sys].[schemas] AS [s]
 WHERE [s].[name] IN
 (
     N'dbo', N'job', N'db', N'backup', N'capacity', N'ha', N'maintenance',
-    N'patch', N'config', N'security', N'audit', N'alert', N'report'
+    N'patch', N'config', N'security', N'audit', N'alert', N'perf', N'report', N'perf'
 )
   AND [o].[is_ms_shipped] = 0
 ORDER BY
@@ -39,7 +39,7 @@ WHERE [i].[index_id] > 0
   AND [s].[name] IN
   (
       N'dbo', N'job', N'db', N'backup', N'capacity', N'ha', N'maintenance',
-      N'patch', N'config', N'security', N'audit', N'alert'
+      N'patch', N'config', N'security', N'audit', N'alert', N'perf'
   )
 ORDER BY
     [s].[name],

@@ -301,3 +301,21 @@ $modulePath = Join-Path `
 
 Import-Module -Name $modulePath -Force -ErrorAction Stop
 ```
+
+---
+
+## Grafana i moduł PERF
+
+Od rozszerzenia v3 Grafana może być bezpośrednią warstwą prezentacji danych z repozytorium.
+
+Nowe elementy:
+
+- `20_Create_Perf_Module.sql` – snapshoty CPU/I/O/Buffer Pool/log/concurrency per baza,
+- `21_Create_Perf_Retention.sql` – retencja historii performance,
+- `Collect-DatabasePerformance.ps1` – lekki collector wydajności,
+- `22_Create_Grafana_Views.sql` – warstwa `report.vGrafana*`,
+- `23_Create_Perf_Agent_Job.sql` – niezależny harmonogram performance,
+- `grafana/*.json` – dashboardy do importu,
+- `GRAFANA.md` – konfiguracja datasource i zmiennych.
+
+Confluence nie został usunięty. Dotychczasowe eksporty i joby mogą działać równolegle, a migrację prezentacji do Grafany można przeprowadzić etapami.

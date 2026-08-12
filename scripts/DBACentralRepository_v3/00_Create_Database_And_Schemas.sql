@@ -30,7 +30,8 @@ VALUES
 (N'security', N'Loginy, role, uprawnienia, proxy, credentials i Database Mail.'),
 (N'audit', N'Audyt zgodności, dokumentacja, wyjątki i historia zmian.'),
 (N'alert', N'Centralne reguły i findingi operacyjne.'),
-(N'report', N'Widoki i procedury raportowe dla DBA i Confluence.');
+(N'report', N'Widoki i procedury raportowe dla DBA, Grafana i Confluence.'),
+(N'perf', N'Historyczne snapshoty wydajności per baza: CPU, I/O, Buffer Pool, log i concurrency.');
 
 DECLARE @SchemaName sysname, @Description nvarchar(4000), @Sql nvarchar(max);
 
