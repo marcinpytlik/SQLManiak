@@ -1,4 +1,4 @@
-﻿USE [DBACentralRepository];
+USE [DBACentralRepository];
 GO
 
 /* Walidacja instalacji — nie modyfikuje danych. */
@@ -14,7 +14,7 @@ INNER JOIN [sys].[schemas] AS [s]
 WHERE [s].[name] IN
 (
     N'dbo', N'job', N'db', N'backup', N'capacity', N'ha', N'maintenance',
-    N'patch', N'config', N'security', N'audit', N'alert', N'perf', N'report', N'perf'
+    N'patch', N'config', N'security', N'audit', N'alert', N'perf', N'report'
 )
   AND [o].[is_ms_shipped] = 0
 ORDER BY
@@ -45,4 +45,25 @@ ORDER BY
     [s].[name],
     [t].[name],
     [i].[index_id];
+GO
+
+
+SELECT
+    [TableUsageTargetCount] = COUNT_BIG(*),
+    [EnabledTableUsageTargetCount] = SUM(CONVERT(bigint,CASE WHEN IsEnabled=1 THEN 1 ELSE 0 END))
+FROM [perf].[TableUsageTarget];
+GO
+
+SELECT
+    [ObjectName],
+    [ExistsFlag]
+FROM
+(
+    VALUES
+        (N'perf.TableUsageTarget', CASE WHEN OBJECT_ID(N'perf.TableUsageTarget',N'U') IS NOT NULL THEN 1 ELSE 0 END),
+        (N'perf.TableUsageSnapshot', CASE WHEN OBJECT_ID(N'perf.TableUsageSnapshot',N'U') IS NOT NULL THEN 1 ELSE 0 END),
+        (N'perf.TableAccessAggregate', CASE WHEN OBJECT_ID(N'perf.TableAccessAggregate',N'U') IS NOT NULL THEN 1 ELSE 0 END),
+        (N'perf.usp_GetTableUsageByPrincipal', CASE WHEN OBJECT_ID(N'perf.usp_GetTableUsageByPrincipal',N'P') IS NOT NULL THEN 1 ELSE 0 END),
+        (N'report.vTableUsageDaily', CASE WHEN OBJECT_ID(N'report.vTableUsageDaily',N'V') IS NOT NULL THEN 1 ELSE 0 END)
+) AS X([ObjectName],[ExistsFlag]);
 GO

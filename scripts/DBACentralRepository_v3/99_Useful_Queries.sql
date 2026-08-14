@@ -1,7 +1,7 @@
-﻿/*
+/*
 ===============================================================================
 Plik końcowy: zapytania użytkowe i kontrolne.
-Nie tworzy obiektów. Uruchamiać dopiero po zakończeniu instalacji 00–14.
+Nie tworzy obiektów. Uruchamiać dopiero po zakończeniu instalacji 00–25.
 ===============================================================================
 */
 
@@ -50,4 +50,27 @@ FROM [dbo].[ScanError] E
 JOIN [dbo].[ScanRun] S ON S.ScanRunId=E.ScanRunId
 LEFT JOIN [dbo].[Instance] I ON I.InstanceId=E.InstanceId
 ORDER BY E.ErrorAt DESC;
+GO
+
+
+/* TABLE USAGE */
+SELECT
+    I.ServerInstance,
+    T.TableUsageTargetId,
+    T.DatabaseName,
+    T.IsEnabled,
+    T.AuditName,
+    T.AuditPath
+FROM perf.TableUsageTarget AS T
+JOIN dbo.Instance AS I ON I.InstanceId=T.InstanceId
+ORDER BY I.ServerInstance,T.DatabaseName;
+GO
+
+-- Przykład po skonfigurowaniu targetu:
+-- EXEC perf.usp_GetTableUsageByPrincipal
+--     @ServerInstance=N'sql32',
+--     @DatabaseName=N'CRM',
+--     @From=DATEADD(day,-7,SYSUTCDATETIME()),
+--     @To=SYSUTCDATETIME(),
+--     @Top=100;
 GO

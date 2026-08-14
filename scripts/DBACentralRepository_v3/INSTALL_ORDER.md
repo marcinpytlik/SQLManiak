@@ -27,19 +27,23 @@ Uruchamiaj pliki rosnąco według numeru:
 21_Create_Perf_Retention.sql
 22_Create_Grafana_Views.sql
 23_Create_Perf_Agent_Job.sql
+24_Create_Table_Usage_Module.sql
+25_Create_Table_Usage_Agent_Job.sql
 98_Verify_Installation.sql
 99_Useful_Queries.sql
 ```
 
 ## Zasady
 
-- Pliki `00–23` tworzą lub aktualizują obiekty.
+- Pliki `00–25` tworzą lub aktualizują obiekty.
 - `20–21` dodają historyczny moduł `perf`.
 - `22` jest stabilną warstwą prezentacji dla Grafany (`report.vGrafana*`).
 - `23` tworzy niezależny job collectora wydajności, domyślnie co 5 minut.
+- `24` dodaje moduł TABLE USAGE: snapshoty `sys.dm_db_index_usage_stats`, konfigurację SQL Audit oraz raport technical vs other.
+- `25` tworzy opcjonalny job collectora TABLE USAGE, domyślnie co 5 minut.
 - `14` i `18` pozostają bez zmian, więc istniejąca automatyzacja Confluence nadal działa. Można ją wyłączyć później, po zaakceptowaniu dashboardów Grafana.
 - `98_Verify_Installation.sql` służy do kontroli instalacji.
 - `99_Useful_Queries.sql` zawiera tylko zapytania kontrolne i raportowe.
 - Tabele i indeksy są chronione testami istnienia, a procedury i widoki korzystają z `CREATE OR ALTER` tam, gdzie jest to możliwe.
 - Nazwy obiektów są zapisywane w konwencji `[schemat].[Obiekt]`.
-- Przed uruchomieniem `14`, `18` i `23` ustaw ścieżki, konto właściciela i nazwę instancji repozytorium.
+- Przed uruchomieniem `14`, `18`, `23` i `25` ustaw ścieżki, konto właściciela i nazwę instancji repozytorium.

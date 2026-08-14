@@ -1,4 +1,4 @@
-﻿# DBACentralRepository v3 — kompletna paczka
+# DBACentralRepository v3 — kompletna paczka
 
 Centralne repozytorium administracyjne dla floty SQL Server. Paczka zawiera
 kolektor, audyt zgodności, klasyfikację jobów, raporty dzienne/tygodniowe/
@@ -319,3 +319,15 @@ Nowe elementy:
 - `GRAFANA.md` – konfiguracja datasource i zmiennych.
 
 Confluence nie został usunięty. Dotychczasowe eksporty i joby mogą działać równolegle, a migrację prezentacji do Grafany można przeprowadzić etapami.
+
+
+## TABLE USAGE – kto czyta które tabele
+
+Repozytorium zawiera moduł `TABLE USAGE`, który łączy dwa źródła danych:
+
+- `sys.dm_db_index_usage_stats` – cumulative seeks/scans/lookups/updates per tabela,
+- SQL Server Audit – dokładne przypisanie dostępu `SELECT` do principalu i obiektu.
+
+Dzięki temu można raportować m.in. `TechnicalAccessCount`, `OtherAccessCount`, `TechnicalPercent` oraz `UserReadsDelta`. Metryki są rozdzielone świadomie: SQL Server Audit nie dostarcza logical reads per obiekt.
+
+Pliki: `24_Create_Table_Usage_Module.sql`, `Install-TableAccessAudit.ps1`, `Collect-TableUsage.ps1`, `25_Create_Table_Usage_Agent_Job.sql`, `TABLE_USAGE.md`.

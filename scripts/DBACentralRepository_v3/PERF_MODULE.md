@@ -70,3 +70,8 @@ EXEC perf.usp_PurgePerformanceHistory
     @RetentionDays = 90,
     @BatchSize = 5000;
 ```
+
+
+## Rozszerzenie TABLE USAGE
+
+Dla analizy wykorzystania tabel i rozdzielenia dostępu na konta techniczne oraz pozostałe użyj modułu `24_Create_Table_Usage_Module.sql`. Szczegóły: `TABLE_USAGE.md`. Moduł celowo rozdziela **ogólne delty odczytów tabeli z DMV** od **liczby dostępów SELECT per principal z SQL Server Audit**.

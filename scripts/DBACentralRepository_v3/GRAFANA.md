@@ -86,3 +86,13 @@ EXEC perf.usp_GetDatabaseLoadRanking
 ```
 
 W dashboardach time-series można prezentować wartości surowe albo liczyć delty w zapytaniu Grafany. Do rankingu zalecane są procedury `perf.usp_Get...`.
+
+## Dashboard TABLE USAGE
+
+`grafana/DBACentralRepository-Table-Usage.json` korzysta z `report.vTableUsageDaily` i pokazuje:
+
+- technical vs other w czasie,
+- TOP tabel wg liczby audytowanych SELECT,
+- tabele z najwyższym udziałem kont technicznych.
+
+Dashboard wymaga wcześniejszej konfiguracji modułu z `TABLE_USAGE.md`.
