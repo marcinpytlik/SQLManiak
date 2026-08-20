@@ -146,6 +146,16 @@ def parse_expiration(value):
     return parsed.astimezone(dt.timezone.utc)
 
 def token_seconds_remaining(token):
+    # Prefer the absolute expiration timestamp.
+    # Grafana 13 may return secondsUntilExpiration=0 even for a token
+    # whose expiration is many days in the future.
+    expiration = parse_expiration(token.get("expiration"))
+
+    if expiration is not None:
+        now = dt.datetime.now(dt.timezone.utc)
+        return int((expiration - now).total_seconds())
+
+    # Fallback only when Grafana does not return a usable expiration timestamp.
     remaining = token.get("secondsUntilExpiration")
 
     if remaining is not None:
@@ -154,12 +164,7 @@ def token_seconds_remaining(token):
         except (TypeError, ValueError):
             pass
 
-    expiration = parse_expiration(token.get("expiration"))
-    if expiration is None:
-        return None
-
-    now = dt.datetime.now(dt.timezone.utc)
-    return int((expiration - now).total_seconds())
+    return None
 
 def best_managed_token(tokens, prefix):
     candidates = managed_tokens(tokens, prefix)
@@ -190,6 +195,7 @@ def assess_rotation(tokens, prefix, credential_name):
     print(f"{credential_name}:")
     print(f"  Current token: {name}")
     print(f"  Expiration:    {expiration_raw or '<not returned>'}")
+    print(f"  API secondsUntilExpiration: {current.get('secondsUntilExpiration')!r}")
     print(f"  Threshold:     {ROTATE_WHEN_DAYS_LEFT} days")
 
     if seconds_left is None:
