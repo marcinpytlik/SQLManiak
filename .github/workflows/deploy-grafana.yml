@@ -52,16 +52,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
           echo "Testing Grafana API..."
-
           curl \
             --fail \
             --silent \
             --show-error \
             --header "Authorization: Bearer $GRAFANA_TOKEN" \
             "$GRAFANA_URL/api/health"
-
           echo
           echo "Grafana API is reachable."
 
@@ -93,42 +90,39 @@ jobs:
           for file in "${dashboards[@]}"; do
             echo "Validating: $file"
 
-            python3 - "$file" <<'PY'
-            import json
-            import pathlib
-            import sys
+            python3 -c '
+import json, pathlib, sys
+path = pathlib.Path(sys.argv[1])
+with path.open("r", encoding="utf-8-sig") as f:
+    root = json.load(f)
 
-            path = pathlib.Path(sys.argv[1])
+if not isinstance(root, dict):
+    raise SystemExit(f"{path}: root JSON value must be an object")
 
-            with path.open("r", encoding="utf-8-sig") as f:
-                root = json.load(f)
+if isinstance(root.get("dashboard"), dict):
+    dashboard = root["dashboard"]
+    fmt = "wrapped:dashboard"
+elif isinstance(root.get("spec"), dict):
+    dashboard = root["spec"]
+    fmt = "wrapped:spec"
+else:
+    dashboard = root
+    fmt = "classic"
 
-            if not isinstance(root, dict):
-                raise SystemExit(f"{path}: root JSON value must be an object")
+title = dashboard.get("title")
+uid = dashboard.get("uid")
 
-            if isinstance(root.get("dashboard"), dict):
-                dashboard = root["dashboard"]
-                fmt = "wrapped:dashboard"
-            elif isinstance(root.get("spec"), dict):
-                dashboard = root["spec"]
-                fmt = "wrapped:spec"
-            else:
-                dashboard = root
-                fmt = "classic"
+if not title:
+    raise SystemExit(
+        f"{path}: dashboard has no title "
+        f"(detected format: {fmt}; top-level keys: {list(root.keys())[:20]})"
+    )
 
-            title = dashboard.get("title")
-            uid = dashboard.get("uid")
-
-            if not title:
-                raise SystemExit(
-                    f"{path}: dashboard has no 'title' "
-                    f"(detected format: {fmt}; top-level keys: {list(root.keys())[:20]})"
-                )
-
-            print(f"  format: {fmt}")
-            print(f"  title:  {title}")
-            print(f"  uid:    {uid or '<none>'}")
-            PY
+print(f"  format: {fmt}")
+print(f"  title:  {title}")
+print(f"  uid:    {uid or chr(60) + \"none\" + chr(62)}")
+' "$file"
+          done
 
       - name: Deploy dashboards
         shell: bash
@@ -156,42 +150,38 @@ jobs:
             payload="$(mktemp)"
             response="$(mktemp)"
 
-            python3 - "$file" "$payload" <<'PY'
-            import json
-            import pathlib
-            import sys
+            python3 -c '
+import json, pathlib, sys
+source = pathlib.Path(sys.argv[1])
+target = pathlib.Path(sys.argv[2])
 
-            source = pathlib.Path(sys.argv[1])
-            target = pathlib.Path(sys.argv[2])
+with source.open("r", encoding="utf-8-sig") as f:
+    root = json.load(f)
 
-            with source.open("r", encoding="utf-8-sig") as f:
-                root = json.load(f)
+if isinstance(root.get("dashboard"), dict):
+    dashboard = root["dashboard"]
+elif isinstance(root.get("spec"), dict):
+    dashboard = root["spec"]
+else:
+    dashboard = root
 
-            if isinstance(root.get("dashboard"), dict):
-                dashboard = root["dashboard"]
-            elif isinstance(root.get("spec"), dict):
-                dashboard = root["spec"]
-            else:
-                dashboard = root
+if not isinstance(dashboard, dict):
+    raise SystemExit(f"{source}: dashboard payload is not an object")
 
-            if not isinstance(dashboard, dict):
-                raise SystemExit(f"{source}: dashboard payload is not an object")
+if not dashboard.get("title"):
+    raise SystemExit(f"{source}: dashboard has no title")
 
-            if not dashboard.get("title"):
-                raise SystemExit(f"{source}: dashboard has no title")
+dashboard["id"] = None
 
-            # Numeric database ID is instance-local; UID is the portable identity.
-            dashboard["id"] = None
+payload = {
+    "dashboard": dashboard,
+    "overwrite": True,
+    "message": "Deployed from GitHub Actions"
+}
 
-            payload = {
-                "dashboard": dashboard,
-                "overwrite": True,
-                "message": "Deployed from GitHub Actions"
-            }
-
-            with target.open("w", encoding="utf-8") as f:
-                json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
-            PY
+with target.open("w", encoding="utf-8") as f:
+    json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
+' "$file" "$payload"
 
             http_code="$(
               curl \
