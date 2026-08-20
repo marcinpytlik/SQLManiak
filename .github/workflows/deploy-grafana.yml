@@ -46,10 +46,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl \
-            --fail \
-            --silent \
-            --show-error \
+          curl --fail --silent --show-error \
             --header "Authorization: Bearer $GRAFANA_TOKEN" \
             "$GRAFANA_URL/api/health"
           echo
@@ -63,35 +60,25 @@ jobs:
           collection_url="$GRAFANA_URL/apis/folder.grafana.app/v1/namespaces/$GRAFANA_NAMESPACE/folders"
           response="$(mktemp)"
 
-          code="$(
-            curl \
-              --silent \
-              --show-error \
-              --output "$response" \
-              --write-out '%{http_code}' \
-              --header "Authorization: Bearer $GRAFANA_TOKEN" \
-              --header "Accept: application/json" \
-              "$folder_url"
-          )"
+          code="$(curl --silent --show-error --output "$response" --write-out '%{http_code}' \
+            --header "Authorization: Bearer $GRAFANA_TOKEN" \
+            --header "Accept: application/json" \
+            "$folder_url")"
 
           if [ "$code" = "200" ]; then
             echo "Folder already exists: $GRAFANA_FOLDER_TITLE"
           elif [ "$code" = "404" ]; then
             payload="$(mktemp)"
-            python3 -c 'import json,sys; json.dump({"apiVersion":"folder.grafana.app/v1","kind":"Folder","metadata":{"name":sys.argv[1]},"spec":{"title":sys.argv[2]}},open(sys.argv[3],"w"))' "$GRAFANA_FOLDER_UID" "$GRAFANA_FOLDER_TITLE" "$payload"
 
-            create_code="$(
-              curl \
-                --silent \
-                --show-error \
-                --output "$response" \
-                --write-out '%{http_code}' \
-                --request POST \
-                --header "Authorization: Bearer $GRAFANA_TOKEN" \
-                --header "Content-Type: application/json" \
-                --data-binary "@$payload" \
-                "$collection_url"
-            )"
+            python3 -c 'import json,sys; json.dump({"apiVersion":"folder.grafana.app/v1","kind":"Folder","metadata":{"name":sys.argv[1]},"spec":{"title":sys.argv[2]}},open(sys.argv[3],"w",encoding="utf-8"),ensure_ascii=False,separators=(",",":"))' \
+              "$GRAFANA_FOLDER_UID" "$GRAFANA_FOLDER_TITLE" "$payload"
+
+            create_code="$(curl --silent --show-error --output "$response" --write-out '%{http_code}' \
+              --request POST \
+              --header "Authorization: Bearer $GRAFANA_TOKEN" \
+              --header "Content-Type: application/json" \
+              --data-binary "@$payload" \
+              "$collection_url")"
 
             rm -f "$payload"
 
@@ -118,11 +105,7 @@ jobs:
           set -euo pipefail
 
           mapfile -t dashboards < <(
-            find "$DASHBOARD_DIR" \
-              -maxdepth 1 \
-              -type f \
-              -name '*.json' \
-              -print | sort
+            find "$DASHBOARD_DIR" -maxdepth 1 -type f -name '*.json' -print | sort
           )
 
           if [ "${#dashboards[@]}" -eq 0 ]; then
@@ -146,57 +129,18 @@ jobs:
 
             api_group="${api_version%/*}"
             api_ver="${api_version##*/}"
-
             collection_url="$GRAFANA_URL/apis/$api_group/$api_ver/namespaces/$GRAFANA_NAMESPACE/dashboards"
             resource_url="$collection_url/$name"
 
             payload="$(mktemp)"
             response="$(mktemp)"
 
-            python3 - "$file" "$payload" "$GRAFANA_FOLDER_UID" <<'PY'
-            import copy
-            import json
-            import sys
+            python3 -c 'import copy,json,sys; source,target,folder_uid=sys.argv[1:4]; root=json.load(open(source,encoding="utf-8-sig")); spec=copy.deepcopy(root["spec"]); tags=list(spec.get("tags") or []); [tags.append(t) for t in ("DBACentralRepository","ManagedByGitHub") if t not in tags]; spec["tags"]=tags; payload={"apiVersion":root["apiVersion"],"kind":"Dashboard","metadata":{"name":root["metadata"]["name"],"annotations":{"grafana.app/folder":folder_uid,"grafana.app/message":"Deployed from GitHub Actions"}},"spec":spec}; json.dump(payload,open(target,"w",encoding="utf-8"),ensure_ascii=False,separators=(",",":"))' \
+              "$file" "$payload" "$GRAFANA_FOLDER_UID"
 
-            source, target, folder_uid = sys.argv[1:4]
-
-            with open(source, "r", encoding="utf-8-sig") as f:
-                root = json.load(f)
-
-            spec = copy.deepcopy(root["spec"])
-
-            tags = list(spec.get("tags") or [])
-            for tag in ("DBACentralRepository", "ManagedByGitHub"):
-                if tag not in tags:
-                    tags.append(tag)
-            spec["tags"] = tags
-
-            payload = {
-                "apiVersion": root["apiVersion"],
-                "kind": "Dashboard",
-                "metadata": {
-                    "name": root["metadata"]["name"],
-                    "annotations": {
-                        "grafana.app/folder": folder_uid,
-                        "grafana.app/message": "Deployed from GitHub Actions"
-                    }
-                },
-                "spec": spec
-            }
-
-            with open(target, "w", encoding="utf-8") as f:
-                json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
-            PY
-
-            get_code="$(
-              curl \
-                --silent \
-                --show-error \
-                --output "$response" \
-                --write-out '%{http_code}' \
-                --header "Authorization: Bearer $GRAFANA_TOKEN" \
-                "$resource_url"
-            )"
+            get_code="$(curl --silent --show-error --output "$response" --write-out '%{http_code}' \
+              --header "Authorization: Bearer $GRAFANA_TOKEN" \
+              "$resource_url")"
 
             if [ "$get_code" = "200" ]; then
               method="PUT"
@@ -213,18 +157,12 @@ jobs:
               exit 1
             fi
 
-            code="$(
-              curl \
-                --silent \
-                --show-error \
-                --output "$response" \
-                --write-out '%{http_code}' \
-                --request "$method" \
-                --header "Authorization: Bearer $GRAFANA_TOKEN" \
-                --header "Content-Type: application/json" \
-                --data-binary "@$payload" \
-                "$url"
-            )"
+            code="$(curl --silent --show-error --output "$response" --write-out '%{http_code}' \
+              --request "$method" \
+              --header "Authorization: Bearer $GRAFANA_TOKEN" \
+              --header "Content-Type: application/json" \
+              --data-binary "@$payload" \
+              "$url")"
 
             if [[ ! "$code" =~ ^2 ]]; then
               echo "::error::Deploy failed for $name. HTTP $code"
