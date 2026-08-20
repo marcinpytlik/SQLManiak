@@ -1,0 +1,99 @@
+name: Validate Grafana dashboards
+
+on:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'scripts/DBACentralRepository_v3/grafana/*.json'
+      - '.github/workflows/validate-grafana.yml'
+
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Validate dashboard JSON
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    env:
+      DASHBOARD_DIR: scripts/DBACentralRepository_v3/grafana
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            scripts/DBACentralRepository_v3/grafana
+          sparse-checkout-cone-mode: false
+
+      - name: Validate dashboards
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 - "$DASHBOARD_DIR" <<'PY'
+          import json
+          import pathlib
+          import sys
+
+          root = pathlib.Path(sys.argv[1])
+          files = sorted(root.glob("*.json"))
+
+          if not files:
+              raise SystemExit(f"No JSON files found in {root}")
+
+          names = {}
+          titles = {}
+
+          for path in files:
+              with path.open("r", encoding="utf-8-sig") as f:
+                  obj = json.load(f)
+
+              if not isinstance(obj, dict):
+                  raise SystemExit(f"{path}: root must be an object")
+
+              api_version = obj.get("apiVersion")
+              kind = obj.get("kind")
+              metadata = obj.get("metadata") or {}
+              spec = obj.get("spec") or {}
+
+              name = metadata.get("name")
+              title = spec.get("title")
+
+              if not api_version or not api_version.startswith("dashboard.grafana.app/"):
+                  raise SystemExit(f"{path}: invalid apiVersion: {api_version!r}")
+
+              if kind != "Dashboard":
+                  raise SystemExit(f"{path}: kind must be Dashboard")
+
+              if not name:
+                  raise SystemExit(f"{path}: metadata.name is required")
+
+              if not title:
+                  raise SystemExit(f"{path}: spec.title is required")
+
+              if name in names:
+                  raise SystemExit(
+                      f"Duplicate metadata.name {name!r}: {names[name]} and {path}"
+                  )
+
+              if title in titles:
+                  raise SystemExit(
+                      f"Duplicate dashboard title {title!r}: {titles[title]} and {path}"
+                  )
+
+              names[name] = path
+              titles[title] = path
+
+              print(f"OK  {path.name}")
+              print(f"    apiVersion: {api_version}")
+              print(f"    name:       {name}")
+              print(f"    title:      {title}")
+
+          print()
+          print(f"Validated {len(files)} dashboard(s).")
+          PY
