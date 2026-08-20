@@ -25,90 +25,26 @@ jobs:
       GRAFANA_TOKEN: ${{ secrets.GRAFANA_TOKEN }}
 
     steps:
-      - name: Checkout Grafana dashboards
+      - name: Checkout Grafana files
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
           sparse-checkout: |
             scripts/DBACentralRepository_v3/grafana
+            scripts/DBACentralRepository_v3/Compare-GrafanaDrift.py
           sparse-checkout-cone-mode: false
 
-      - name: Detect drift
+      - name: Test Grafana API
         shell: bash
         run: |
           set -euo pipefail
+          curl --fail --silent --show-error \
+            --header "Authorization: Bearer $GRAFANA_TOKEN" \
+            "$GRAFANA_URL/api/health"
+          echo
 
-          mapfile -t dashboards < <(
-            find "$DASHBOARD_DIR" -maxdepth 1 -type f -name '*.json' -print | sort
-          )
-
-          drift_count=0
-          missing_count=0
-
-          for file in "${dashboards[@]}"; do
-            name="$(python3 -c 'import json,sys; r=json.load(open(sys.argv[1],encoding="utf-8-sig")); print(r["metadata"]["name"])' "$file")"
-            api_version="$(python3 -c 'import json,sys; r=json.load(open(sys.argv[1],encoding="utf-8-sig")); print(r["apiVersion"])' "$file")"
-            api_group="${api_version%/*}"
-            api_ver="${api_version##*/}"
-            resource_url="$GRAFANA_URL/apis/$api_group/$api_ver/namespaces/$GRAFANA_NAMESPACE/dashboards/$name"
-
-            current="$(mktemp)"
-            comparison="$(mktemp)"
-
-            code="$(curl --silent --show-error --output "$current" --write-out '%{http_code}' \
-              --header "Authorization: Bearer $GRAFANA_TOKEN" \
-              --header "Accept: application/json" \
-              "$resource_url")"
-
-            if [ "$code" = "404" ]; then
-              echo "::warning::Dashboard missing in Grafana: $name"
-              missing_count=$((missing_count + 1))
-              rm -f "$current" "$comparison"
-              continue
-            fi
-
-            if [ "$code" != "200" ]; then
-              echo "::error::GET failed for $name. HTTP $code"
-              cat "$current"
-              rm -f "$current" "$comparison"
-              exit 1
-            fi
-
-            python3 -c 'import copy,json,sys; repo_path,live_path,out_path,folder_uid=sys.argv[1:5]; desired=json.load(open(repo_path,encoding="utf-8-sig")); live=json.load(open(live_path,encoding="utf-8")); 
-def norm(obj):
-    spec=copy.deepcopy(obj.get("spec") or {})
-    spec.pop("version",None)
-    tags=list(spec.get("tags") or [])
-    [tags.append(t) for t in ("DBACentralRepository","ManagedByGitHub") if t not in tags]
-    spec["tags"]=sorted(tags)
-    meta=obj.get("metadata") or {}
-    return {"apiVersion":obj.get("apiVersion"),"kind":obj.get("kind"),"metadata":{"name":meta.get("name"),"annotations":{"grafana.app/folder":folder_uid}},"spec":spec}
-json.dump({"desired":norm(desired),"live":norm(live)},open(out_path,"w",encoding="utf-8"),ensure_ascii=False,indent=2,sort_keys=True)' \
-              "$file" "$current" "$comparison" "$GRAFANA_FOLDER_UID"
-
-            same="$(python3 -c 'import json,sys; x=json.load(open(sys.argv[1],encoding="utf-8")); print("yes" if x["desired"]==x["live"] else "no")' "$comparison")"
-
-            if [ "$same" = "yes" ]; then
-              echo "OK: $name"
-            else
-              echo "::warning::DRIFT detected: $name"
-              python3 -c 'import difflib,json,sys; x=json.load(open(sys.argv[1],encoding="utf-8")); a=json.dumps(x["desired"],ensure_ascii=False,indent=2,sort_keys=True).splitlines(); b=json.dumps(x["live"],ensure_ascii=False,indent=2,sort_keys=True).splitlines(); print("\n".join(difflib.unified_diff(a,b,fromfile="GitHub",tofile="Grafana",lineterm="")))' "$comparison"
-              drift_count=$((drift_count + 1))
-            fi
-
-            rm -f "$current" "$comparison"
-          done
-
-          {
-            echo "## Grafana drift check"
-            echo
-            echo "| Result | Count |"
-            echo "|---|---:|"
-            echo "| Drifted dashboards | $drift_count |"
-            echo "| Missing dashboards | $missing_count |"
-          } >> "$GITHUB_STEP_SUMMARY"
-
-          if [ "$drift_count" -gt 0 ] || [ "$missing_count" -gt 0 ]; then
-            echo "::error::Grafana differs from GitHub."
-            exit 1
-          fi
+      - name: Compare GitHub with Grafana
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/DBACentralRepository_v3/Compare-GrafanaDrift.py
