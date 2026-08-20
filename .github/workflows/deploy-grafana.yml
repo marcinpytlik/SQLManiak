@@ -89,27 +89,27 @@ jobs:
             echo "Validating: $file"
 
             python3 - "$file" <<'PY'
-import json
-import pathlib
-import sys
-
-path = pathlib.Path(sys.argv[1])
-
-with path.open("r", encoding="utf-8-sig") as f:
-    dashboard = json.load(f)
-
-if not isinstance(dashboard, dict):
-    raise SystemExit(f"{path}: root JSON value must be an object")
-
-title = dashboard.get("title")
-uid = dashboard.get("uid")
-
-if not title:
-    raise SystemExit(f"{path}: dashboard has no 'title'")
-
-print(f"  title: {title}")
-print(f"  uid:   {uid or '<none>'}")
-PY
+          import json
+          import pathlib
+          import sys
+          
+          path = pathlib.Path(sys.argv[1])
+          
+          with path.open("r", encoding="utf-8-sig") as f:
+              dashboard = json.load(f)
+          
+          if not isinstance(dashboard, dict):
+              raise SystemExit(f"{path}: root JSON value must be an object")
+          
+          title = dashboard.get("title")
+          uid = dashboard.get("uid")
+          
+          if not title:
+              raise SystemExit(f"{path}: dashboard has no 'title'")
+          
+          print(f"  title: {title}")
+          print(f"  uid:   {uid or '<none>'}")
+          PY
           done
 
       - name: Deploy dashboards
@@ -139,27 +139,27 @@ PY
             response="$(mktemp)"
 
             python3 - "$file" "$payload" <<'PY'
-import json
-import pathlib
-import sys
-
-source = pathlib.Path(sys.argv[1])
-target = pathlib.Path(sys.argv[2])
-
-with source.open("r", encoding="utf-8-sig") as f:
-    dashboard = json.load(f)
-
-dashboard["id"] = None
-
-payload = {
-    "dashboard": dashboard,
-    "overwrite": True,
-    "message": "Deployed from GitHub Actions"
-}
-
-with target.open("w", encoding="utf-8") as f:
-    json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
-PY
+          import json
+          import pathlib
+          import sys
+          
+          source = pathlib.Path(sys.argv[1])
+          target = pathlib.Path(sys.argv[2])
+          
+          with source.open("r", encoding="utf-8-sig") as f:
+              dashboard = json.load(f)
+          
+          dashboard["id"] = None
+          
+          payload = {
+              "dashboard": dashboard,
+              "overwrite": True,
+              "message": "Deployed from GitHub Actions"
+          }
+          
+          with target.open("w", encoding="utf-8") as f:
+              json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
+          PY
 
             http_code="$(
               curl \
