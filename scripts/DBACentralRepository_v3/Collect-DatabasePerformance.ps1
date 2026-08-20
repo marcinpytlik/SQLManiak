@@ -15,7 +15,7 @@ param(
 
     [switch]$IncludeSystemDatabases,
 
-    [string]$CollectorVersion = '1.0'
+    [string]$CollectorVersion = '1.1'
 )
 
 Set-StrictMode -Version Latest
@@ -282,41 +282,49 @@ SELECT @SampleBatchId;
 
         # ---------------------------------------------------------------------
         # CPU / workload - cumulative plan-cache attribution by database.
+        #
+        # Important:
+        # - dbid is taken from plan attributes, not only dm_exec_sql_text.dbid;
+        # - every ONLINE database gets a row, even when there is no cached
+        #   workload for it in the current sample.
         # ---------------------------------------------------------------------
         try {
             $cpu = Invoke-SourceTable `
                 -ServerInstance $serverInstance `
                 -Sql @"
-;WITH Q AS
+;WITH QueryStatsByDatabase AS
 (
     SELECT
         CONVERT(int,PA.value) AS DatabaseId,
-        QS.execution_count,
-        QS.total_worker_time,
-        QS.total_elapsed_time,
-        QS.total_logical_reads,
-        QS.total_logical_writes,
-        QS.total_physical_reads
+        COUNT_BIG(*) AS CachedQueryCount,
+        SUM(CONVERT(bigint,QS.execution_count)) AS ExecutionCount,
+        SUM(CONVERT(bigint,QS.total_worker_time / 1000)) AS CpuMs,
+        SUM(CONVERT(bigint,QS.total_elapsed_time / 1000)) AS ElapsedMs,
+        SUM(CONVERT(bigint,QS.total_logical_reads)) AS LogicalReads,
+        SUM(CONVERT(bigint,QS.total_logical_writes)) AS LogicalWrites,
+        SUM(CONVERT(bigint,QS.total_physical_reads)) AS PhysicalReads
     FROM sys.dm_exec_query_stats AS QS
     CROSS APPLY sys.dm_exec_plan_attributes(QS.plan_handle) AS PA
     WHERE PA.attribute = 'dbid'
       AND PA.value IS NOT NULL
+    GROUP BY CONVERT(int,PA.value)
 )
 SELECT
     D.database_id AS DatabaseId,
     D.name AS DatabaseName,
-    COUNT_BIG(*) AS CachedQueryCount,
-    SUM(CONVERT(bigint,Q.execution_count)) AS ExecutionCount,
-    SUM(CONVERT(bigint,Q.total_worker_time / 1000)) AS CpuMs,
-    SUM(CONVERT(bigint,Q.total_elapsed_time / 1000)) AS ElapsedMs,
-    SUM(CONVERT(bigint,Q.total_logical_reads)) AS LogicalReads,
-    SUM(CONVERT(bigint,Q.total_logical_writes)) AS LogicalWrites,
-    SUM(CONVERT(bigint,Q.total_physical_reads)) AS PhysicalReads
-FROM Q
-INNER JOIN sys.databases AS D
-    ON D.database_id = Q.DatabaseId
-WHERE $databaseFilter
-GROUP BY D.database_id, D.name;
+    ISNULL(Q.CachedQueryCount,0) AS CachedQueryCount,
+    ISNULL(Q.ExecutionCount,0) AS ExecutionCount,
+    ISNULL(Q.CpuMs,0) AS CpuMs,
+    ISNULL(Q.ElapsedMs,0) AS ElapsedMs,
+    ISNULL(Q.LogicalReads,0) AS LogicalReads,
+    ISNULL(Q.LogicalWrites,0) AS LogicalWrites,
+    ISNULL(Q.PhysicalReads,0) AS PhysicalReads
+FROM sys.databases AS D
+LEFT JOIN QueryStatsByDatabase AS Q
+    ON Q.DatabaseId = D.database_id
+WHERE D.state = 0
+  AND $databaseFilter
+ORDER BY D.database_id;
 "@
 
             $cpu = Add-PerfCommonColumns `
@@ -325,7 +333,9 @@ GROUP BY D.database_id, D.name;
                 -InstanceId $instanceId `
                 -CapturedAt $capturedAt
 
-            Write-PerfBulk -Table $cpu -DestinationTable '[perf].[DatabaseCpuSnapshot]'
+            Write-PerfBulk `
+                -Table $cpu `
+                -DestinationTable '[perf].[DatabaseCpuSnapshot]'
         }
         catch {
             $status = 'PARTIAL'
@@ -377,34 +387,60 @@ WHERE $databaseFilter;
         }
 
         # ---------------------------------------------------------------------
-        # Buffer Pool.
+        # Buffer Pool - per database.
+        #
+        # Every ONLINE database gets a row. A database with no pages currently
+        # present in the buffer pool is stored with 0 MB instead of disappearing
+        # from the time series.
         # ---------------------------------------------------------------------
         try {
-            $memoryWhere =
+            $memoryDatabaseFilter =
                 if ($IncludeSystemDatabases) {
-                    'BD.database_id IS NOT NULL AND BD.database_id <> 32767'
+                    'D.database_id <> 32767'
                 }
                 else {
-                    'BD.database_id > 4 AND BD.database_id <> 32767'
+                    'D.database_id > 4 AND D.database_id <> 32767'
                 }
 
             $memory = Invoke-SourceTable `
                 -ServerInstance $serverInstance `
                 -Sql @"
+;WITH BufferPoolByDatabase AS
+(
+    SELECT
+        BD.database_id AS DatabaseId,
+        COUNT_BIG(*) AS BufferPoolPages,
+        SUM(
+            CASE
+                WHEN BD.is_modified = 1
+                    THEN CONVERT(bigint,1)
+                ELSE CONVERT(bigint,0)
+            END
+        ) AS DirtyPages
+    FROM sys.dm_os_buffer_descriptors AS BD
+    WHERE BD.database_id IS NOT NULL
+      AND BD.database_id <> 32767
+    GROUP BY BD.database_id
+)
 SELECT
-    BD.database_id AS DatabaseId,
-    DB_NAME(BD.database_id) AS DatabaseName,
-    COUNT_BIG(*) AS BufferPoolPages,
-    CAST(COUNT_BIG(*) * 8.0 / 1024.0 AS decimal(19,2)) AS BufferPoolMB,
-    SUM(CASE WHEN BD.is_modified = 1 THEN CONVERT(bigint,1) ELSE CONVERT(bigint,0) END) AS DirtyPages,
+    D.database_id AS DatabaseId,
+    D.name AS DatabaseName,
+    ISNULL(B.BufferPoolPages,0) AS BufferPoolPages,
     CAST(
-        SUM(CASE WHEN BD.is_modified = 1 THEN CONVERT(bigint,1) ELSE CONVERT(bigint,0) END)
-        * 8.0 / 1024.0
+        ISNULL(B.BufferPoolPages,0) * 8.0 / 1024.0
+        AS decimal(19,2)
+    ) AS BufferPoolMB,
+    ISNULL(B.DirtyPages,0) AS DirtyPages,
+    CAST(
+        ISNULL(B.DirtyPages,0) * 8.0 / 1024.0
         AS decimal(19,2)
     ) AS DirtyPagesMB
-FROM sys.dm_os_buffer_descriptors AS BD
-WHERE $memoryWhere
-GROUP BY BD.database_id;
+FROM sys.databases AS D
+LEFT JOIN BufferPoolByDatabase AS B
+    ON B.DatabaseId = D.database_id
+WHERE D.state = 0
+  AND $memoryDatabaseFilter
+ORDER BY D.database_id;
 "@
 
             $memory = Add-PerfCommonColumns `
@@ -413,7 +449,9 @@ GROUP BY BD.database_id;
                 -InstanceId $instanceId `
                 -CapturedAt $capturedAt
 
-            Write-PerfBulk -Table $memory -DestinationTable '[perf].[DatabaseMemorySnapshot]'
+            Write-PerfBulk `
+                -Table $memory `
+                -DestinationTable '[perf].[DatabaseMemorySnapshot]'
         }
         catch {
             $status = 'PARTIAL'
@@ -484,34 +522,91 @@ HAVING PC.instance_name <> '_Total';
 
         # ---------------------------------------------------------------------
         # Current concurrency / request waits.
+        #
+        # Snapshot is based on dm_exec_requests, but every ONLINE database is
+        # returned. Idle databases therefore get zeroes instead of no row.
         # ---------------------------------------------------------------------
         try {
+            $requestDatabaseFilter =
+                if ($IncludeSystemDatabases) {
+                    'D.database_id IS NOT NULL'
+                }
+                else {
+                    'D.database_id > 4'
+                }
+
             $requests = Invoke-SourceTable `
                 -ServerInstance $serverInstance `
                 -Sql @"
+;WITH RequestsByDatabase AS
+(
+    SELECT
+        R.database_id AS DatabaseId,
+        COUNT(*) AS ActiveRequests,
+        SUM(CASE WHEN R.status = 'running' THEN 1 ELSE 0 END)
+            AS RunningRequests,
+        SUM(CASE WHEN R.status = 'suspended' THEN 1 ELSE 0 END)
+            AS SuspendedRequests,
+        SUM(
+            CASE
+                WHEN ISNULL(R.blocking_session_id,0) <> 0
+                    THEN 1
+                ELSE 0
+            END
+        ) AS BlockedRequests,
+        SUM(CONVERT(bigint,R.cpu_time)) AS CurrentCpuMs,
+        SUM(CONVERT(bigint,R.total_elapsed_time)) AS CurrentElapsedMs,
+        SUM(CONVERT(bigint,R.reads)) AS CurrentReads,
+        SUM(CONVERT(bigint,R.writes)) AS CurrentWrites,
+        SUM(CONVERT(bigint,R.logical_reads)) AS CurrentLogicalReads,
+        SUM(CONVERT(bigint,ISNULL(R.wait_time,0))) AS CurrentWaitMs,
+        SUM(
+            CASE
+                WHEN R.wait_type LIKE 'LCK[_]%'
+                    THEN 1
+                ELSE 0
+            END
+        ) AS LockWaitRequests,
+        SUM(
+            CASE
+                WHEN
+                    R.wait_type LIKE 'PAGEIOLATCH[_]%'
+                    OR R.wait_type IN
+                    (
+                        'WRITELOG',
+                        'ASYNC_IO_COMPLETION',
+                        'IO_COMPLETION'
+                    )
+                    THEN 1
+                ELSE 0
+            END
+        ) AS IoWaitRequests
+    FROM sys.dm_exec_requests AS R
+    WHERE R.session_id <> @@SPID
+      AND R.database_id IS NOT NULL
+    GROUP BY R.database_id
+)
 SELECT
-    R.database_id AS DatabaseId,
-    DB_NAME(R.database_id) AS DatabaseName,
-    COUNT(*) AS ActiveRequests,
-    SUM(CASE WHEN R.status = 'running' THEN 1 ELSE 0 END) AS RunningRequests,
-    SUM(CASE WHEN R.status = 'suspended' THEN 1 ELSE 0 END) AS SuspendedRequests,
-    SUM(CASE WHEN ISNULL(R.blocking_session_id,0) <> 0 THEN 1 ELSE 0 END) AS BlockedRequests,
-    SUM(CONVERT(bigint,R.cpu_time)) AS CurrentCpuMs,
-    SUM(CONVERT(bigint,R.total_elapsed_time)) AS CurrentElapsedMs,
-    SUM(CONVERT(bigint,R.reads)) AS CurrentReads,
-    SUM(CONVERT(bigint,R.writes)) AS CurrentWrites,
-    SUM(CONVERT(bigint,R.logical_reads)) AS CurrentLogicalReads,
-    SUM(CONVERT(bigint,ISNULL(R.wait_time,0))) AS CurrentWaitMs,
-    SUM(CASE WHEN R.wait_type LIKE 'LCK[_]%' THEN 1 ELSE 0 END) AS LockWaitRequests,
-    SUM(CASE WHEN
-                 R.wait_type LIKE 'PAGEIOLATCH[_]%'
-              OR R.wait_type IN ('WRITELOG','ASYNC_IO_COMPLETION','IO_COMPLETION')
-             THEN 1 ELSE 0 END) AS IoWaitRequests
-FROM sys.dm_exec_requests AS R
-WHERE R.session_id <> @@SPID
-  AND R.database_id IS NOT NULL
-  AND $(if ($IncludeSystemDatabases) { 'R.database_id IS NOT NULL' } else { 'R.database_id > 4' })
-GROUP BY R.database_id;
+    D.database_id AS DatabaseId,
+    D.name AS DatabaseName,
+    ISNULL(R.ActiveRequests,0) AS ActiveRequests,
+    ISNULL(R.RunningRequests,0) AS RunningRequests,
+    ISNULL(R.SuspendedRequests,0) AS SuspendedRequests,
+    ISNULL(R.BlockedRequests,0) AS BlockedRequests,
+    ISNULL(R.CurrentCpuMs,0) AS CurrentCpuMs,
+    ISNULL(R.CurrentElapsedMs,0) AS CurrentElapsedMs,
+    ISNULL(R.CurrentReads,0) AS CurrentReads,
+    ISNULL(R.CurrentWrites,0) AS CurrentWrites,
+    ISNULL(R.CurrentLogicalReads,0) AS CurrentLogicalReads,
+    ISNULL(R.CurrentWaitMs,0) AS CurrentWaitMs,
+    ISNULL(R.LockWaitRequests,0) AS LockWaitRequests,
+    ISNULL(R.IoWaitRequests,0) AS IoWaitRequests
+FROM sys.databases AS D
+LEFT JOIN RequestsByDatabase AS R
+    ON R.DatabaseId = D.database_id
+WHERE D.state = 0
+  AND $requestDatabaseFilter
+ORDER BY D.database_id;
 "@
 
             $requests = Add-PerfCommonColumns `
@@ -520,7 +615,9 @@ GROUP BY R.database_id;
                 -InstanceId $instanceId `
                 -CapturedAt $capturedAt
 
-            Write-PerfBulk -Table $requests -DestinationTable '[perf].[DatabaseConcurrencySnapshot]'
+            Write-PerfBulk `
+                -Table $requests `
+                -DestinationTable '[perf].[DatabaseConcurrencySnapshot]'
         }
         catch {
             $status = 'PARTIAL'

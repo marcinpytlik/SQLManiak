@@ -3,7 +3,7 @@ GO
 
 /*
 ===============================================================================
-DBACentralRepository v3 - PERF module v1.0
+DBACentralRepository v3 - PERF module v1.1
 ===============================================================================
 Cel:
   Historyczny pomiar obciążenia baz danych na poziomie instancji SQL Server.
@@ -51,7 +51,7 @@ BEGIN
         [CollectorHost]      nvarchar(128) NULL,
         [CollectorUser]      nvarchar(256) NULL,
         [CollectorVersion]   varchar(20) NOT NULL
-            CONSTRAINT [DF_perf_SampleBatch_CollectorVersion] DEFAULT ('1.0'),
+            CONSTRAINT [DF_perf_SampleBatch_CollectorVersion] DEFAULT ('1.1'),
         [CollectionStatus]   varchar(20) NOT NULL
             CONSTRAINT [DF_perf_SampleBatch_Status] DEFAULT ('STARTED'),
         [DurationMs]         int NULL,
@@ -442,6 +442,21 @@ BEGIN
         THROW 51011, 'Instance not found.', 1;
 
     /*
+      Grafana przekazuje @From/@To w UTC. Snapshoty perf.* są zapisywane
+      w lokalnym czasie SQL Servera. Konwertujemy tylko granice zakresu,
+      dzięki czemu predykaty po CapturedAt pozostają sargowalne.
+    */
+    DECLARE
+        @FromLocal datetime2(0),
+        @ToLocal datetime2(0);
+
+    SET @FromLocal = CAST((@From AT TIME ZONE 'UTC')
+        AT TIME ZONE 'Central European Standard Time' AS datetime2(0));
+
+    SET @ToLocal = CAST((@To AT TIME ZONE 'UTC')
+        AT TIME ZONE 'Central European Standard Time' AS datetime2(0));
+
+    /*
       Dla cumulative counters wybieramy pierwszy i ostatni sample w okresie.
       Jeśli licznik spadł (restart/eviction/reset), delta = NULL zamiast
       sztucznie ujemnej wartości.
@@ -464,8 +479,8 @@ BEGIN
         INNER JOIN [perf].[SampleBatch] AS B
             ON B.[SampleBatchId] = C.[SampleBatchId]
         WHERE C.[InstanceId] = @InstanceId
-          AND C.[CapturedAt] >= @From
-          AND C.[CapturedAt] < @To
+          AND C.[CapturedAt] >= @FromLocal
+          AND C.[CapturedAt] < @ToLocal
           AND B.[CollectionStatus] IN ('SUCCESS','PARTIAL')
     ),
     Cpu AS
@@ -505,8 +520,8 @@ BEGIN
         INNER JOIN [perf].[SampleBatch] AS B
             ON B.[SampleBatchId] = I.[SampleBatchId]
         WHERE I.[InstanceId] = @InstanceId
-          AND I.[CapturedAt] >= @From
-          AND I.[CapturedAt] < @To
+          AND I.[CapturedAt] >= @FromLocal
+          AND I.[CapturedAt] < @ToLocal
           AND B.[CollectionStatus] IN ('SUCCESS','PARTIAL')
     ),
     IoPerFile AS
@@ -552,8 +567,8 @@ BEGIN
         INNER JOIN [perf].[SampleBatch] AS B
             ON B.[SampleBatchId] = M.[SampleBatchId]
         WHERE M.[InstanceId] = @InstanceId
-          AND M.[CapturedAt] >= @From
-          AND M.[CapturedAt] < @To
+          AND M.[CapturedAt] >= @FromLocal
+          AND M.[CapturedAt] < @ToLocal
           AND B.[CollectionStatus] IN ('SUCCESS','PARTIAL')
         GROUP BY M.[DatabaseName]
     ),
@@ -570,8 +585,8 @@ BEGIN
         INNER JOIN [perf].[SampleBatch] AS B
             ON B.[SampleBatchId] = C.[SampleBatchId]
         WHERE C.[InstanceId] = @InstanceId
-          AND C.[CapturedAt] >= @From
-          AND C.[CapturedAt] < @To
+          AND C.[CapturedAt] >= @FromLocal
+          AND C.[CapturedAt] < @ToLocal
           AND B.[CollectionStatus] IN ('SUCCESS','PARTIAL')
         GROUP BY C.[DatabaseName]
     ),
@@ -593,8 +608,8 @@ BEGIN
         INNER JOIN [perf].[SampleBatch] AS B
             ON B.[SampleBatchId] = L.[SampleBatchId]
         WHERE L.[InstanceId] = @InstanceId
-          AND L.[CapturedAt] >= @From
-          AND L.[CapturedAt] < @To
+          AND L.[CapturedAt] >= @FromLocal
+          AND L.[CapturedAt] < @ToLocal
           AND B.[CollectionStatus] IN ('SUCCESS','PARTIAL')
     ),
     LogAgg AS
@@ -788,6 +803,25 @@ BEGIN
         FROM [dbo].[Instance]
         WHERE [ServerInstance] = @ServerInstance;
 
+    IF @From IS NULL OR @To IS NULL OR @From >= @To
+        THROW 51010, 'Specify a valid @From / @To range.', 1;
+
+    IF @Top IS NULL OR @Top < 1
+        SET @Top = 20;
+
+    IF @InstanceId IS NULL
+        THROW 51011, 'Instance not found.', 1;
+
+    DECLARE
+        @FromLocal datetime2(0),
+        @ToLocal datetime2(0);
+
+    SET @FromLocal = CAST((@From AT TIME ZONE 'UTC')
+        AT TIME ZONE 'Central European Standard Time' AS datetime2(0));
+
+    SET @ToLocal = CAST((@To AT TIME ZONE 'UTC')
+        AT TIME ZONE 'Central European Standard Time' AS datetime2(0));
+
     ;WITH X AS
     (
         SELECT
@@ -806,8 +840,8 @@ BEGIN
         INNER JOIN perf.SampleBatch AS B
             ON B.SampleBatchId = C.SampleBatchId
         WHERE C.InstanceId = @InstanceId
-          AND C.CapturedAt >= @From
-          AND C.CapturedAt < @To
+          AND C.CapturedAt >= @FromLocal
+          AND C.CapturedAt < @ToLocal
           AND B.CollectionStatus IN ('SUCCESS','PARTIAL')
     ),
     D AS
@@ -861,6 +895,25 @@ BEGIN
         FROM [dbo].[Instance]
         WHERE [ServerInstance] = @ServerInstance;
 
+    IF @From IS NULL OR @To IS NULL OR @From >= @To
+        THROW 51010, 'Specify a valid @From / @To range.', 1;
+
+    IF @Top IS NULL OR @Top < 1
+        SET @Top = 20;
+
+    IF @InstanceId IS NULL
+        THROW 51011, 'Instance not found.', 1;
+
+    DECLARE
+        @FromLocal datetime2(0),
+        @ToLocal datetime2(0);
+
+    SET @FromLocal = CAST((@From AT TIME ZONE 'UTC')
+        AT TIME ZONE 'Central European Standard Time' AS datetime2(0));
+
+    SET @ToLocal = CAST((@To AT TIME ZONE 'UTC')
+        AT TIME ZONE 'Central European Standard Time' AS datetime2(0));
+
     ;WITH X AS
     (
         SELECT
@@ -879,8 +932,8 @@ BEGIN
         INNER JOIN perf.SampleBatch AS B
             ON B.SampleBatchId = F.SampleBatchId
         WHERE F.InstanceId = @InstanceId
-          AND F.CapturedAt >= @From
-          AND F.CapturedAt < @To
+          AND F.CapturedAt >= @FromLocal
+          AND F.CapturedAt < @ToLocal
           AND B.CollectionStatus IN ('SUCCESS','PARTIAL')
     ),
     PF AS
@@ -955,6 +1008,25 @@ BEGIN
         FROM [dbo].[Instance]
         WHERE [ServerInstance] = @ServerInstance;
 
+    IF @From IS NULL OR @To IS NULL OR @From >= @To
+        THROW 51010, 'Specify a valid @From / @To range.', 1;
+
+    IF @Top IS NULL OR @Top < 1
+        SET @Top = 20;
+
+    IF @InstanceId IS NULL
+        THROW 51011, 'Instance not found.', 1;
+
+    DECLARE
+        @FromLocal datetime2(0),
+        @ToLocal datetime2(0);
+
+    SET @FromLocal = CAST((@From AT TIME ZONE 'UTC')
+        AT TIME ZONE 'Central European Standard Time' AS datetime2(0));
+
+    SET @ToLocal = CAST((@To AT TIME ZONE 'UTC')
+        AT TIME ZONE 'Central European Standard Time' AS datetime2(0));
+
     SELECT TOP (@Top)
         I.[ServerInstance],
         M.[DatabaseName],
@@ -967,8 +1039,8 @@ BEGIN
     INNER JOIN [perf].[SampleBatch] AS B
         ON B.[SampleBatchId] = M.[SampleBatchId]
     WHERE M.[InstanceId] = @InstanceId
-      AND M.[CapturedAt] >= @From
-      AND M.[CapturedAt] < @To
+      AND M.[CapturedAt] >= @FromLocal
+      AND M.[CapturedAt] < @ToLocal
       AND B.[CollectionStatus] IN ('SUCCESS','PARTIAL')
     GROUP BY I.[ServerInstance], M.[DatabaseName]
     ORDER BY AvgBufferPoolMB DESC;
@@ -990,6 +1062,25 @@ BEGIN
         FROM [dbo].[Instance]
         WHERE [ServerInstance] = @ServerInstance;
 
+    IF @From IS NULL OR @To IS NULL OR @From >= @To
+        THROW 51010, 'Specify a valid @From / @To range.', 1;
+
+    IF @Top IS NULL OR @Top < 1
+        SET @Top = 20;
+
+    IF @InstanceId IS NULL
+        THROW 51011, 'Instance not found.', 1;
+
+    DECLARE
+        @FromLocal datetime2(0),
+        @ToLocal datetime2(0);
+
+    SET @FromLocal = CAST((@From AT TIME ZONE 'UTC')
+        AT TIME ZONE 'Central European Standard Time' AS datetime2(0));
+
+    SET @ToLocal = CAST((@To AT TIME ZONE 'UTC')
+        AT TIME ZONE 'Central European Standard Time' AS datetime2(0));
+
     SELECT TOP (@Top)
         I.[ServerInstance],
         C.[DatabaseName],
@@ -1004,8 +1095,8 @@ BEGIN
     INNER JOIN [perf].[SampleBatch] AS B
         ON B.[SampleBatchId] = C.[SampleBatchId]
     WHERE C.[InstanceId] = @InstanceId
-      AND C.[CapturedAt] >= @From
-      AND C.[CapturedAt] < @To
+      AND C.[CapturedAt] >= @FromLocal
+      AND C.[CapturedAt] < @ToLocal
       AND B.[CollectionStatus] IN ('SUCCESS','PARTIAL')
     GROUP BY I.[ServerInstance], C.[DatabaseName]
     ORDER BY MaxBlockedRequests DESC, AvgBlockedRequests DESC;
@@ -1100,5 +1191,5 @@ GO
 Retencja jest instalowana osobnym plikiem:
     21_Create_Perf_Retention.sql
 */
-PRINT 'DBACentralRepository PERF module v1.0 installed.';
+PRINT 'DBACentralRepository PERF module v1.1 installed.';
 GO

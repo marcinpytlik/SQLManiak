@@ -226,7 +226,12 @@ WHERE TableUsageTargetId=@TargetId
         Write-Host "  snapshots=$($snapshot.Rows.Count), audit aggregates=$($access.Rows.Count)" -ForegroundColor Green
     }
     catch {
-        Write-Warning "Audit import failed for $serverInstance / $databaseName: $($_.Exception.Message)"
+        Write-Warning (
+    'Audit import failed for {0} / {1}: {2}' -f
+    $serverInstance,
+    $databaseName,
+    $_.Exception.Message
+)
         Write-Warning 'DMV snapshot was saved. Verify SQL Audit is enabled and SQL Server service can write/read AuditPath.'
     }
 }
