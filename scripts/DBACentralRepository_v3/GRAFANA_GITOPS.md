@@ -125,3 +125,4 @@ drift check   → self-hosted ARM64
 ```
 
 `GRAFANA_TOKEN` i `GRAFANA_URL` pozostają w GitHub Repository Secrets.
+test
