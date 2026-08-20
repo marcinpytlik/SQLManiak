@@ -7,7 +7,7 @@ on:
     branches:
       - master
     paths:
-      - 'SQLManiak/scripts/DBACentralRepository_v3/grafana/*.json'
+      - 'scripts/DBACentralRepository_v3/grafana/*.json'
       - '.github/workflows/deploy-grafana.yml'
 
 concurrency:
@@ -26,7 +26,7 @@ jobs:
       contents: read
 
     env:
-      DASHBOARD_DIR: SQLManiak/scripts/DBACentralRepository_v3/grafana
+      DASHBOARD_DIR: scripts/DBACentralRepository_v3/grafana
       GRAFANA_URL: ${{ secrets.GRAFANA_URL }}
       GRAFANA_TOKEN: ${{ secrets.GRAFANA_TOKEN }}
 
