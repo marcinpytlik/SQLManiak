@@ -33,30 +33,30 @@ jobs:
           set -euo pipefail
 
           python3 -c 'import json,pathlib,sys
-root=pathlib.Path(sys.argv[1])
-files=sorted(root.glob("*.json"))
-assert files, f"No JSON files found in {root}"
-names={}
-titles={}
-for path in files:
-    obj=json.load(open(path,encoding="utf-8-sig"))
-    api_version=obj.get("apiVersion")
-    kind=obj.get("kind")
-    metadata=obj.get("metadata") or {}
-    spec=obj.get("spec") or {}
-    name=metadata.get("name")
-    title=spec.get("title")
-    assert api_version and api_version.startswith("dashboard.grafana.app/"), f"{path}: invalid apiVersion: {api_version!r}"
-    assert kind=="Dashboard", f"{path}: kind must be Dashboard"
-    assert name, f"{path}: metadata.name is required"
-    assert title, f"{path}: spec.title is required"
-    assert name not in names, f"Duplicate metadata.name {name!r}: {names.get(name)} and {path}"
-    assert title not in titles, f"Duplicate dashboard title {title!r}: {titles.get(title)} and {path}"
-    names[name]=path
-    titles[title]=path
-    print(f"OK  {path.name}")
-    print(f"    apiVersion: {api_version}")
-    print(f"    name:       {name}")
-    print(f"    title:      {title}")
-print()
-print(f"Validated {len(files)} dashboard(s).")' "$DASHBOARD_DIR"
+          root=pathlib.Path(sys.argv[1])
+          files=sorted(root.glob("*.json"))
+          assert files, f"No JSON files found in {root}"
+          names={}
+          titles={}
+          for path in files:
+              obj=json.load(open(path,encoding="utf-8-sig"))
+              api_version=obj.get("apiVersion")
+              kind=obj.get("kind")
+              metadata=obj.get("metadata") or {}
+              spec=obj.get("spec") or {}
+              name=metadata.get("name")
+              title=spec.get("title")
+              assert api_version and api_version.startswith("dashboard.grafana.app/"), f"{path}: invalid apiVersion: {api_version!r}"
+              assert kind=="Dashboard", f"{path}: kind must be Dashboard"
+              assert name, f"{path}: metadata.name is required"
+              assert title, f"{path}: spec.title is required"
+              assert name not in names, f"Duplicate metadata.name {name!r}: {names.get(name)} and {path}"
+              assert title not in titles, f"Duplicate dashboard title {title!r}: {titles.get(title)} and {path}"
+              names[name]=path
+              titles[title]=path
+              print(f"OK  {path.name}")
+              print(f"    apiVersion: {api_version}")
+              print(f"    name:       {name}")
+              print(f"    title:      {title}")
+          print()
+          print(f"Validated {len(files)} dashboard(s).")' "$DASHBOARD_DIR"
