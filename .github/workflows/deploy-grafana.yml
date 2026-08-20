@@ -1,0 +1,209 @@
+name: Deploy Grafana dashboards
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+      - main
+    paths:
+      - 'SQLManiak/scripts/DBACentralRepository_v3/grafana/*.json'
+      - '.github/workflows/deploy-grafana.yml'
+
+concurrency:
+  group: grafana-dashboard-deployment
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy dashboards to Grafana
+    runs-on:
+      - self-hosted
+      - Linux
+      - ARM64
+
+    permissions:
+      contents: read
+
+    env:
+      DASHBOARD_DIR: SQLManiak/scripts/DBACentralRepository_v3/grafana
+      GRAFANA_URL: ${{ secrets.GRAFANA_URL }}
+      GRAFANA_TOKEN: ${{ secrets.GRAFANA_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Show deployment context
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Runner: $(hostname)"
+          echo "Architecture: $(uname -m)"
+          echo "Dashboard directory: $DASHBOARD_DIR"
+          echo "Grafana URL: $GRAFANA_URL"
+
+      - name: Test Grafana API
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "Testing Grafana API..."
+
+          curl \
+            --fail \
+            --silent \
+            --show-error \
+            --header "Authorization: Bearer $GRAFANA_TOKEN" \
+            "$GRAFANA_URL/api/health"
+
+          echo
+          echo "Grafana API is reachable."
+
+      - name: Validate dashboard files
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ ! -d "$DASHBOARD_DIR" ]; then
+            echo "::error::Dashboard directory does not exist: $DASHBOARD_DIR"
+            exit 1
+          fi
+
+          mapfile -t dashboards < <(
+            find "$DASHBOARD_DIR" \
+              -maxdepth 1 \
+              -type f \
+              -name '*.json' \
+              -print | sort
+          )
+
+          if [ "${#dashboards[@]}" -eq 0 ]; then
+            echo "::error::No Grafana dashboard JSON files found in $DASHBOARD_DIR"
+            exit 1
+          fi
+
+          echo "Found ${#dashboards[@]} dashboard file(s)."
+
+          for file in "${dashboards[@]}"; do
+            echo "Validating: $file"
+
+            python3 - "$file" <<'PY'
+import json
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+
+with path.open("r", encoding="utf-8-sig") as f:
+    dashboard = json.load(f)
+
+if not isinstance(dashboard, dict):
+    raise SystemExit(f"{path}: root JSON value must be an object")
+
+title = dashboard.get("title")
+uid = dashboard.get("uid")
+
+if not title:
+    raise SystemExit(f"{path}: dashboard has no 'title'")
+
+print(f"  title: {title}")
+print(f"  uid:   {uid or '<none>'}")
+PY
+          done
+
+      - name: Deploy dashboards
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mapfile -t dashboards < <(
+            find "$DASHBOARD_DIR" \
+              -maxdepth 1 \
+              -type f \
+              -name '*.json' \
+              -print | sort
+          )
+
+          deployed=0
+
+          for file in "${dashboards[@]}"; do
+            filename="$(basename "$file")"
+
+            echo
+            echo "============================================================"
+            echo "Deploying: $filename"
+            echo "============================================================"
+
+            payload="$(mktemp)"
+            response="$(mktemp)"
+
+            python3 - "$file" "$payload" <<'PY'
+import json
+import pathlib
+import sys
+
+source = pathlib.Path(sys.argv[1])
+target = pathlib.Path(sys.argv[2])
+
+with source.open("r", encoding="utf-8-sig") as f:
+    dashboard = json.load(f)
+
+dashboard["id"] = None
+
+payload = {
+    "dashboard": dashboard,
+    "overwrite": True,
+    "message": "Deployed from GitHub Actions"
+}
+
+with target.open("w", encoding="utf-8") as f:
+    json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
+PY
+
+            http_code="$(
+              curl \
+                --silent \
+                --show-error \
+                --output "$response" \
+                --write-out '%{http_code}' \
+                --request POST \
+                --header "Authorization: Bearer $GRAFANA_TOKEN" \
+                --header "Content-Type: application/json" \
+                --data-binary "@$payload" \
+                "$GRAFANA_URL/api/dashboards/db"
+            )"
+
+            if [[ "$http_code" =~ ^2 ]]; then
+              echo "SUCCESS: $filename"
+              cat "$response"
+              echo
+              deployed=$((deployed + 1))
+            else
+              echo "::error::Grafana deployment failed for $filename. HTTP $http_code"
+              cat "$response"
+              echo
+              rm -f "$payload" "$response"
+              exit 1
+            fi
+
+            rm -f "$payload" "$response"
+          done
+
+          echo
+          echo "Successfully deployed $deployed dashboard(s)."
+
+      - name: Deployment summary
+        if: success()
+        shell: bash
+        run: |
+          {
+            echo "## Grafana deployment"
+            echo
+            echo "✅ Deployment completed successfully."
+            echo
+            echo "- Runner: \`$(hostname)\`"
+            echo "- Architecture: \`$(uname -m)\`"
+            echo "- Source: \`$DASHBOARD_DIR\`"
+            echo "- Grafana: \`$GRAFANA_URL\`"
+          } >> "$GITHUB_STEP_SUMMARY"
