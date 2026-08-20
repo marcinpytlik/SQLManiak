@@ -1,0 +1,41 @@
+name: Grafana token rotation reminder
+
+on:
+  workflow_dispatch:
+
+  schedule:
+    - cron: '17 4 * * 1'
+
+jobs:
+  reminder:
+    name: Check Grafana token lifetime
+    runs-on:
+      - self-hosted
+      - Linux
+      - ARM64
+
+    permissions:
+      contents: read
+      issues: write
+
+    env:
+      GRAFANA_URL: ${{ secrets.GRAFANA_URL }}
+      GRAFANA_ROTATION_ADMIN_TOKEN: ${{ secrets.GRAFANA_ROTATION_ADMIN_TOKEN }}
+      GRAFANA_DEPLOY_SERVICE_ACCOUNT_ID: ${{ vars.GRAFANA_DEPLOY_SERVICE_ACCOUNT_ID }}
+      GRAFANA_REMIND_WHEN_DAYS_LEFT: ${{ vars.GRAFANA_REMIND_WHEN_DAYS_LEFT }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout reminder script
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            scripts/DBACentralRepository_v3/Check-GrafanaTokenExpiry.py
+          sparse-checkout-cone-mode: false
+
+      - name: Check token lifetime
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/DBACentralRepository_v3/Check-GrafanaTokenExpiry.py

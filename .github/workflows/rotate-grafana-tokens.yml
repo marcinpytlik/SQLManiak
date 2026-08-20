@@ -1,0 +1,69 @@
+name: Rotate Grafana tokens
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_rotation:
+        description: 'Rotate now even if token lifetime is healthy'
+        required: true
+        default: false
+        type: boolean
+
+  schedule:
+    - cron: '47 3 * * 0'
+
+concurrency:
+  group: grafana-token-rotation
+  cancel-in-progress: false
+
+jobs:
+  rotate:
+    name: Zero-downtime Grafana token rotation
+    runs-on:
+      - self-hosted
+      - Linux
+      - ARM64
+
+    permissions:
+      contents: read
+
+    env:
+      GRAFANA_URL: ${{ secrets.GRAFANA_URL }}
+      GRAFANA_ROTATION_ADMIN_TOKEN: ${{ secrets.GRAFANA_ROTATION_ADMIN_TOKEN }}
+      GH_SECRETS_TOKEN: ${{ secrets.GH_SECRETS_TOKEN }}
+
+      GRAFANA_DEPLOY_SERVICE_ACCOUNT_ID: ${{ vars.GRAFANA_DEPLOY_SERVICE_ACCOUNT_ID }}
+      GRAFANA_ROTATION_SERVICE_ACCOUNT_ID: ${{ vars.GRAFANA_ROTATION_SERVICE_ACCOUNT_ID }}
+
+      GRAFANA_TOKEN_TTL_DAYS: ${{ vars.GRAFANA_TOKEN_TTL_DAYS }}
+      GRAFANA_ROTATE_WHEN_DAYS_LEFT: ${{ vars.GRAFANA_ROTATE_WHEN_DAYS_LEFT }}
+
+      GRAFANA_LEGACY_DEPLOY_TOKEN_NAME: ${{ vars.GRAFANA_LEGACY_DEPLOY_TOKEN_NAME }}
+      GRAFANA_LEGACY_ROTATOR_TOKEN_NAME: ${{ vars.GRAFANA_LEGACY_ROTATOR_TOKEN_NAME }}
+
+      FORCE_ROTATION: ${{ github.event_name == 'workflow_dispatch' && inputs.force_rotation || false }}
+
+    steps:
+      - name: Checkout rotation script
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            scripts/DBACentralRepository_v3/Rotate-GrafanaTokens.py
+          sparse-checkout-cone-mode: false
+
+      - name: Preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v python3
+          command -v gh
+          gh --version
+          test -n "$GRAFANA_DEPLOY_SERVICE_ACCOUNT_ID"
+          test -n "$GRAFANA_ROTATION_SERVICE_ACCOUNT_ID"
+
+      - name: Rotate tokens
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/DBACentralRepository_v3/Rotate-GrafanaTokens.py
