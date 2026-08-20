@@ -90,38 +90,42 @@ jobs:
           for file in "${dashboards[@]}"; do
             echo "Validating: $file"
 
-            python3 -c '
-import json, pathlib, sys
-path = pathlib.Path(sys.argv[1])
-with path.open("r", encoding="utf-8-sig") as f:
-    root = json.load(f)
+            python3 - "$file" <<'PY'
+          import json
+          import pathlib
+          import sys
 
-if not isinstance(root, dict):
-    raise SystemExit(f"{path}: root JSON value must be an object")
+          path = pathlib.Path(sys.argv[1])
 
-if isinstance(root.get("dashboard"), dict):
-    dashboard = root["dashboard"]
-    fmt = "wrapped:dashboard"
-elif isinstance(root.get("spec"), dict):
-    dashboard = root["spec"]
-    fmt = "wrapped:spec"
-else:
-    dashboard = root
-    fmt = "classic"
+          with path.open("r", encoding="utf-8-sig") as f:
+              root = json.load(f)
 
-title = dashboard.get("title")
-uid = dashboard.get("uid")
+          if not isinstance(root, dict):
+              raise SystemExit(f"{path}: root JSON value must be an object")
 
-if not title:
-    raise SystemExit(
-        f"{path}: dashboard has no title "
-        f"(detected format: {fmt}; top-level keys: {list(root.keys())[:20]})"
-    )
+          if isinstance(root.get("dashboard"), dict):
+              dashboard = root["dashboard"]
+              fmt = "wrapped:dashboard"
+          elif isinstance(root.get("spec"), dict):
+              dashboard = root["spec"]
+              fmt = "wrapped:spec"
+          else:
+              dashboard = root
+              fmt = "classic"
 
-print(f"  format: {fmt}")
-print(f"  title:  {title}")
-print(f"  uid:    {uid or chr(60) + \"none\" + chr(62)}")
-' "$file"
+          title = dashboard.get("title")
+          uid = dashboard.get("uid")
+
+          if not title:
+              raise SystemExit(
+                  f"{path}: dashboard has no 'title' "
+                  f"(detected format: {fmt}; top-level keys: {list(root.keys())[:20]})"
+              )
+
+          print(f"  format: {fmt}")
+          print(f"  title:  {title}")
+          print(f"  uid:    {uid or '<none>'}")
+          PY
           done
 
       - name: Deploy dashboards
@@ -150,38 +154,41 @@ print(f"  uid:    {uid or chr(60) + \"none\" + chr(62)}")
             payload="$(mktemp)"
             response="$(mktemp)"
 
-            python3 -c '
-import json, pathlib, sys
-source = pathlib.Path(sys.argv[1])
-target = pathlib.Path(sys.argv[2])
+            python3 - "$file" "$payload" <<'PY'
+          import json
+          import pathlib
+          import sys
 
-with source.open("r", encoding="utf-8-sig") as f:
-    root = json.load(f)
+          source = pathlib.Path(sys.argv[1])
+          target = pathlib.Path(sys.argv[2])
 
-if isinstance(root.get("dashboard"), dict):
-    dashboard = root["dashboard"]
-elif isinstance(root.get("spec"), dict):
-    dashboard = root["spec"]
-else:
-    dashboard = root
+          with source.open("r", encoding="utf-8-sig") as f:
+              root = json.load(f)
 
-if not isinstance(dashboard, dict):
-    raise SystemExit(f"{source}: dashboard payload is not an object")
+          if isinstance(root.get("dashboard"), dict):
+              dashboard = root["dashboard"]
+          elif isinstance(root.get("spec"), dict):
+              dashboard = root["spec"]
+          else:
+              dashboard = root
 
-if not dashboard.get("title"):
-    raise SystemExit(f"{source}: dashboard has no title")
+          if not isinstance(dashboard, dict):
+              raise SystemExit(f"{source}: dashboard payload is not an object")
 
-dashboard["id"] = None
+          if not dashboard.get("title"):
+              raise SystemExit(f"{source}: dashboard has no title")
 
-payload = {
-    "dashboard": dashboard,
-    "overwrite": True,
-    "message": "Deployed from GitHub Actions"
-}
+          dashboard["id"] = None
 
-with target.open("w", encoding="utf-8") as f:
-    json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
-' "$file" "$payload"
+          payload = {
+              "dashboard": dashboard,
+              "overwrite": True,
+              "message": "Deployed from GitHub Actions"
+          }
+
+          with target.open("w", encoding="utf-8") as f:
+              json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
+          PY
 
             http_code="$(
               curl \
