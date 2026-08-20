@@ -125,42 +125,91 @@ def managed_tokens(tokens, prefix):
         and not bool(token.get("hasExpired", False))
     ]
 
+def parse_expiration(value):
+    if not value:
+        return None
+
+    raw = str(value).strip()
+
+    # Grafana may return timestamps with Z or an explicit UTC offset.
+    if raw.endswith("Z"):
+        raw = raw[:-1] + "+00:00"
+
+    try:
+        parsed = dt.datetime.fromisoformat(raw)
+    except ValueError:
+        return None
+
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=dt.timezone.utc)
+
+    return parsed.astimezone(dt.timezone.utc)
+
+def token_seconds_remaining(token):
+    remaining = token.get("secondsUntilExpiration")
+
+    if remaining is not None:
+        try:
+            return int(float(remaining))
+        except (TypeError, ValueError):
+            pass
+
+    expiration = parse_expiration(token.get("expiration"))
+    if expiration is None:
+        return None
+
+    now = dt.datetime.now(dt.timezone.utc)
+    return int((expiration - now).total_seconds())
+
 def best_managed_token(tokens, prefix):
     candidates = managed_tokens(tokens, prefix)
     if not candidates:
         return None
 
     def score(token):
-        remaining = token.get("secondsUntilExpiration")
-        if remaining is None:
-            remaining = -1
-        return int(remaining)
+        remaining = token_seconds_remaining(token)
+        return remaining if remaining is not None else -1
 
     return max(candidates, key=score)
 
-def needs_rotation(tokens, prefix):
+def assess_rotation(tokens, prefix, credential_name):
     if FORCE_ROTATION:
-        return True, "forced"
+        print(f"{credential_name}: forced rotation requested.")
+        return True
 
     current = best_managed_token(tokens, prefix)
+
     if current is None:
-        return True, "no managed token"
+        print(f"{credential_name}: no managed token found -> ROTATE")
+        return True
 
-    expiration = current.get("expiration")
-    remaining = current.get("secondsUntilExpiration")
+    name = current.get("name", "<unknown>")
+    expiration_raw = current.get("expiration")
+    seconds_left = token_seconds_remaining(current)
 
-    if not expiration:
-        return True, "managed token has no expiration"
+    print(f"{credential_name}:")
+    print(f"  Current token: {name}")
+    print(f"  Expiration:    {expiration_raw or '<not returned>'}")
+    print(f"  Threshold:     {ROTATE_WHEN_DAYS_LEFT} days")
 
-    if remaining is None:
-        return True, "remaining lifetime is unknown"
+    if seconds_left is None:
+        print("  Days remaining: unknown")
+        print("  Decision: ROTATE (cannot determine expiration safely)")
+        return True
 
-    if int(remaining) <= THRESHOLD_SECONDS:
-        days = int(remaining) / 86400
-        return True, f"only {days:.1f} days remaining"
+    days_left = seconds_left / 86400
+    print(f"  Days remaining: {days_left:.2f}")
 
-    days = int(remaining) / 86400
-    return False, f"{days:.1f} days remaining"
+    if seconds_left <= 0:
+        print("  Decision: ROTATE (token expired)")
+        return True
+
+    if seconds_left <= THRESHOLD_SECONDS:
+        print("  Decision: ROTATE")
+        return True
+
+    print("  Decision: SKIP ROTATION")
+    return False
 
 def cleanup_old_tokens(service_account_id, tokens_before, new_id, prefix, legacy_name, auth_token):
     deleted = []
@@ -181,10 +230,8 @@ def cleanup_old_tokens(service_account_id, tokens_before, new_id, prefix, legacy
 
 def rotate_deployment_token(admin_token):
     tokens_before = list_tokens(DEPLOY_SA_ID, admin_token)
-    rotate, reason = needs_rotation(tokens_before, DEPLOY_PREFIX)
 
-    print(f"Deployment token assessment: {reason}")
-    if not rotate:
+    if not assess_rotation(tokens_before, DEPLOY_PREFIX, "GRAFANA_TOKEN"):
         return False, admin_token
 
     new_id, _, new_key = create_token(DEPLOY_SA_ID, DEPLOY_PREFIX, admin_token)
@@ -209,10 +256,8 @@ def rotate_deployment_token(admin_token):
 
 def rotate_rotator_token(current_admin_token):
     tokens_before = list_tokens(ROTATOR_SA_ID, current_admin_token)
-    rotate, reason = needs_rotation(tokens_before, ROTATOR_PREFIX)
 
-    print(f"Rotator token assessment: {reason}")
-    if not rotate:
+    if not assess_rotation(tokens_before, ROTATOR_PREFIX, "GRAFANA_ROTATION_ADMIN_TOKEN"):
         return False, current_admin_token
 
     new_id, _, new_key = create_token(
