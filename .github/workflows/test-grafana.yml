@@ -1,0 +1,29 @@
+name: Test Grafana connection
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on:
+      - self-hosted
+      - Linux
+      - ARM64
+
+    steps:
+      - name: Test runner
+        run: |
+          echo "Runner działa"
+          uname -a
+
+      - name: Test Grafana API
+        shell: bash
+        env:
+          GRAFANA_URL: ${{ secrets.GRAFANA_URL }}
+          GRAFANA_TOKEN: ${{ secrets.GRAFANA_TOKEN }}
+        run: |
+          echo "Testing Grafana at $GRAFANA_URL"
+
+          curl --fail --silent --show-error \
+            --header "Authorization: Bearer $GRAFANA_TOKEN" \
+            "$GRAFANA_URL/api/health"
