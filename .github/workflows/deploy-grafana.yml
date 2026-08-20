@@ -27,6 +27,7 @@ jobs:
 
     env:
       DASHBOARD_DIR: scripts/DBACentralRepository_v3/grafana
+      GRAFANA_NAMESPACE: default
       GRAFANA_URL: ${{ secrets.GRAFANA_URL }}
       GRAFANA_TOKEN: ${{ secrets.GRAFANA_TOKEN }}
 
@@ -46,19 +47,23 @@ jobs:
           echo "Runner: $(hostname)"
           echo "Architecture: $(uname -m)"
           echo "Dashboard directory: $DASHBOARD_DIR"
+          echo "Grafana namespace: $GRAFANA_NAMESPACE"
           echo "Grafana URL: $GRAFANA_URL"
 
       - name: Test Grafana API
         shell: bash
         run: |
           set -euo pipefail
+
           echo "Testing Grafana API..."
+
           curl \
             --fail \
             --silent \
             --show-error \
             --header "Authorization: Bearer $GRAFANA_TOKEN" \
             "$GRAFANA_URL/api/health"
+
           echo
           echo "Grafana API is reachable."
 
@@ -90,45 +95,43 @@ jobs:
           for file in "${dashboards[@]}"; do
             echo "Validating: $file"
 
-            python3 - "$file" <<'PY'
-          import json
-          import pathlib
-          import sys
+            api_version="$(python3 -c 'import json,sys; r=json.load(open(sys.argv[1], encoding="utf-8-sig")); print(r.get("apiVersion",""))' "$file")"
+            kind="$(python3 -c 'import json,sys; r=json.load(open(sys.argv[1], encoding="utf-8-sig")); print(r.get("kind",""))' "$file")"
+            name="$(python3 -c 'import json,sys; r=json.load(open(sys.argv[1], encoding="utf-8-sig")); print((r.get("metadata") or {}).get("name",""))' "$file")"
+            title="$(python3 -c 'import json,sys; r=json.load(open(sys.argv[1], encoding="utf-8-sig")); print((r.get("spec") or {}).get("title",""))' "$file")"
 
-          path = pathlib.Path(sys.argv[1])
+            if [ -z "$api_version" ]; then
+              echo "::error::$file has no apiVersion"
+              exit 1
+            fi
 
-          with path.open("r", encoding="utf-8-sig") as f:
-              root = json.load(f)
+            if [[ "$api_version" != dashboard.grafana.app/* ]]; then
+              echo "::error::$file has unsupported apiVersion: $api_version"
+              exit 1
+            fi
 
-          if not isinstance(root, dict):
-              raise SystemExit(f"{path}: root JSON value must be an object")
+            if [ "$kind" != "Dashboard" ]; then
+              echo "::error::$file has unsupported kind: $kind"
+              exit 1
+            fi
 
-          if isinstance(root.get("dashboard"), dict):
-              dashboard = root["dashboard"]
-              fmt = "wrapped:dashboard"
-          elif isinstance(root.get("spec"), dict):
-              dashboard = root["spec"]
-              fmt = "wrapped:spec"
-          else:
-              dashboard = root
-              fmt = "classic"
+            if [ -z "$name" ]; then
+              echo "::error::$file has no metadata.name"
+              exit 1
+            fi
 
-          title = dashboard.get("title")
-          uid = dashboard.get("uid")
+            if [ -z "$title" ]; then
+              echo "::error::$file has no spec.title"
+              exit 1
+            fi
 
-          if not title:
-              raise SystemExit(
-                  f"{path}: dashboard has no 'title' "
-                  f"(detected format: {fmt}; top-level keys: {list(root.keys())[:20]})"
-              )
-
-          print(f"  format: {fmt}")
-          print(f"  title:  {title}")
-          print(f"  uid:    {uid or '<none>'}")
-          PY
+            echo "  apiVersion: $api_version"
+            echo "  kind:       $kind"
+            echo "  name:       $name"
+            echo "  title:      $title"
           done
 
-      - name: Deploy dashboards
+      - name: Deploy dashboards using Grafana Resource API
         shell: bash
         run: |
           set -euo pipefail
@@ -142,72 +145,100 @@ jobs:
           )
 
           deployed=0
+          created=0
+          updated=0
 
           for file in "${dashboards[@]}"; do
             filename="$(basename "$file")"
 
+            api_version="$(python3 -c 'import json,sys; r=json.load(open(sys.argv[1], encoding="utf-8-sig")); print(r["apiVersion"])' "$file")"
+            api_group="${api_version%/*}"
+            api_ver="${api_version##*/}"
+            name="$(python3 -c 'import json,sys; r=json.load(open(sys.argv[1], encoding="utf-8-sig")); print(r["metadata"]["name"])' "$file")"
+            title="$(python3 -c 'import json,sys; r=json.load(open(sys.argv[1], encoding="utf-8-sig")); print(r["spec"]["title"])' "$file")"
+
+            collection_url="$GRAFANA_URL/apis/$api_group/$api_ver/namespaces/$GRAFANA_NAMESPACE/dashboards"
+            resource_url="$collection_url/$name"
+
             echo
             echo "============================================================"
-            echo "Deploying: $filename"
+            echo "Dashboard: $title"
+            echo "File:      $filename"
+            echo "API:       $api_group/$api_ver"
+            echo "Name:      $name"
             echo "============================================================"
 
             payload="$(mktemp)"
             response="$(mktemp)"
 
-            python3 - "$file" "$payload" <<'PY'
-          import json
-          import pathlib
-          import sys
+            python3 -c 'import json,sys; r=json.load(open(sys.argv[1], encoding="utf-8-sig")); m=r.get("metadata") or {}; a=m.get("annotations") or {}; md={"name":m["name"]}; folder=a.get("grafana.app/folder"); md["annotations"]={"grafana.app/message":"Deployed from GitHub Actions"}; folder and md["annotations"].__setitem__("grafana.app/folder",folder); labels=m.get("labels"); labels and md.__setitem__("labels",labels); out={"apiVersion":r["apiVersion"],"kind":"Dashboard","metadata":md,"spec":r["spec"]}; json.dump(out,open(sys.argv[2],"w",encoding="utf-8"),ensure_ascii=False,separators=(",",":"))' "$file" "$payload"
 
-          source = pathlib.Path(sys.argv[1])
-          target = pathlib.Path(sys.argv[2])
-
-          with source.open("r", encoding="utf-8-sig") as f:
-              root = json.load(f)
-
-          if isinstance(root.get("dashboard"), dict):
-              dashboard = root["dashboard"]
-          elif isinstance(root.get("spec"), dict):
-              dashboard = root["spec"]
-          else:
-              dashboard = root
-
-          if not isinstance(dashboard, dict):
-              raise SystemExit(f"{source}: dashboard payload is not an object")
-
-          if not dashboard.get("title"):
-              raise SystemExit(f"{source}: dashboard has no title")
-
-          dashboard["id"] = None
-
-          payload = {
-              "dashboard": dashboard,
-              "overwrite": True,
-              "message": "Deployed from GitHub Actions"
-          }
-
-          with target.open("w", encoding="utf-8") as f:
-              json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
-          PY
-
-            http_code="$(
+            get_code="$(
               curl \
                 --silent \
                 --show-error \
                 --output "$response" \
                 --write-out '%{http_code}' \
-                --request POST \
                 --header "Authorization: Bearer $GRAFANA_TOKEN" \
-                --header "Content-Type: application/json" \
-                --data-binary "@$payload" \
-                "$GRAFANA_URL/api/dashboards/db"
+                --header "Accept: application/json" \
+                "$resource_url"
             )"
 
-            if [[ "$http_code" =~ ^2 ]]; then
-              echo "SUCCESS: $filename"
+            if [ "$get_code" = "200" ]; then
+              echo "Existing dashboard found -> UPDATE"
+
+              http_code="$(
+                curl \
+                  --silent \
+                  --show-error \
+                  --output "$response" \
+                  --write-out '%{http_code}' \
+                  --request PUT \
+                  --header "Authorization: Bearer $GRAFANA_TOKEN" \
+                  --header "Accept: application/json" \
+                  --header "Content-Type: application/json" \
+                  --data-binary "@$payload" \
+                  "$resource_url"
+              )"
+
+              action="updated"
+
+            elif [ "$get_code" = "404" ]; then
+              echo "Dashboard not found -> CREATE"
+
+              http_code="$(
+                curl \
+                  --silent \
+                  --show-error \
+                  --output "$response" \
+                  --write-out '%{http_code}' \
+                  --request POST \
+                  --header "Authorization: Bearer $GRAFANA_TOKEN" \
+                  --header "Accept: application/json" \
+                  --header "Content-Type: application/json" \
+                  --data-binary "@$payload" \
+                  "$collection_url"
+              )"
+
+              action="created"
+
+            else
+              echo "::error::Unable to determine dashboard state for $filename. GET returned HTTP $get_code"
               cat "$response"
               echo
+              rm -f "$payload" "$response"
+              exit 1
+            fi
+
+            if [[ "$http_code" =~ ^2 ]]; then
+              echo "SUCCESS: $filename ($action)"
               deployed=$((deployed + 1))
+
+              if [ "$action" = "created" ]; then
+                created=$((created + 1))
+              else
+                updated=$((updated + 1))
+              fi
             else
               echo "::error::Grafana deployment failed for $filename. HTTP $http_code"
               cat "$response"
@@ -220,19 +251,34 @@ jobs:
           done
 
           echo
-          echo "Successfully deployed $deployed dashboard(s)."
+          echo "Deployment completed."
+          echo "Total:   $deployed"
+          echo "Created: $created"
+          echo "Updated: $updated"
+
+          {
+            echo "DEPLOYED=$deployed"
+            echo "CREATED=$created"
+            echo "UPDATED=$updated"
+          } >> "$GITHUB_ENV"
 
       - name: Deployment summary
         if: success()
         shell: bash
         run: |
           {
-            echo "## Grafana deployment"
+            echo "## Grafana dashboard deployment"
             echo
             echo "✅ Deployment completed successfully."
+            echo
+            echo "| Item | Value |"
+            echo "|---|---:|"
+            echo "| Total | $DEPLOYED |"
+            echo "| Created | $CREATED |"
+            echo "| Updated | $UPDATED |"
             echo
             echo "- Runner: \`$(hostname)\`"
             echo "- Architecture: \`$(uname -m)\`"
             echo "- Source: \`$DASHBOARD_DIR\`"
-            echo "- Grafana: \`$GRAFANA_URL\`"
+            echo "- Namespace: \`$GRAFANA_NAMESPACE\`"
           } >> "$GITHUB_STEP_SUMMARY"
