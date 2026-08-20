@@ -1,0 +1,100 @@
+name: Grafana GitOps alerts
+
+on:
+  workflow_run:
+    workflows:
+      - Deploy Grafana dashboards
+      - Detect Grafana dashboard drift
+      - Rotate Grafana tokens
+      - Grafana token rotation reminder
+    types:
+      - completed
+
+jobs:
+  alert:
+    name: Report Grafana GitOps failure
+    if: ${{ github.event.workflow_run.conclusion != 'success' }}
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      issues: write
+
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+      WORKFLOW_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+      WORKFLOW_URL: ${{ github.event.workflow_run.html_url }}
+      WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
+      WORKFLOW_BRANCH: ${{ github.event.workflow_run.head_branch }}
+      WORKFLOW_SHA: ${{ github.event.workflow_run.head_sha }}
+      WORKFLOW_ACTOR: ${{ github.event.workflow_run.actor.login }}
+
+    steps:
+      - name: Create or update incident issue
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          title="[Grafana GitOps] Failure: $WORKFLOW_NAME"
+
+          body="$(cat <<EOF
+          ## Grafana GitOps failure
+
+          | Field | Value |
+          |---|---|
+          | Workflow | \`$WORKFLOW_NAME\` |
+          | Conclusion | \`$WORKFLOW_CONCLUSION\` |
+          | Branch | \`$WORKFLOW_BRANCH\` |
+          | Commit | \`$WORKFLOW_SHA\` |
+          | Actor | \`$WORKFLOW_ACTOR\` |
+          | Run ID | \`$WORKFLOW_RUN_ID\` |
+
+          [Open failed workflow run]($WORKFLOW_URL)
+
+          ### Operational response
+
+          1. Open the failed workflow run.
+          2. Determine whether the failure concerns deployment, drift, token rotation, or connectivity.
+          3. Fix the root cause.
+          4. Re-run the failed workflow.
+          5. Confirm:
+             - Test Grafana connection: success
+             - Deploy Grafana dashboards: success
+             - Detect Grafana dashboard drift: 0 drift / 0 missing
+          EOF
+          )"
+
+          existing="$(
+            gh issue list \
+              --repo "$GITHUB_REPOSITORY" \
+              --state open \
+              --search "$title in:title" \
+              --json number,title \
+              --jq ".[] | select(.title == \"$title\") | .number" \
+              | head -n 1
+          )"
+
+          if [ -n "$existing" ]; then
+            echo "Existing incident issue: #$existing"
+            gh issue comment "$existing" \
+              --repo "$GITHUB_REPOSITORY" \
+              --body "$body"
+          else
+            echo "Creating incident issue."
+            gh issue create \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "$title" \
+              --body "$body"
+          fi
+
+      - name: Job summary
+        shell: bash
+        run: |
+          {
+            echo "## Grafana GitOps alert"
+            echo
+            echo "❌ **$WORKFLOW_NAME** finished with \`$WORKFLOW_CONCLUSION\`."
+            echo
+            echo "[Open workflow run]($WORKFLOW_URL)"
+          } >> "$GITHUB_STEP_SUMMARY"

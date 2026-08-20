@@ -4,9 +4,6 @@ on:
   pull_request:
     branches:
       - master
-    paths:
-      - 'scripts/DBACentralRepository_v3/grafana/*.json'
-      - '.github/workflows/validate-grafana.yml'
 
   workflow_dispatch:
 
@@ -35,7 +32,12 @@ jobs:
         run: |
           set -euo pipefail
 
-          python3 -c 'import json,pathlib,sys; root=pathlib.Path(sys.argv[1]); files=sorted(root.glob("*.json")); assert files, f"No JSON files found in {root}"; names={}; titles={}; 
+          python3 -c 'import json,pathlib,sys
+root=pathlib.Path(sys.argv[1])
+files=sorted(root.glob("*.json"))
+assert files, f"No JSON files found in {root}"
+names={}
+titles={}
 for path in files:
     obj=json.load(open(path,encoding="utf-8-sig"))
     api_version=obj.get("apiVersion")
