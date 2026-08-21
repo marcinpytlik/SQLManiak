@@ -67,7 +67,7 @@
                       "spec": {
                         "format": "time_series",
                         "rawQuery": true,
-                        "rawSql": "SELECT CAST(UsageDateUtc AS datetime2) AS time, SUM(TechnicalAccessCount) AS TechnicalAccessCount, SUM(OtherAccessCount) AS OtherAccessCount FROM report.vTableUsageDaily WHERE ServerInstance='$ServerInstance' AND DatabaseName='$DatabaseName' AND $__timeFilter(CAST(UsageDateUtc AS datetime2)) GROUP BY UsageDateUtc ORDER BY UsageDateUtc;"
+                        "rawSql": "SELECT CAST(UsageDateUtc AS datetime2) AS time, SUM(TechnicalAccessCount) AS TechnicalAccessCount, SUM(OtherAccessCount) AS OtherAccessCount FROM report.vTableUsageDaily WHERE ServerInstance='$ServerInstance' AND DatabaseName='$DatabaseName' AND $__timeFilter(UsageDateUtc) GROUP BY UsageDateUtc ORDER BY UsageDateUtc;"
                       }
                     },
                     "refId": "A",
@@ -180,7 +180,7 @@
                       "spec": {
                         "format": "table",
                         "rawQuery": true,
-                        "rawSql": "SELECT TOP (50) SchemaName,TableName,SUM(AccessCount) AS AccessCount,SUM(TechnicalAccessCount) AS TechnicalAccessCount,SUM(OtherAccessCount) AS OtherAccessCount FROM report.vTableUsageDaily WHERE ServerInstance='$ServerInstance' AND DatabaseName='$DatabaseName' AND $__timeFilter(CAST(UsageDateUtc AS datetime2)) GROUP BY SchemaName,TableName ORDER BY AccessCount DESC;"
+                        "rawSql": "SELECT TOP (50) SchemaName,TableName,SUM(AccessCount) AS AccessCount,SUM(TechnicalAccessCount) AS TechnicalAccessCount,SUM(OtherAccessCount) AS OtherAccessCount FROM report.vTableUsageDaily WHERE ServerInstance='$ServerInstance' AND DatabaseName='$DatabaseName' AND $__timeFilter(UsageDateUtc) GROUP BY SchemaName,TableName ORDER BY AccessCount DESC;"
                       }
                     },
                     "refId": "A",
@@ -257,7 +257,7 @@
                       "spec": {
                         "format": "table",
                         "rawQuery": true,
-                        "rawSql": "SELECT TOP (50) SchemaName,TableName,SUM(AccessCount) AS AccessCount,SUM(TechnicalAccessCount) AS TechnicalAccessCount,CAST(100.0*SUM(TechnicalAccessCount)/NULLIF(SUM(AccessCount),0) AS decimal(9,2)) AS TechnicalPercent FROM report.vTableUsageDaily WHERE ServerInstance='$ServerInstance' AND DatabaseName='$DatabaseName' AND $__timeFilter(CAST(UsageDateUtc AS datetime2)) GROUP BY SchemaName,TableName HAVING SUM(AccessCount)>0 ORDER BY TechnicalPercent DESC,AccessCount DESC;"
+                        "rawSql": "SELECT TOP (50) SchemaName,TableName,SUM(AccessCount) AS AccessCount,SUM(TechnicalAccessCount) AS TechnicalAccessCount,CAST(100.0*SUM(TechnicalAccessCount)/NULLIF(SUM(AccessCount),0) AS decimal(9,2)) AS TechnicalPercent FROM report.vTableUsageDaily WHERE ServerInstance='$ServerInstance' AND DatabaseName='$DatabaseName' AND $__timeFilter(UsageDateUtc) GROUP BY SchemaName,TableName HAVING SUM(AccessCount)>0 ORDER BY TechnicalPercent DESC,AccessCount DESC;"
                       }
                     },
                     "refId": "A",
