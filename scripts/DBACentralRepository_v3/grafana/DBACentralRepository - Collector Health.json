@@ -18,7 +18,7 @@
     ],
     "timezone": "browser",
     "editable": true,
-    "graphTooltip": 1,
+    "cursorSync": "Off",
     "refresh": "1m",
     "schemaVersion": 42,
     "time": {
