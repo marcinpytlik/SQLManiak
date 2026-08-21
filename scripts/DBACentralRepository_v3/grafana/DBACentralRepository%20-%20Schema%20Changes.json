@@ -57,7 +57,7 @@
                       "spec": {
                         "format": "table",
                         "rawQuery": true,
-                        "rawSql": "SELECT\n    ChangeScope,\n    ChangeType,\n    SUM(ChangeCount) AS ChangeCount\nFROM report.vDatabaseSchemaChangeSummary\nWHERE $__timeFilter(ChangeDetectedAt)\nGROUP BY\n    ChangeScope,\n    ChangeType\nORDER BY\n    ChangeScope,\n    ChangeType;"
+                        "rawSql": "SELECT\n    ChangeScope,\n    ChangeType,\n    SUM(ChangeCount) AS ChangeCount\nFROM report.vDatabaseSchemaChangeSummary\nWHERE $__timeFilter(ChangeDetectedAtUtc)\nGROUP BY\n    ChangeScope,\n    ChangeType\nORDER BY\n    ChangeScope,\n    ChangeType;"
                       }
                     },
                     "refId": "A",
@@ -223,7 +223,7 @@
                       "spec": {
                         "format": "table",
                         "rawQuery": true,
-                        "rawSql": "SELECT\n    DatabaseName,\n    SUM(ChangeCount) AS ChangeCount\nFROM report.vDatabaseSchemaChangeSummary\nWHERE $__timeFilter(ChangeDetectedAt)\nGROUP BY\n    DatabaseName\nORDER BY\n    SUM(ChangeCount) DESC,\n    DatabaseName;"
+                        "rawSql": "SELECT\n    DatabaseName,\n    SUM(ChangeCount) AS ChangeCount\nFROM report.vDatabaseSchemaChangeSummary\nWHERE $__timeFilter(ChangeDetectedAtUtc)\nGROUP BY\n    DatabaseName\nORDER BY\n    SUM(ChangeCount) DESC,\n    DatabaseName;"
                       }
                     },
                     "refId": "A",
@@ -300,7 +300,7 @@
                       "spec": {
                         "format": "table",
                         "rawQuery": true,
-                        "rawSql": "SELECT TOP (100)\n    ChangeDetectedAt,\n    DatabaseName,\n    SchemaName,\n    ObjectName,\n    ObjectTypeDesc,\n    ChangeType,\n    PreviousScanRunId,\n    CurrentScanRunId\nFROM report.vDatabaseObjectChanges\nWHERE $__timeFilter(ChangeDetectedAt)\nORDER BY\n    ChangeDetectedAt DESC,\n    DatabaseName,\n    SchemaName,\n    ObjectName;"
+                        "rawSql": "SELECT TOP (100)\n    ChangeDetectedAt,\n    ChangeDetectedAtUtc,\n    DatabaseName,\n    SchemaName,\n    ObjectName,\n    ObjectTypeDesc,\n    ChangeType,\n    PreviousScanRunId,\n    CurrentScanRunId\nFROM report.vDatabaseObjectChanges\nWHERE $__timeFilter(ChangeDetectedAtUtc)\nORDER BY\n    ChangeDetectedAtUtc DESC,\n    DatabaseName,\n    SchemaName,\n    ObjectName;"
                       }
                     },
                     "refId": "A",
@@ -432,7 +432,7 @@
                       "spec": {
                         "format": "table",
                         "rawQuery": true,
-                        "rawSql": "SELECT TOP (200)\n    ChangeDetectedAt,\n    DatabaseName,\n    SchemaName,\n    ObjectName,\n    ColumnName,\n    ChangeType,\n    PreviousDataTypeName,\n    CurrentDataTypeName,\n    PreviousMaxLength,\n    CurrentMaxLength,\n    PreviousIsNullable,\n    CurrentIsNullable\nFROM report.vDatabaseColumnChanges\nWHERE $__timeFilter(ChangeDetectedAt)\nORDER BY\n    ChangeDetectedAt DESC,\n    DatabaseName,\n    SchemaName,\n    ObjectName,\n    ColumnName;"
+                        "rawSql": "SELECT TOP (200)\n    ChangeDetectedAt,\n    ChangeDetectedAtUtc,\n    DatabaseName,\n    SchemaName,\n    ObjectName,\n    ColumnName,\n    ChangeType,\n    PreviousDataTypeName,\n    CurrentDataTypeName,\n    PreviousMaxLength,\n    CurrentMaxLength,\n    PreviousIsNullable,\n    CurrentIsNullable\nFROM report.vDatabaseColumnChanges\nWHERE $__timeFilter(ChangeDetectedAtUtc)\nORDER BY\n    ChangeDetectedAtUtc DESC,\n    DatabaseName,\n    SchemaName,\n    ObjectName,\n    ColumnName;"
                       }
                     },
                     "refId": "A",
@@ -564,7 +564,7 @@
                       "spec": {
                         "format": "table",
                         "rawQuery": true,
-                        "rawSql": "SELECT TOP (250)\n    ChangeDetectedAt,\n    DatabaseName,\n    SchemaName,\n    ObjectName,\n    ColumnName,\n    ChangeScope,\n    ChangeType,\n    PreviousScanRunId,\n    CurrentScanRunId\nFROM report.vDatabaseSchemaChanges\nWHERE $__timeFilter(ChangeDetectedAt)\nORDER BY\n    ChangeDetectedAt DESC,\n    DatabaseName,\n    SchemaName,\n    ObjectName,\n    ColumnName;"
+                        "rawSql": "SELECT TOP (250)\n    ChangeDetectedAt,\n    ChangeDetectedAtUtc,\n    DatabaseName,\n    SchemaName,\n    ObjectName,\n    ColumnName,\n    ChangeScope,\n    ChangeType,\n    PreviousScanRunId,\n    CurrentScanRunId\nFROM report.vDatabaseSchemaChanges\nWHERE $__timeFilter(ChangeDetectedAtUtc)\nORDER BY\n    ChangeDetectedAtUtc DESC,\n    DatabaseName,\n    SchemaName,\n    ObjectName,\n    ColumnName;"
                       }
                     },
                     "refId": "A",
@@ -790,7 +790,7 @@
     ],
     "timeSettings": {
       "timezone": "browser",
-      "from": "now-7d",
+      "from": "now-30d",
       "to": "now",
       "autoRefresh": "5m",
       "autoRefreshIntervals": [
