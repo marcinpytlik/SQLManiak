@@ -1,0 +1,812 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "dbacr-schema-changes",
+    "annotations": {
+      "grafana.app/folder": "dbacentralrepository"
+    },
+    "labels": {}
+  },
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "grafana",
+            "version": "v0",
+            "datasource": {
+              "name": "-- Grafana --"
+            },
+            "spec": {}
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "builtIn": true
+        }
+      }
+    ],
+    "cursorSync": "Crosshair",
+    "editable": true,
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Schema changes summary",
+          "description": "Summary of schema changes in the selected time range.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "mssql",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "cfvow0j9mkef4c"
+                      },
+                      "spec": {
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT\n    ChangeScope,\n    ChangeType,\n    SUM(ChangeCount) AS ChangeCount\nFROM report.vDatabaseSchemaChangeSummary\nWHERE $__timeFilter(ChangeDetectedAt)\nGROUP BY\n    ChangeScope,\n    ChangeType\nORDER BY\n    ChangeScope,\n    ChangeType;"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "ChangeType"
+                    },
+                    "properties": [
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "type": "value",
+                            "options": {
+                              "OBJECT_ADDED": {
+                                "color": "green",
+                                "index": 0,
+                                "text": "OBJECT_ADDED"
+                              },
+                              "OBJECT_REMOVED": {
+                                "color": "red",
+                                "index": 1,
+                                "text": "OBJECT_REMOVED"
+                              },
+                              "OBJECT_CHANGED": {
+                                "color": "yellow",
+                                "index": 2,
+                                "text": "OBJECT_CHANGED"
+                              },
+                              "COLUMN_ADDED": {
+                                "color": "green",
+                                "index": 3,
+                                "text": "COLUMN_ADDED"
+                              },
+                              "COLUMN_REMOVED": {
+                                "color": "red",
+                                "index": 4,
+                                "text": "COLUMN_REMOVED"
+                              },
+                              "COLUMN_CHANGED": {
+                                "color": "yellow",
+                                "index": 5,
+                                "text": "COLUMN_CHANGED"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "color-background"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "ChangeScope"
+                    },
+                    "properties": [
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "type": "value",
+                            "options": {
+                              "OBJECT": {
+                                "color": "blue",
+                                "index": 0,
+                                "text": "OBJECT"
+                              },
+                              "COLUMN": {
+                                "color": "purple",
+                                "index": 1,
+                                "text": "COLUMN"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "color-background"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-2": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "Changes by database",
+          "description": "Databases with the highest number of detected schema changes.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "mssql",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "cfvow0j9mkef4c"
+                      },
+                      "spec": {
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT\n    DatabaseName,\n    SUM(ChangeCount) AS ChangeCount\nFROM report.vDatabaseSchemaChangeSummary\nWHERE $__timeFilter(ChangeDetectedAt)\nGROUP BY\n    DatabaseName\nORDER BY\n    SUM(ChangeCount) DESC,\n    DatabaseName;"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-3": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "Latest object changes",
+          "description": "Added, removed and changed database objects.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "mssql",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "cfvow0j9mkef4c"
+                      },
+                      "spec": {
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT TOP (100)\n    ChangeDetectedAt,\n    DatabaseName,\n    SchemaName,\n    ObjectName,\n    ObjectTypeDesc,\n    ChangeType,\n    PreviousScanRunId,\n    CurrentScanRunId\nFROM report.vDatabaseObjectChanges\nWHERE $__timeFilter(ChangeDetectedAt)\nORDER BY\n    ChangeDetectedAt DESC,\n    DatabaseName,\n    SchemaName,\n    ObjectName;"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "ChangeType"
+                    },
+                    "properties": [
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "type": "value",
+                            "options": {
+                              "OBJECT_ADDED": {
+                                "color": "green",
+                                "index": 0,
+                                "text": "OBJECT_ADDED"
+                              },
+                              "OBJECT_REMOVED": {
+                                "color": "red",
+                                "index": 1,
+                                "text": "OBJECT_REMOVED"
+                              },
+                              "OBJECT_CHANGED": {
+                                "color": "yellow",
+                                "index": 2,
+                                "text": "OBJECT_CHANGED"
+                              },
+                              "COLUMN_ADDED": {
+                                "color": "green",
+                                "index": 3,
+                                "text": "COLUMN_ADDED"
+                              },
+                              "COLUMN_REMOVED": {
+                                "color": "red",
+                                "index": 4,
+                                "text": "COLUMN_REMOVED"
+                              },
+                              "COLUMN_CHANGED": {
+                                "color": "yellow",
+                                "index": 5,
+                                "text": "COLUMN_CHANGED"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "color-background"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-4": {
+        "kind": "Panel",
+        "spec": {
+          "id": 4,
+          "title": "Latest column changes",
+          "description": "Added, removed and changed columns, including before/after metadata.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "mssql",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "cfvow0j9mkef4c"
+                      },
+                      "spec": {
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT TOP (200)\n    ChangeDetectedAt,\n    DatabaseName,\n    SchemaName,\n    ObjectName,\n    ColumnName,\n    ChangeType,\n    PreviousDataTypeName,\n    CurrentDataTypeName,\n    PreviousMaxLength,\n    CurrentMaxLength,\n    PreviousIsNullable,\n    CurrentIsNullable\nFROM report.vDatabaseColumnChanges\nWHERE $__timeFilter(ChangeDetectedAt)\nORDER BY\n    ChangeDetectedAt DESC,\n    DatabaseName,\n    SchemaName,\n    ObjectName,\n    ColumnName;"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "ChangeType"
+                    },
+                    "properties": [
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "type": "value",
+                            "options": {
+                              "OBJECT_ADDED": {
+                                "color": "green",
+                                "index": 0,
+                                "text": "OBJECT_ADDED"
+                              },
+                              "OBJECT_REMOVED": {
+                                "color": "red",
+                                "index": 1,
+                                "text": "OBJECT_REMOVED"
+                              },
+                              "OBJECT_CHANGED": {
+                                "color": "yellow",
+                                "index": 2,
+                                "text": "OBJECT_CHANGED"
+                              },
+                              "COLUMN_ADDED": {
+                                "color": "green",
+                                "index": 3,
+                                "text": "COLUMN_ADDED"
+                              },
+                              "COLUMN_REMOVED": {
+                                "color": "red",
+                                "index": 4,
+                                "text": "COLUMN_REMOVED"
+                              },
+                              "COLUMN_CHANGED": {
+                                "color": "yellow",
+                                "index": 5,
+                                "text": "COLUMN_CHANGED"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "color-background"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-5": {
+        "kind": "Panel",
+        "spec": {
+          "id": 5,
+          "title": "Recent schema changes",
+          "description": "Unified stream of object and column schema changes.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "mssql",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "cfvow0j9mkef4c"
+                      },
+                      "spec": {
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT TOP (250)\n    ChangeDetectedAt,\n    DatabaseName,\n    SchemaName,\n    ObjectName,\n    ColumnName,\n    ChangeScope,\n    ChangeType,\n    PreviousScanRunId,\n    CurrentScanRunId\nFROM report.vDatabaseSchemaChanges\nWHERE $__timeFilter(ChangeDetectedAt)\nORDER BY\n    ChangeDetectedAt DESC,\n    DatabaseName,\n    SchemaName,\n    ObjectName,\n    ColumnName;"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "ChangeType"
+                    },
+                    "properties": [
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "type": "value",
+                            "options": {
+                              "OBJECT_ADDED": {
+                                "color": "green",
+                                "index": 0,
+                                "text": "OBJECT_ADDED"
+                              },
+                              "OBJECT_REMOVED": {
+                                "color": "red",
+                                "index": 1,
+                                "text": "OBJECT_REMOVED"
+                              },
+                              "OBJECT_CHANGED": {
+                                "color": "yellow",
+                                "index": 2,
+                                "text": "OBJECT_CHANGED"
+                              },
+                              "COLUMN_ADDED": {
+                                "color": "green",
+                                "index": 3,
+                                "text": "COLUMN_ADDED"
+                              },
+                              "COLUMN_REMOVED": {
+                                "color": "red",
+                                "index": 4,
+                                "text": "COLUMN_REMOVED"
+                              },
+                              "COLUMN_CHANGED": {
+                                "color": "yellow",
+                                "index": 5,
+                                "text": "COLUMN_CHANGED"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "color-background"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "ChangeScope"
+                    },
+                    "properties": [
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "type": "value",
+                            "options": {
+                              "OBJECT": {
+                                "color": "blue",
+                                "index": 0,
+                                "text": "OBJECT"
+                              },
+                              "COLUMN": {
+                                "color": "purple",
+                                "index": 1,
+                                "text": "COLUMN"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "color-background"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 10,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 10,
+              "y": 0,
+              "width": 14,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-2"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 8,
+              "width": 24,
+              "height": 10,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-3"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 18,
+              "width": 24,
+              "height": 11,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-4"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 29,
+              "width": 24,
+              "height": 11,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-5"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": [
+      "DBACentralRepository",
+      "SQL Server",
+      "SchemaChanges",
+      "ManagedByGitHub"
+    ],
+    "timeSettings": {
+      "timezone": "browser",
+      "from": "now-7d",
+      "to": "now",
+      "autoRefresh": "5m",
+      "autoRefreshIntervals": [
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "DBACentralRepository - Schema Changes",
+    "variables": []
+  }
+}
