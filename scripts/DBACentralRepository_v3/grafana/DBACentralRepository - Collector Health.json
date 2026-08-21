@@ -9,424 +9,628 @@
     "labels": {}
   },
   "spec": {
-    "title": "DBACentralRepository - Collector Health",
-    "description": "Operational health and freshness monitoring for DBACentralRepository collectors.",
-    "tags": [
-      "DBACentralRepository",
-      "ManagedByGitHub",
-      "CollectorHealth"
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "grafana",
+            "version": "v0",
+            "datasource": {
+              "name": "-- Grafana --"
+            },
+            "spec": {}
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "builtIn": true
+        }
+      }
     ],
-    "timezone": "browser",
+    "cursorSync": "Crosshair",
     "editable": true,
-    "cursorSync": "Off",
-    "refresh": "1m",
-    "schemaVersion": 42,
-    "time": {
-      "from": "now-24h",
-      "to": "now"
-    },
-    "timepicker": {},
-    "templating": {
-      "list": [
-        {
-          "name": "datasource",
-          "label": "Data source",
-          "type": "datasource",
-          "query": "mssql",
-          "current": {},
-          "hide": 0,
-          "includeAll": false,
-          "multi": false,
-          "refresh": 1,
-          "regex": "",
-          "skipUrlSync": false
-        }
-      ]
-    },
-    "annotations": [],
-    "links": [],
-    "panels": [
-      {
-        "id": 1,
-        "type": "table",
-        "title": "Collector health",
-        "description": "Current health state of all registered DBACentralRepository collectors.",
-        "datasource": {
-          "type": "mssql",
-          "uid": "${datasource}"
-        },
-        "gridPos": {
-          "h": 10,
-          "w": 24,
-          "x": 0,
-          "y": 0
-        },
-        "targets": [
-          {
-            "refId": "A",
-            "datasource": {
-              "type": "mssql",
-              "uid": "${datasource}"
-            },
-            "format": "table",
-            "rawQuery": true,
-            "rawSql": "SELECT\n    CollectorName,\n    HealthStatus,\n    LastStatus,\n    LastSuccessAt,\n    MinutesSinceSuccess,\n    ExpectedIntervalMinutes,\n    WarningAfterMinutes,\n    CriticalAfterMinutes,\n    CollectorHost,\n    DurationMs,\n    ErrorMessage\nFROM report.vCollectorHealth\nORDER BY\n    CASE HealthStatus\n        WHEN 'CRITICAL'  THEN 1\n        WHEN 'WARNING'   THEN 2\n        WHEN 'NEVER_RUN' THEN 3\n        WHEN 'OK'        THEN 4\n        WHEN 'DISABLED'  THEN 5\n        ELSE 6\n    END,\n    CollectorName;"
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "custom": {
-              "align": "auto",
-              "cellOptions": {
-                "type": "auto"
-              },
-              "inspect": false
-            },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Collector health",
+          "description": "Current health and freshness state of DBACentralRepository collectors.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
                 {
-                  "color": "green",
-                  "value": null
-                }
-              ]
-            }
-          },
-          "overrides": [
-            {
-              "matcher": {
-                "id": "byName",
-                "options": "HealthStatus"
-              },
-              "properties": [
-                {
-                  "id": "mappings",
-                  "value": [
-                    {
-                      "type": "value",
-                      "options": {
-                        "OK": {
-                          "color": "green",
-                          "index": 0,
-                          "text": "OK"
-                        },
-                        "WARNING": {
-                          "color": "yellow",
-                          "index": 1,
-                          "text": "WARNING"
-                        },
-                        "CRITICAL": {
-                          "color": "red",
-                          "index": 2,
-                          "text": "CRITICAL"
-                        },
-                        "NEVER_RUN": {
-                          "color": "purple",
-                          "index": 3,
-                          "text": "NEVER_RUN"
-                        },
-                        "DISABLED": {
-                          "color": "gray",
-                          "index": 4,
-                          "text": "DISABLED"
-                        }
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "mssql",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "cfvow0j9mkef4c"
+                      },
+                      "spec": {
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT\n    CollectorName,\n    HealthStatus,\n    LastStatus,\n    LastSuccessAt,\n    MinutesSinceSuccess,\n    ExpectedIntervalMinutes,\n    WarningAfterMinutes,\n    CriticalAfterMinutes,\n    CollectorHost,\n    DurationMs,\n    ErrorMessage\nFROM report.vCollectorHealth\nORDER BY\n    CASE HealthStatus\n        WHEN 'CRITICAL'  THEN 1\n        WHEN 'WARNING'   THEN 2\n        WHEN 'NEVER_RUN' THEN 3\n        WHEN 'OK'        THEN 4\n        WHEN 'DISABLED'  THEN 5\n        ELSE 6\n    END,\n    CollectorName;"
                       }
-                    }
-                  ]
-                },
-                {
-                  "id": "custom.cellOptions",
-                  "value": {
-                    "type": "color-background"
+                    },
+                    "refId": "A",
+                    "hidden": false
                   }
                 }
-              ]
+              ],
+              "transformations": [],
+              "queryOptions": {}
             }
-          ]
-        },
-        "options": {
-          "showHeader": true,
-          "cellHeight": "sm",
-          "footer": {
-            "show": false,
-            "reducer": [
-              "sum"
-            ],
-            "countRows": false,
-            "fields": ""
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "HealthStatus"
+                    },
+                    "properties": [
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "type": "value",
+                            "options": {
+                              "OK": {
+                                "color": "green",
+                                "index": 0,
+                                "text": "OK"
+                              },
+                              "WARNING": {
+                                "color": "yellow",
+                                "index": 1,
+                                "text": "WARNING"
+                              },
+                              "CRITICAL": {
+                                "color": "red",
+                                "index": 2,
+                                "text": "CRITICAL"
+                              },
+                              "NEVER_RUN": {
+                                "color": "purple",
+                                "index": 3,
+                                "text": "NEVER_RUN"
+                              },
+                              "DISABLED": {
+                                "color": "gray",
+                                "index": 4,
+                                "text": "DISABLED"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "color-background"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
           }
         }
       },
-      {
-        "id": 2,
-        "type": "stat",
-        "title": "Collectors requiring attention",
-        "description": "Collectors in WARNING, CRITICAL or NEVER_RUN state.",
-        "datasource": {
-          "type": "mssql",
-          "uid": "${datasource}"
-        },
-        "gridPos": {
-          "h": 7,
-          "w": 8,
-          "x": 0,
-          "y": 10
-        },
-        "targets": [
-          {
-            "refId": "A",
-            "datasource": {
-              "type": "mssql",
-              "uid": "${datasource}"
-            },
-            "format": "table",
-            "rawQuery": true,
-            "rawSql": "SELECT\n    COUNT(*) AS ProblemCollectors\nFROM report.vCollectorHealth\nWHERE HealthStatus IN\n(\n    'WARNING',\n    'CRITICAL',\n    'NEVER_RUN'\n);"
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
+      "panel-2": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "Status summary",
+          "description": "Number of collectors in each health state.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
                 {
-                  "color": "green",
-                  "value": null
-                },
-                {
-                  "color": "red",
-                  "value": 1
-                }
-              ]
-            }
-          },
-          "overrides": []
-        },
-        "options": {
-          "reduceOptions": {
-            "values": false,
-            "calcs": [
-              "lastNotNull"
-            ],
-            "fields": ""
-          },
-          "orientation": "auto",
-          "textMode": "auto",
-          "wideLayout": true,
-          "colorMode": "background",
-          "graphMode": "none",
-          "justifyMode": "auto",
-          "showPercentChange": false
-        }
-      },
-      {
-        "id": 3,
-        "type": "table",
-        "title": "Status summary",
-        "description": "Number of collectors in each health state.",
-        "datasource": {
-          "type": "mssql",
-          "uid": "${datasource}"
-        },
-        "gridPos": {
-          "h": 7,
-          "w": 16,
-          "x": 8,
-          "y": 10
-        },
-        "targets": [
-          {
-            "refId": "A",
-            "datasource": {
-              "type": "mssql",
-              "uid": "${datasource}"
-            },
-            "format": "table",
-            "rawQuery": true,
-            "rawSql": "SELECT\n    HealthStatus,\n    COUNT(*) AS CollectorCount\nFROM report.vCollectorHealth\nGROUP BY\n    HealthStatus\nORDER BY\n    CASE HealthStatus\n        WHEN 'CRITICAL'  THEN 1\n        WHEN 'WARNING'   THEN 2\n        WHEN 'NEVER_RUN' THEN 3\n        WHEN 'OK'        THEN 4\n        WHEN 'DISABLED'  THEN 5\n        ELSE 6\n    END;"
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "custom": {
-              "align": "auto",
-              "cellOptions": {
-                "type": "auto"
-              },
-              "inspect": false
-            },
-            "mappings": []
-          },
-          "overrides": [
-            {
-              "matcher": {
-                "id": "byName",
-                "options": "HealthStatus"
-              },
-              "properties": [
-                {
-                  "id": "mappings",
-                  "value": [
-                    {
-                      "type": "value",
-                      "options": {
-                        "OK": {
-                          "color": "green",
-                          "index": 0,
-                          "text": "OK"
-                        },
-                        "WARNING": {
-                          "color": "yellow",
-                          "index": 1,
-                          "text": "WARNING"
-                        },
-                        "CRITICAL": {
-                          "color": "red",
-                          "index": 2,
-                          "text": "CRITICAL"
-                        },
-                        "NEVER_RUN": {
-                          "color": "purple",
-                          "index": 3,
-                          "text": "NEVER_RUN"
-                        },
-                        "DISABLED": {
-                          "color": "gray",
-                          "index": 4,
-                          "text": "DISABLED"
-                        }
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "mssql",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "cfvow0j9mkef4c"
+                      },
+                      "spec": {
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT\n    HealthStatus,\n    COUNT(*) AS CollectorCount\nFROM report.vCollectorHealth\nGROUP BY HealthStatus\nORDER BY\n    CASE HealthStatus\n        WHEN 'CRITICAL'  THEN 1\n        WHEN 'WARNING'   THEN 2\n        WHEN 'NEVER_RUN' THEN 3\n        WHEN 'OK'        THEN 4\n        WHEN 'DISABLED'  THEN 5\n        ELSE 6\n    END;"
                       }
-                    }
-                  ]
-                },
-                {
-                  "id": "custom.cellOptions",
-                  "value": {
-                    "type": "color-background"
+                    },
+                    "refId": "A",
+                    "hidden": false
                   }
                 }
-              ]
+              ],
+              "transformations": [],
+              "queryOptions": {}
             }
-          ]
-        },
-        "options": {
-          "showHeader": true,
-          "cellHeight": "sm",
-          "footer": {
-            "show": false,
-            "reducer": [
-              "sum"
-            ],
-            "countRows": false,
-            "fields": ""
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "HealthStatus"
+                    },
+                    "properties": [
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "type": "value",
+                            "options": {
+                              "OK": {
+                                "color": "green",
+                                "index": 0,
+                                "text": "OK"
+                              },
+                              "WARNING": {
+                                "color": "yellow",
+                                "index": 1,
+                                "text": "WARNING"
+                              },
+                              "CRITICAL": {
+                                "color": "red",
+                                "index": 2,
+                                "text": "CRITICAL"
+                              },
+                              "NEVER_RUN": {
+                                "color": "purple",
+                                "index": 3,
+                                "text": "NEVER_RUN"
+                              },
+                              "DISABLED": {
+                                "color": "gray",
+                                "index": 4,
+                                "text": "DISABLED"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "color-background"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
           }
         }
       },
-      {
-        "id": 4,
-        "type": "table",
-        "title": "Stale / unhealthy collectors",
-        "description": "Collectors that currently require operator attention.",
-        "datasource": {
-          "type": "mssql",
-          "uid": "${datasource}"
-        },
-        "gridPos": {
-          "h": 10,
-          "w": 24,
-          "x": 0,
-          "y": 17
-        },
-        "targets": [
-          {
-            "refId": "A",
-            "datasource": {
-              "type": "mssql",
-              "uid": "${datasource}"
-            },
-            "format": "table",
-            "rawQuery": true,
-            "rawSql": "SELECT\n    CollectorName,\n    HealthStatus,\n    LastSuccessAt,\n    MinutesSinceSuccess,\n    ExpectedIntervalMinutes,\n    WarningAfterMinutes,\n    CriticalAfterMinutes,\n    ErrorMessage\nFROM report.vCollectorHealth\nWHERE HealthStatus <> 'OK'\nORDER BY\n    CASE HealthStatus\n        WHEN 'CRITICAL'  THEN 1\n        WHEN 'WARNING'   THEN 2\n        WHEN 'NEVER_RUN' THEN 3\n        WHEN 'DISABLED'  THEN 4\n        ELSE 5\n    END,\n    MinutesSinceSuccess DESC;"
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "custom": {
-              "align": "auto",
-              "cellOptions": {
-                "type": "auto"
-              },
-              "inspect": false
-            },
-            "mappings": []
-          },
-          "overrides": [
-            {
-              "matcher": {
-                "id": "byName",
-                "options": "HealthStatus"
-              },
-              "properties": [
+      "panel-3": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "Stale / unhealthy collectors",
+          "description": "Collectors that currently require operator attention.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
                 {
-                  "id": "mappings",
-                  "value": [
-                    {
-                      "type": "value",
-                      "options": {
-                        "OK": {
-                          "color": "green",
-                          "index": 0,
-                          "text": "OK"
-                        },
-                        "WARNING": {
-                          "color": "yellow",
-                          "index": 1,
-                          "text": "WARNING"
-                        },
-                        "CRITICAL": {
-                          "color": "red",
-                          "index": 2,
-                          "text": "CRITICAL"
-                        },
-                        "NEVER_RUN": {
-                          "color": "purple",
-                          "index": 3,
-                          "text": "NEVER_RUN"
-                        },
-                        "DISABLED": {
-                          "color": "gray",
-                          "index": 4,
-                          "text": "DISABLED"
-                        }
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "mssql",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "cfvow0j9mkef4c"
+                      },
+                      "spec": {
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT\n    CollectorName,\n    HealthStatus,\n    LastSuccessAt,\n    MinutesSinceSuccess,\n    ExpectedIntervalMinutes,\n    WarningAfterMinutes,\n    CriticalAfterMinutes,\n    ErrorMessage\nFROM report.vCollectorHealth\nWHERE HealthStatus <> 'OK'\nORDER BY\n    CASE HealthStatus\n        WHEN 'CRITICAL'  THEN 1\n        WHEN 'WARNING'   THEN 2\n        WHEN 'NEVER_RUN' THEN 3\n        WHEN 'DISABLED'  THEN 4\n        ELSE 5\n    END,\n    MinutesSinceSuccess DESC;"
                       }
-                    }
-                  ]
-                },
-                {
-                  "id": "custom.cellOptions",
-                  "value": {
-                    "type": "color-background"
+                    },
+                    "refId": "A",
+                    "hidden": false
                   }
                 }
-              ]
+              ],
+              "transformations": [],
+              "queryOptions": {}
             }
-          ]
-        },
-        "options": {
-          "showHeader": true,
-          "cellHeight": "sm",
-          "footer": {
-            "show": false,
-            "reducer": [
-              "sum"
-            ],
-            "countRows": false,
-            "fields": ""
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "HealthStatus"
+                    },
+                    "properties": [
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "type": "value",
+                            "options": {
+                              "OK": {
+                                "color": "green",
+                                "index": 0,
+                                "text": "OK"
+                              },
+                              "WARNING": {
+                                "color": "yellow",
+                                "index": 1,
+                                "text": "WARNING"
+                              },
+                              "CRITICAL": {
+                                "color": "red",
+                                "index": 2,
+                                "text": "CRITICAL"
+                              },
+                              "NEVER_RUN": {
+                                "color": "purple",
+                                "index": 3,
+                                "text": "NEVER_RUN"
+                              },
+                              "DISABLED": {
+                                "color": "gray",
+                                "index": 4,
+                                "text": "DISABLED"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "color-background"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-4": {
+        "kind": "Panel",
+        "spec": {
+          "id": 4,
+          "title": "Collector freshness",
+          "description": "Freshness of the latest successful collection for each collector.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "mssql",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "cfvow0j9mkef4c"
+                      },
+                      "spec": {
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT\n    CollectorName,\n    LastSuccessAt,\n    MinutesSinceSuccess,\n    ExpectedIntervalMinutes,\n    HealthStatus\nFROM report.vCollectorHealth\nORDER BY MinutesSinceSuccess DESC;"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "HealthStatus"
+                    },
+                    "properties": [
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "type": "value",
+                            "options": {
+                              "OK": {
+                                "color": "green",
+                                "index": 0,
+                                "text": "OK"
+                              },
+                              "WARNING": {
+                                "color": "yellow",
+                                "index": 1,
+                                "text": "WARNING"
+                              },
+                              "CRITICAL": {
+                                "color": "red",
+                                "index": 2,
+                                "text": "CRITICAL"
+                              },
+                              "NEVER_RUN": {
+                                "color": "purple",
+                                "index": 3,
+                                "text": "NEVER_RUN"
+                              },
+                              "DISABLED": {
+                                "color": "gray",
+                                "index": 4,
+                                "text": "DISABLED"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "color-background"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
           }
         }
       }
-    ]
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 24,
+              "height": 10,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 10,
+              "width": 8,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-2"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 8,
+              "y": 10,
+              "width": 16,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-3"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 18,
+              "width": 24,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-4"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": [
+      "DBACentralRepository",
+      "SQL Server",
+      "CollectorHealth",
+      "ManagedByGitHub"
+    ],
+    "timeSettings": {
+      "timezone": "browser",
+      "from": "now-6h",
+      "to": "now",
+      "autoRefresh": "1m",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "DBACentralRepository - Collector Health",
+    "variables": []
   }
 }
