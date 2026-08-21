@@ -74,3 +74,44 @@ GO
 --     @To=SYSUTCDATETIME(),
 --     @Top=100;
 GO
+
+/*=============================================================================
+  Collector Health
+=============================================================================*/
+SELECT
+    [CollectorCode],
+    [CollectorName],
+    [LastRunAt],
+    [LastSuccessAt],
+    [LastStatus],
+    [MinutesSinceSuccess],
+    [ExpectedIntervalMinutes],
+    [WarningAfterMinutes],
+    [CriticalAfterMinutes],
+    [HealthStatus],
+    [CollectorHost],
+    [DurationMs],
+    [ErrorMessage]
+FROM [report].[vCollectorHealth]
+ORDER BY [CollectorCode];
+GO
+
+/* Only unhealthy enabled collectors. */
+SELECT
+    [CollectorCode],
+    [CollectorName],
+    [LastSuccessAt],
+    [MinutesSinceSuccess],
+    [HealthStatus],
+    [ErrorMessage]
+FROM [report].[vCollectorHealth]
+WHERE [HealthStatus] IN ('WARNING','CRITICAL','NEVER_RUN')
+ORDER BY
+    CASE [HealthStatus]
+        WHEN 'CRITICAL' THEN 1
+        WHEN 'NEVER_RUN' THEN 2
+        WHEN 'WARNING' THEN 3
+        ELSE 4
+    END,
+    [CollectorCode];
+GO

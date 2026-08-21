@@ -100,7 +100,7 @@ BEGIN
             CONSTRAINT [PK_perf_TableUsageSnapshot] PRIMARY KEY,
         [TableUsageTargetId] bigint NOT NULL,
         [InstanceId]        bigint NOT NULL,
-        [CapturedAt]        datetime2(0) NOT NULL,
+        [CapturedAt]        datetime2(0) NOT NULL, -- UTC (collector timestamp)
         [DatabaseId]        int NOT NULL,
         [DatabaseName]      sysname NOT NULL,
         [ObjectId]          int NOT NULL,

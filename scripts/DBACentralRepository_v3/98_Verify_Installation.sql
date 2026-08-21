@@ -67,3 +67,28 @@ FROM
         (N'report.vTableUsageDaily', CASE WHEN OBJECT_ID(N'report.vTableUsageDaily',N'V') IS NOT NULL THEN 1 ELSE 0 END)
 ) AS X([ObjectName],[ExistsFlag]);
 GO
+
+/* Collector Health */
+SELECT
+    [ObjectName],
+    [ExistsFlag]
+FROM
+(
+    VALUES
+        (N'config.CollectorPolicy', CASE WHEN OBJECT_ID(N'config.CollectorPolicy',N'U') IS NOT NULL THEN 1 ELSE 0 END),
+        (N'report.vCollectorHealth', CASE WHEN OBJECT_ID(N'report.vCollectorHealth',N'V') IS NOT NULL THEN 1 ELSE 0 END)
+) AS [X]([ObjectName],[ExistsFlag]);
+GO
+
+IF OBJECT_ID(N'[report].[vCollectorHealth]', N'V') IS NOT NULL
+BEGIN
+    SELECT
+        [CollectorCode],
+        [CollectorName],
+        [LastSuccessAt],
+        [MinutesSinceSuccess],
+        [HealthStatus]
+    FROM [report].[vCollectorHealth]
+    ORDER BY [CollectorCode];
+END;
+GO
