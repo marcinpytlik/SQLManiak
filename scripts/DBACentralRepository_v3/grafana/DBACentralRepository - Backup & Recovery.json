@@ -1,0 +1,595 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "dbacr-backup-recovery",
+    "annotations": {
+      "grafana.app/folder": "dbacentralrepository"
+    },
+    "labels": {}
+  },
+  "spec": {
+    "annotations": [],
+    "cursorSync": "Crosshair",
+    "editable": true,
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Backup compliance summary",
+          "description": "Current backup status grouped by status.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "mssql",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "cfvow0j9mkef4c"
+                      },
+                      "spec": {
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT\n    BackupStatus,\n    COUNT(*) AS DatabaseCount\nFROM report.vGrafanaBackupStatus\nGROUP BY BackupStatus\nORDER BY COUNT(*) DESC, BackupStatus;"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 1,
+                        "color": "red"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-2": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "Databases requiring attention",
+          "description": "Databases whose current backup state is not healthy/compliant.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "mssql",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "cfvow0j9mkef4c"
+                      },
+                      "spec": {
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT TOP (100)\n    ServerInstance,\n    EnvironmentCode,\n    DatabaseName,\n    RecoveryModelDesc,\n    LastFull,\n    FullAgeHours,\n    LastDiff,\n    LastLog,\n    LogAgeMinutes,\n    BackupStatus\nFROM report.vGrafanaBackupStatus\nWHERE UPPER(ISNULL(BackupStatus, '')) NOT IN ('OK', 'HEALTHY', 'COMPLIANT')\nORDER BY\n    CASE WHEN FullAgeHours IS NULL THEN 0 ELSE 1 END,\n    FullAgeHours DESC,\n    CASE WHEN LogAgeMinutes IS NULL THEN 0 ELSE 1 END,\n    LogAgeMinutes DESC,\n    ServerInstance,\n    DatabaseName;"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 1,
+                        "color": "red"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-3": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "Backup status by instance",
+          "description": "Operational backup summary per SQL Server instance.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "mssql",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "cfvow0j9mkef4c"
+                      },
+                      "spec": {
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT\n    ServerInstance,\n    COUNT(*) AS DatabaseCount,\n    SUM(CASE WHEN UPPER(ISNULL(BackupStatus, '')) IN ('OK', 'HEALTHY', 'COMPLIANT') THEN 1 ELSE 0 END) AS HealthyCount,\n    SUM(CASE WHEN UPPER(ISNULL(BackupStatus, '')) NOT IN ('OK', 'HEALTHY', 'COMPLIANT') THEN 1 ELSE 0 END) AS AttentionCount,\n    MAX(FullAgeHours) AS MaxFullAgeHours,\n    MAX(LogAgeMinutes) AS MaxLogAgeMinutes\nFROM report.vGrafanaBackupStatus\nGROUP BY ServerInstance\nORDER BY AttentionCount DESC, ServerInstance;"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 1,
+                        "color": "red"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-4": {
+        "kind": "Panel",
+        "spec": {
+          "id": 4,
+          "title": "Latest backup status per database",
+          "description": "Latest FULL, DIFF and LOG backup information.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "mssql",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "cfvow0j9mkef4c"
+                      },
+                      "spec": {
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT\n    ServerInstance,\n    EnvironmentCode,\n    DatabaseName,\n    RecoveryModelDesc,\n    LastFull,\n    FullAgeHours,\n    LastDiff,\n    LastLog,\n    LogAgeMinutes,\n    BackupStatus\nFROM report.vGrafanaBackupStatus\nORDER BY ServerInstance, DatabaseName;"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 1,
+                        "color": "red"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-5": {
+        "kind": "Panel",
+        "spec": {
+          "id": 5,
+          "title": "Latest restore test per database",
+          "description": "Most recent restore validation per source database.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "mssql",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "cfvow0j9mkef4c"
+                      },
+                      "spec": {
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "WITH x AS\n(\n    SELECT\n        rt.*,\n        CAST(\n            rt.TestStartedAt\n                AT TIME ZONE 'Central European Standard Time'\n                AT TIME ZONE 'UTC'\n            AS datetime2\n        ) AS TestStartedAtUtc,\n        ROW_NUMBER() OVER\n        (\n            PARTITION BY rt.InstanceId, rt.SourceDatabaseName\n            ORDER BY rt.TestStartedAt DESC, rt.RestoreTestId DESC\n        ) AS rn\n    FROM backup.RestoreTest AS rt\n)\nSELECT TOP (100)\n    InstanceId,\n    SourceDatabaseName,\n    TargetServerInstance,\n    TargetDatabaseName,\n    TestStartedAtUtc AS TestStartedAt,\n    TestFinishedAt,\n    DurationSeconds,\n    RestoreResult,\n    CheckDbResult,\n    BackupFinishDate,\n    PerformedBy,\n    TicketNumber\nFROM x\nWHERE rn = 1\nORDER BY TestStartedAtUtc DESC, SourceDatabaseName;"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 1,
+                        "color": "red"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-6": {
+        "kind": "Panel",
+        "spec": {
+          "id": 6,
+          "title": "Recent restore tests",
+          "description": "Restore tests in the selected Grafana time range.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "mssql",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "cfvow0j9mkef4c"
+                      },
+                      "spec": {
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT TOP (250)\n    RestoreTestId,\n    InstanceId,\n    SourceDatabaseName,\n    TargetServerInstance,\n    TargetDatabaseName,\n    CAST(\n        TestStartedAt\n            AT TIME ZONE 'Central European Standard Time'\n            AT TIME ZONE 'UTC'\n        AS datetime2\n    ) AS TestStartedAt,\n    TestFinishedAt,\n    DurationSeconds,\n    RestoreResult,\n    CheckDbResult,\n    BackupFinishDate,\n    PerformedBy,\n    TicketNumber,\n    Notes\nFROM backup.RestoreTest\nWHERE $__timeFilter(\n    CAST(\n        TestStartedAt\n            AT TIME ZONE 'Central European Standard Time'\n            AT TIME ZONE 'UTC'\n        AS datetime2\n    )\n)\nORDER BY TestStartedAt DESC, RestoreTestId DESC;"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 1,
+                        "color": "red"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 8,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 8,
+              "y": 0,
+              "width": 16,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-3"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 8,
+              "width": 24,
+              "height": 10,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-2"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 18,
+              "width": 24,
+              "height": 11,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-4"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 29,
+              "width": 24,
+              "height": 10,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-5"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 39,
+              "width": 24,
+              "height": 11,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-6"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": [
+      "DBACentralRepository",
+      "SQL Server",
+      "Backup",
+      "Recovery",
+      "ManagedByGitHub"
+    ],
+    "timeSettings": {
+      "timezone": "browser",
+      "from": "now-30d",
+      "to": "now",
+      "autoRefresh": "5m",
+      "autoRefreshIntervals": [
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "DBACentralRepository - Backup & Recovery",
+    "variables": []
+  }
+}
