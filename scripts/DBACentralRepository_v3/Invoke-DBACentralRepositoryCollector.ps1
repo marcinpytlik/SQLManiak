@@ -1,7 +1,7 @@
 ﻿[CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [ValidateSet('Performance','TableUsage','Inventory','DatabaseSchema')]
+    [ValidateSet('Performance','TableUsage','Inventory','DatabaseSchema','Backup')]
     [string]$Collector,
 
     [Parameter(Mandatory)]
@@ -15,6 +15,8 @@ param(
     [string]$ServerListPath = 'Servers.csv',
 
     [long]$TableUsageTargetId = 1,
+
+    [int]$BackupHistoryDays = 35,
 
     [string]$LogRoot = 'C:\DBACentralRepository\Logs'
 )
@@ -91,6 +93,17 @@ try {
             & $script `
                 -RepositoryServerInstance $RepositoryServerInstance `
                 -RepositoryDatabase $RepositoryDatabase *>&1 |
+                Tee-Object -FilePath $logFile -Append
+        }
+
+        'Backup' {
+            $script = Join-Path $ScriptRoot 'Collect-BackupHistory.ps1'
+            if (-not (Test-Path -LiteralPath $script)) { throw "Missing script: $script" }
+
+            & $script `
+                -RepositoryServerInstance $RepositoryServerInstance `
+                -RepositoryDatabase $RepositoryDatabase `
+                -HistoryDays $BackupHistoryDays *>&1 |
                 Tee-Object -FilePath $logFile -Append
         }
     }
