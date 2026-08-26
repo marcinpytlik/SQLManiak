@@ -1,0 +1,767 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "dbacr-patch-build-compliance",
+    "annotations": {
+      "grafana.app/folder": "dbacentralrepository"
+    },
+    "labels": {}
+  },
+  "spec": {
+    "annotations": [],
+    "cursorSync": "Crosshair",
+    "editable": true,
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Patch compliance summary",
+          "description": "Current patch assessment status across enabled SQL Server instances.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "mssql",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "cfvow0j9mkef4c"
+                      },
+                      "spec": {
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT\n    COALESCE(AssessmentStatus, 'UNKNOWN') AS AssessmentStatus,\n    COUNT(*) AS InstanceCount\nFROM report.vGrafanaPatchStatus\nGROUP BY COALESCE(AssessmentStatus, 'UNKNOWN')\nORDER BY InstanceCount DESC, AssessmentStatus;"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "AssessmentStatus"
+                    },
+                    "properties": [
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "type": "value",
+                            "options": {
+                              "CURRENT": {
+                                "text": "CURRENT",
+                                "color": "green",
+                                "index": 0
+                              },
+                              "OUTDATED": {
+                                "text": "OUTDATED",
+                                "color": "yellow",
+                                "index": 1
+                              },
+                              "EOS": {
+                                "text": "EOS",
+                                "color": "red",
+                                "index": 2
+                              },
+                              "UNKNOWN": {
+                                "text": "UNKNOWN",
+                                "color": "orange",
+                                "index": 3
+                              },
+                              "AHEAD": {
+                                "text": "AHEAD",
+                                "color": "blue",
+                                "index": 4
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "color-background"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-2": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "Compliance by environment",
+          "description": "Current patch compliance grouped by environment.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "mssql",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "cfvow0j9mkef4c"
+                      },
+                      "spec": {
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT\n    COALESCE(EnvironmentCode, 'UNKNOWN') AS EnvironmentCode,\n    COUNT(*) AS InstanceCount,\n    SUM(CASE WHEN AssessmentStatus = 'CURRENT' THEN 1 ELSE 0 END) AS CurrentCount,\n    SUM(CASE WHEN AssessmentStatus = 'OUTDATED' THEN 1 ELSE 0 END) AS OutdatedCount,\n    SUM(CASE WHEN AssessmentStatus = 'EOS' THEN 1 ELSE 0 END) AS EndOfSupportCount,\n    SUM(CASE WHEN AssessmentStatus = 'UNKNOWN' OR AssessmentStatus IS NULL THEN 1 ELSE 0 END) AS UnknownCount,\n    SUM(CASE WHEN AssessmentStatus = 'AHEAD' THEN 1 ELSE 0 END) AS AheadCount\nFROM report.vGrafanaPatchStatus\nGROUP BY COALESCE(EnvironmentCode, 'UNKNOWN')\nORDER BY OutdatedCount DESC, EndOfSupportCount DESC, EnvironmentCode;"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-3": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "Instances requiring attention",
+          "description": "Instances that are not currently on the recommended build.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "mssql",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "cfvow0j9mkef4c"
+                      },
+                      "spec": {
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT\n    ServerInstance,\n    EnvironmentCode,\n    InventoryVersion,\n    CurrentVersion,\n    RecommendedVersion,\n    AssessmentStatus,\n    MissingReleaseCount,\n    IsEndOfSupport,\n    Notes\nFROM report.vGrafanaPatchStatus\nWHERE ISNULL(AssessmentStatus, 'UNKNOWN') <> 'CURRENT'\nORDER BY\n    CASE ISNULL(AssessmentStatus, 'UNKNOWN')\n        WHEN 'EOS' THEN 1\n        WHEN 'OUTDATED' THEN 2\n        WHEN 'UNKNOWN' THEN 3\n        WHEN 'AHEAD' THEN 4\n        ELSE 5\n    END,\n    MissingReleaseCount DESC,\n    ServerInstance;"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "AssessmentStatus"
+                    },
+                    "properties": [
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "type": "value",
+                            "options": {
+                              "CURRENT": {
+                                "text": "CURRENT",
+                                "color": "green",
+                                "index": 0
+                              },
+                              "OUTDATED": {
+                                "text": "OUTDATED",
+                                "color": "yellow",
+                                "index": 1
+                              },
+                              "EOS": {
+                                "text": "EOS",
+                                "color": "red",
+                                "index": 2
+                              },
+                              "UNKNOWN": {
+                                "text": "UNKNOWN",
+                                "color": "orange",
+                                "index": 3
+                              },
+                              "AHEAD": {
+                                "text": "AHEAD",
+                                "color": "blue",
+                                "index": 4
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "color-background"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-4": {
+        "kind": "Panel",
+        "spec": {
+          "id": 4,
+          "title": "Current vs recommended build",
+          "description": "Current inventory version compared with the latest patch assessment.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "mssql",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "cfvow0j9mkef4c"
+                      },
+                      "spec": {
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT\n    ServerInstance,\n    EnvironmentCode,\n    InventoryVersion,\n    AssessedAt,\n    CurrentVersion,\n    RecommendedVersion,\n    AssessmentStatus,\n    MissingReleaseCount,\n    IsEndOfSupport,\n    Notes\nFROM report.vGrafanaPatchStatus\nORDER BY\n    CASE ISNULL(AssessmentStatus, 'UNKNOWN')\n        WHEN 'EOS' THEN 1\n        WHEN 'OUTDATED' THEN 2\n        WHEN 'UNKNOWN' THEN 3\n        WHEN 'AHEAD' THEN 4\n        WHEN 'CURRENT' THEN 5\n        ELSE 6\n    END,\n    ServerInstance;"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "AssessmentStatus"
+                    },
+                    "properties": [
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "type": "value",
+                            "options": {
+                              "CURRENT": {
+                                "text": "CURRENT",
+                                "color": "green",
+                                "index": 0
+                              },
+                              "OUTDATED": {
+                                "text": "OUTDATED",
+                                "color": "yellow",
+                                "index": 1
+                              },
+                              "EOS": {
+                                "text": "EOS",
+                                "color": "red",
+                                "index": 2
+                              },
+                              "UNKNOWN": {
+                                "text": "UNKNOWN",
+                                "color": "orange",
+                                "index": 3
+                              },
+                              "AHEAD": {
+                                "text": "AHEAD",
+                                "color": "blue",
+                                "index": 4
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "color-background"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-5": {
+        "kind": "Panel",
+        "spec": {
+          "id": 5,
+          "title": "Assessment history",
+          "description": "Patch assessment history in the selected Grafana time range.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "mssql",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "cfvow0j9mkef4c"
+                      },
+                      "spec": {
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT TOP (500)\n    CAST(\n        pa.AssessedAt\n            AT TIME ZONE 'Central European Standard Time'\n            AT TIME ZONE 'UTC'\n        AS datetime2\n    ) AS AssessedAt,\n    i.ServerInstance,\n    e.EnvironmentCode,\n    pa.CurrentVersion,\n    pa.RecommendedVersion,\n    pa.AssessmentStatus,\n    pa.MissingReleaseCount,\n    pa.IsEndOfSupport,\n    pa.Notes\nFROM patch.PatchAssessment AS pa\nJOIN dbo.Instance AS i\n  ON i.InstanceId = pa.InstanceId\nLEFT JOIN dbo.Environment AS e\n  ON e.EnvironmentId = i.EnvironmentId\nWHERE $__timeFilter(\n    CAST(\n        pa.AssessedAt\n            AT TIME ZONE 'Central European Standard Time'\n            AT TIME ZONE 'UTC'\n        AS datetime2\n    )\n)\nORDER BY\n    pa.AssessedAt DESC,\n    pa.PatchAssessmentId DESC;"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "AssessmentStatus"
+                    },
+                    "properties": [
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "type": "value",
+                            "options": {
+                              "CURRENT": {
+                                "text": "CURRENT",
+                                "color": "green",
+                                "index": 0
+                              },
+                              "OUTDATED": {
+                                "text": "OUTDATED",
+                                "color": "yellow",
+                                "index": 1
+                              },
+                              "EOS": {
+                                "text": "EOS",
+                                "color": "red",
+                                "index": 2
+                              },
+                              "UNKNOWN": {
+                                "text": "UNKNOWN",
+                                "color": "orange",
+                                "index": 3
+                              },
+                              "AHEAD": {
+                                "text": "AHEAD",
+                                "color": "blue",
+                                "index": 4
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "color-background"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-6": {
+        "kind": "Panel",
+        "spec": {
+          "id": 6,
+          "title": "Support / catalog risks",
+          "description": "Instances with end-of-support or unknown catalog state.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "refId": "A",
+                    "hidden": false,
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "mssql",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "cfvow0j9mkef4c"
+                      },
+                      "spec": {
+                        "format": "table",
+                        "rawQuery": true,
+                        "rawSql": "SELECT\n    ServerInstance,\n    EnvironmentCode,\n    CurrentVersion,\n    RecommendedVersion,\n    AssessmentStatus,\n    MissingReleaseCount,\n    IsEndOfSupport,\n    Notes\nFROM report.vGrafanaPatchStatus\nWHERE\n       IsEndOfSupport = 1\n    OR AssessmentStatus IN ('EOS', 'UNKNOWN')\n    OR AssessmentStatus IS NULL\nORDER BY\n    IsEndOfSupport DESC,\n    ServerInstance;"
+                      }
+                    }
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.0",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "AssessmentStatus"
+                    },
+                    "properties": [
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "type": "value",
+                            "options": {
+                              "CURRENT": {
+                                "text": "CURRENT",
+                                "color": "green",
+                                "index": 0
+                              },
+                              "OUTDATED": {
+                                "text": "OUTDATED",
+                                "color": "yellow",
+                                "index": 1
+                              },
+                              "EOS": {
+                                "text": "EOS",
+                                "color": "red",
+                                "index": 2
+                              },
+                              "UNKNOWN": {
+                                "text": "UNKNOWN",
+                                "color": "orange",
+                                "index": 3
+                              },
+                              "AHEAD": {
+                                "text": "AHEAD",
+                                "color": "blue",
+                                "index": 4
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "id": "custom.cellOptions",
+                        "value": {
+                          "type": "color-background"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 9,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 9,
+              "y": 0,
+              "width": 15,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-2"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 8,
+              "width": 24,
+              "height": 10,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-3"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 18,
+              "width": 24,
+              "height": 10,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-4"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 28,
+              "width": 24,
+              "height": 11,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-5"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 39,
+              "width": 24,
+              "height": 9,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-6"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": [
+      "DBACentralRepository",
+      "SQL Server",
+      "Patch",
+      "Build Compliance",
+      "ManagedByGitHub"
+    ],
+    "timeSettings": {
+      "timezone": "browser",
+      "from": "now-30d",
+      "to": "now",
+      "autoRefresh": "5m",
+      "autoRefreshIntervals": [
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "DBACentralRepository - Patch & Build Compliance",
+    "variables": []
+  }
+}
