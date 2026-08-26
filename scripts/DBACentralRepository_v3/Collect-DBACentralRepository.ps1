@@ -14,90 +14,148 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
 
-$modulePath = Join-Path `
-    $PSScriptRoot `
-    'modules\DBACentralRepository.Common\DBACentralRepository.Common.psd1'
-
-Import-Module `
-    -Name $modulePath `
-    -Force `
-    -ErrorAction Stop
-
-
-function Invoke-Table {
+function New-SqlConnection {
     param(
+        [Parameter(Mandatory)]
         [string]$Server,
+
+        [Parameter(Mandatory)]
         [string]$Database,
-        [string]$Query,
+
         [System.Management.Automation.PSCredential]$Credential
     )
 
-    Invoke-DBACentralDataTable `
-        -ServerInstance $Server `
-        -DatabaseName $Database `
-        -Sql $Query `
-        -Credential $Credential `
-        -CommandTimeoutSeconds $CommandTimeoutSeconds `
-        -ApplicationName 'DBACentralRepository v3 Collector'
+    $builder =
+        New-Object System.Data.SqlClient.SqlConnectionStringBuilder
+
+    $builder['Data Source'] = $Server
+    $builder['Initial Catalog'] = $Database
+    $builder['Application Name'] =
+        'DBACentralRepository v3 Collector'
+    $builder['Connect Timeout'] = 15
+    $builder['Encrypt'] = $false
+    $builder['TrustServerCertificate'] = $true
+
+    if ($null -eq $Credential) {
+        $builder['Integrated Security'] = $true
+    }
+    else {
+        $builder['Integrated Security'] = $false
+        $builder['User ID'] = $Credential.UserName
+        $builder['Password'] =
+            $Credential.GetNetworkCredential().Password
+    }
+
+    return New-Object System.Data.SqlClient.SqlConnection(
+        $builder.ConnectionString
+    )
+}
+
+function Invoke-Table {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Server,
+
+        [Parameter(Mandatory)]
+        [string]$Database,
+
+        [Parameter(Mandatory)]
+        [string]$Query,
+
+        [System.Management.Automation.PSCredential]$Credential
+    )
+
+    $connection = New-SqlConnection `
+        -Server $Server `
+        -Database $Database `
+        -Credential $Credential
+
+    $command = $null
+    $adapter = $null
+
+    try {
+        $connection.Open()
+
+        $command = $connection.CreateCommand()
+        $command.CommandText = $Query
+        $command.CommandTimeout = $CommandTimeoutSeconds
+
+        $adapter =
+            New-Object System.Data.SqlClient.SqlDataAdapter($command)
+
+        $table =
+            New-Object System.Data.DataTable
+
+        [void]$adapter.Fill($table)
+
+        # Krytyczne: nie rozwijaj DataTable do DataRow[].
+        Write-Output -NoEnumerate $table
+    }
+    finally {
+        if ($null -ne $adapter) {
+            $adapter.Dispose()
+        }
+
+        if ($null -ne $command) {
+            $command.Dispose()
+        }
+
+        if ($null -ne $connection) {
+            $connection.Dispose()
+        }
+    }
 }
 
 function Invoke-RepoScalar {
-    param(
-        [string]$Sql,
-        [hashtable]$Parameters = @{}
-    )
-
-    Invoke-DBACentralScalar `
-        -ServerInstance $RepositoryServerInstance `
-        -DatabaseName $RepositoryDatabase `
-        -Sql $Sql `
-        -Credential $RepositorySqlCredential `
-        -Parameters $Parameters `
-        -CommandTimeoutSeconds $CommandTimeoutSeconds `
-        -ApplicationName 'DBACentralRepository v3 Repository Scalar'
+    param([string]$Sql,[hashtable]$Parameters=@{})
+    $cn=New-SqlConnection $RepositoryServerInstance $RepositoryDatabase $RepositorySqlCredential
+    try{
+        $cn.Open()
+        $cmd=$cn.CreateCommand()
+        $cmd.CommandText=$Sql
+        $cmd.CommandTimeout=$CommandTimeoutSeconds
+        foreach($k in $Parameters.Keys){
+            $v=$Parameters[$k]
+            if($null -eq $v){$v=[DBNull]::Value}
+            [void]$cmd.Parameters.AddWithValue("@$k",$v)
+        }
+        $cmd.ExecuteScalar()
+    }finally{$cn.Dispose()}
 }
 
 function Add-Common {
-    param(
-        [System.Data.DataTable]$Table,
-        [long]$ScanRunId,
-        [long]$InstanceId,
-        [datetime]$CapturedAt
-    )
-
-    Add-DBACentralCommonColumns `
-        -DataTable $Table `
-        -ScanRunId $ScanRunId `
-        -InstanceId $InstanceId `
-        -CapturedAt $CapturedAt
+    param([System.Data.DataTable]$Table,[long]$ScanRunId,[long]$InstanceId,[datetime]$CapturedAt)
+    foreach($x in @(@('ScanRunId',[long]),@('InstanceId',[long]),@('CapturedAt',[datetime]))){
+        if(-not $Table.Columns.Contains($x[0])){[void]$Table.Columns.Add($x[0],$x[1])}
+    }
+    foreach($r in $Table.Rows){
+        $r.ScanRunId=$ScanRunId
+        $r.InstanceId=$InstanceId
+        $r.CapturedAt=$CapturedAt
+    }
 }
 
 function Add-ScanInstance {
-    param(
-        [System.Data.DataTable]$Table,
-        [long]$ScanRunId,
-        [long]$InstanceId
-    )
-
-    Add-DBACentralScanIdentityColumns `
-        -DataTable $Table `
-        -ScanRunId $ScanRunId `
-        -InstanceId $InstanceId
+    param([System.Data.DataTable]$Table,[long]$ScanRunId,[long]$InstanceId)
+    if(-not $Table.Columns.Contains('ScanRunId')){[void]$Table.Columns.Add('ScanRunId',[long])}
+    if(-not $Table.Columns.Contains('InstanceId')){[void]$Table.Columns.Add('InstanceId',[long])}
+    foreach($r in $Table.Rows){$r.ScanRunId=$ScanRunId;$r.InstanceId=$InstanceId}
 }
 
 function Write-Bulk {
-    param(
-        [System.Data.DataTable]$Table,
-        [string]$Destination
-    )
-
-    [void](Write-DBACentralBulkCopy `
-        -DataTable $Table `
-        -DestinationTable $Destination `
-        -ServerInstance $RepositoryServerInstance `
-        -DatabaseName $RepositoryDatabase `
-        -Credential $RepositorySqlCredential `
-        -CommandTimeoutSeconds $CommandTimeoutSeconds)
+    param([System.Data.DataTable]$Table,[string]$Destination)
+    if($Table.Rows.Count -eq 0){return}
+    $cn=New-SqlConnection $RepositoryServerInstance $RepositoryDatabase $RepositorySqlCredential
+    try{
+        $cn.Open()
+        $bc=[System.Data.SqlClient.SqlBulkCopy]::new($cn)
+        $bc.DestinationTableName=$Destination
+        $bc.BulkCopyTimeout=$CommandTimeoutSeconds
+        $bc.BatchSize=1000
+        foreach($c in $Table.Columns){[void]$bc.ColumnMappings.Add($c.ColumnName,$c.ColumnName)}
+        $bc.WriteToServer($Table)
+        $bc.Close()
+    }finally{$cn.Dispose()}
 }
 
 $servers=Import-Csv $ServerListPath -Delimiter ';' |
@@ -373,6 +431,23 @@ JOIN sys.server_principals memberp ON memberp.principal_id=rm.member_principal_i
 "@ $SourceSqlCredential
             Add-Common $roles $scanRunId $instanceId $capturedAt
             Write-Bulk $roles 'security.ServerRoleMembershipSnapshot'
+
+            $permissions=Invoke-Table $s.ServerInstance master @"
+SELECT
+    grantee.name GranteeName,
+    grantor.name GrantorName,
+    perm.permission_name PermissionName,
+    perm.state_desc StateDesc,
+    perm.class_desc ClassDesc,
+    perm.major_id MajorId
+FROM sys.server_permissions perm
+JOIN sys.server_principals grantee
+    ON grantee.principal_id=perm.grantee_principal_id
+LEFT JOIN sys.server_principals grantor
+    ON grantor.principal_id=perm.grantor_principal_id;
+"@ $SourceSqlCredential
+            Add-Common $permissions $scanRunId $instanceId $capturedAt
+            Write-Bulk $permissions 'security.ServerPermissionSnapshot'
 
             $proxies=Invoke-Table $s.ServerInstance msdb @"
 SELECT p.proxy_id ProxyId,p.name ProxyName,c.name CredentialName,p.enabled IsEnabled,p.description Description
