@@ -1,0 +1,36 @@
+services:
+  kafka:
+    image: quay.io/debezium/kafka:${DEBEZIUM_VERSION:-3.6}
+    container_name: sqllab-kafka
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      CLUSTER_ID: oh-sxaDRTcyAr6pFRbXyzA
+      NODE_ID: 1
+      NODE_ROLE: combined
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://kafka:9092,CONTROLLER://kafka:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+    networks:
+      - debezium-net
+
+  connect:
+    image: quay.io/debezium/connect:${DEBEZIUM_VERSION:-3.6}
+    container_name: sqllab-debezium-connect
+    depends_on:
+      - kafka
+    ports:
+      - "8083:8083"
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      GROUP_ID: 1
+      CONFIG_STORAGE_TOPIC: sqllab_connect_configs
+      OFFSET_STORAGE_TOPIC: sqllab_connect_offsets
+      STATUS_STORAGE_TOPIC: sqllab_connect_statuses
+    networks:
+      - debezium-net
+
+networks:
+  debezium-net:
+    name: sqllab-debezium-net
