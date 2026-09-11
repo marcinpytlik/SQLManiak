@@ -1,0 +1,21 @@
+/* SQLManiak - CDC POC | 00_CreateDatabase.sql */
+USE master;
+GO
+
+IF DB_ID(N'CDC_Lab') IS NOT NULL
+BEGIN
+    ALTER DATABASE CDC_Lab SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE CDC_Lab;
+END;
+GO
+
+CREATE DATABASE CDC_Lab;
+GO
+
+ALTER DATABASE CDC_Lab SET RECOVERY FULL;
+GO
+
+SELECT name, recovery_model_desc, is_cdc_enabled
+FROM sys.databases
+WHERE name = N'CDC_Lab';
+GO
