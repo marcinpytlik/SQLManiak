@@ -3,7 +3,7 @@
     Stage 2 - Security tests for the application account
 
     Run this script in a session connected as the real application account,
-    e.g. SQLLAB\konto after replacing the placeholder in script 05.
+    e.g. SQLLAB\poc-ssis-app after replacing the placeholder in script 05.
 */
 
 USE [SSIS_Delegation_Lab];
@@ -17,10 +17,11 @@ GO
 
 /* TEST 1 - should succeed */
 DECLARE @RequestId uniqueidentifier;
+DECLARE @ReportDate date = CONVERT(date, GETDATE());
 
 EXEC dbo.usp_RequestExport
      @CustomerId = 2001,
-     @ReportDate = CONVERT(date, GETDATE()),
+     @ReportDate = @ReportDate,
      @RequestId = @RequestId OUTPUT;
 
 SELECT @RequestId AS CreatedRequestId;
