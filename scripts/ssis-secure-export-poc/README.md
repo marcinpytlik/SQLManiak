@@ -83,18 +83,18 @@ Stage 4 używa **File System deployment**, ponieważ na `SQL64` nie korzystamy z
 
 Pliki:
 
-- `14-create-stage4-job.sql`
-- `15-test-stage4.sql`
-- `stage4-script-task-main.cs`
-- `STAGE4.md`
+- `WriteShareTest.dtsx` - gotowy pakiet testowy, nie wymaga Visual Studio/SSDT,
+- `14-create-stage4-job.sql`,
+- `15-test-stage4.sql`,
+- `STAGE4.md`.
 
-Pakiet znajduje się lokalnie na `SQL64`:
+Po skopiowaniu pakietu na `SQL64`:
 
 ```text
 C:\SSIS\POC\WriteShareTest.dtsx
 ```
 
-Rezultat Stage 4 ma potwierdzić:
+rezultat Stage 4 ma potwierdzić:
 
 ```text
 SQL Agent
