@@ -62,9 +62,9 @@ function Assert-Command {
     }
 }
 
-if (-not $Force) {
+if (-not $Force -and -not $WhatIfPreference) {
     Write-Warning 'This script removes the Secure Export POC: SQL Agent jobs, schedules, proxies, Credential, POC database, local worker files, SMB share and optionally AD accounts.'
-    Write-Warning 'Use -WhatIf first if you want to review the actions.'
+    Write-Warning 'Run with -WhatIf first if you want to review the actions.'
     $confirmation = Read-Host 'Type DELETE-POC to continue'
     if ($confirmation -ne 'DELETE-POC') {
         throw 'Cleanup cancelled.'
@@ -72,6 +72,12 @@ if (-not $Force) {
 }
 
 Assert-Command -Name Invoke-Sqlcmd
+
+$applicationAccountSql = $ApplicationAccount.Replace("'", "''")
+$executionAccountSql = $ExecutionAccount.Replace("'", "''")
+$applicationAccountIdentifier = $ApplicationAccount.Replace(']', ']]')
+$executionAccountIdentifier = $ExecutionAccount.Replace(']', ']]')
+$dropDb = if ($KeepDatabase) { 0 } else { 1 }
 
 $sqlCleanup = @"
 USE [msdb];
@@ -112,21 +118,20 @@ USE [master];
 IF EXISTS (SELECT 1 FROM sys.credentials WHERE name = N'POC_SSIS_Export_Credential')
     DROP CREDENTIAL [POC_SSIS_Export_Credential];
 
-IF DB_ID(N'SSIS_Delegation_Lab') IS NOT NULL AND $(DropDatabase) = 1
+IF DB_ID(N'SSIS_Delegation_Lab') IS NOT NULL AND __DROP_DATABASE__ = 1
 BEGIN
     ALTER DATABASE [SSIS_Delegation_Lab] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
     DROP DATABASE [SSIS_Delegation_Lab];
 END;
 
-IF SUSER_ID(N'$($ApplicationAccount.Replace("'", "''"))') IS NOT NULL
-    DROP LOGIN [$($ApplicationAccount.Replace(']', ']]'))];
+IF SUSER_ID(N'$applicationAccountSql') IS NOT NULL
+    DROP LOGIN [$applicationAccountIdentifier];
 
-IF SUSER_ID(N'$($ExecutionAccount.Replace("'", "''"))') IS NOT NULL
-    DROP LOGIN [$($ExecutionAccount.Replace(']', ']]'))];
+IF SUSER_ID(N'$executionAccountSql') IS NOT NULL
+    DROP LOGIN [$executionAccountIdentifier];
 "@
 
-$dropDb = if ($KeepDatabase) { 0 } else { 1 }
-$sqlCleanup = $sqlCleanup.Replace('$(DropDatabase)', [string]$dropDb)
+$sqlCleanup = $sqlCleanup.Replace('__DROP_DATABASE__', [string]$dropDb)
 
 Write-Step 'SQL Server cleanup'
 if ($PSCmdlet.ShouldProcess($SqlInstance, 'Remove POC SQL Agent jobs/schedules/proxies/Credential/logins and optionally database')) {
@@ -201,7 +206,7 @@ if (-not $KeepAdAccounts) {
                     Remove-ADOrganizationalUnit -Identity $pocOu -Confirm:$false
                 }
                 else {
-                    Write-Warning "OU=POC is not empty and was not removed."
+                    Write-Warning 'OU=POC is not empty and was not removed.'
                 }
             }
         } -ArgumentList $ApplicationAccount, $ExecutionAccount
