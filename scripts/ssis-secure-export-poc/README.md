@@ -81,20 +81,22 @@ Rezultat: `SQLLAB\poc-ssis-export` może zapisywać do `\\DC01\SSISLab$`, Creden
 
 Stage 4 używa **File System deployment**, ponieważ na `SQL64` nie korzystamy z `SSISDB`.
 
+Pakiet nie jest przechowywany jako ręcznie napisany XML. Jest generowany na `SQL64` przez zainstalowany runtime SSIS, bez Visual Studio i SSDT.
+
 Pliki:
 
-- `WriteShareTest.dtsx` - gotowy pakiet testowy, nie wymaga Visual Studio/SSDT,
+- `13-generate-stage4-package.ps1` - generuje i ponownie ładuje `WriteShareTest.dtsx` przez `Microsoft.SqlServer.Dts.Runtime`,
 - `14-create-stage4-job.sql`,
 - `15-test-stage4.sql`,
 - `STAGE4.md`.
 
-Po skopiowaniu pakietu na `SQL64`:
+Docelowy pakiet:
 
 ```text
 C:\SSIS\POC\WriteShareTest.dtsx
 ```
 
-rezultat Stage 4 ma potwierdzić:
+Rezultat Stage 4 ma potwierdzić:
 
 ```text
 SQL Agent
