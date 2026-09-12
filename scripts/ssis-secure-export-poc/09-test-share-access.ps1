@@ -16,43 +16,42 @@ if ($SharePath -notmatch '^\\\\[^\\]+\\[^\\]+') {
     throw "SharePath must be a UNC path, e.g. \\DC01\SSISLab$. Received: $SharePath"
 }
 
-$credential = Get-Credential -UserName $UserName -Message "Credentials for $UserName"
+Import-Module SmbShare -ErrorAction Stop
 
-$driveName = 'POCSSIS'
+$credential = Get-Credential -UserName $UserName -Message "Credentials for $UserName"
 $testFileName = "poc-write-test-{0:yyyyMMdd-HHmmss-fff}.txt" -f (Get-Date)
-$driveCreated = $false
+$testFile = Join-Path -Path $SharePath -ChildPath $testFileName
+$mappingCreated = $false
 
 try {
-    if (Get-PSDrive -Name $driveName -ErrorAction SilentlyContinue) {
-        Remove-PSDrive -Name $driveName -Force -ErrorAction Stop
-    }
-
-    New-PSDrive `
-        -Name $driveName `
-        -PSProvider FileSystem `
-        -Root $SharePath `
+    # Establish an SMB session with the dedicated export account without
+    # starting a local interactive process as that account.
+    New-SmbMapping `
+        -RemotePath $SharePath `
         -Credential $credential `
-        -Scope Script `
+        -Persistent $false `
         -ErrorAction Stop | Out-Null
 
-    $driveCreated = $true
-    $testFile = "${driveName}:\$testFileName"
+    $mappingCreated = $true
+
+    Write-Host "SharePath = $SharePath"
+    Write-Host "TestFile  = $testFile"
 
     "POC SSIS share write test - $(Get-Date -Format o)" |
-        Set-Content -Path $testFile -Encoding UTF8 -ErrorAction Stop
+        Set-Content -LiteralPath $testFile -Encoding UTF8 -ErrorAction Stop
 
-    if (-not (Test-Path -Path $testFile)) {
+    if (-not (Test-Path -LiteralPath $testFile)) {
         throw 'Test file was not created.'
     }
 
-    $content = Get-Content -Path $testFile -Raw -ErrorAction Stop
+    $content = Get-Content -LiteralPath $testFile -Raw -ErrorAction Stop
     if ($content -notmatch 'POC SSIS share write test') {
         throw 'Test file was created, but its content could not be verified.'
     }
 
-    Remove-Item -Path $testFile -Force -ErrorAction Stop
+    Remove-Item -LiteralPath $testFile -Force -ErrorAction Stop
 
-    if (Test-Path -Path $testFile) {
+    if (Test-Path -LiteralPath $testFile) {
         throw 'Test file could not be deleted.'
     }
 
@@ -61,7 +60,11 @@ try {
     Write-Host "Create/read/delete test succeeded on $SharePath"
 }
 finally {
-    if ($driveCreated -and (Get-PSDrive -Name $driveName -ErrorAction SilentlyContinue)) {
-        Remove-PSDrive -Name $driveName -Force -ErrorAction SilentlyContinue
+    if ($mappingCreated) {
+        Remove-SmbMapping `
+            -RemotePath $SharePath `
+            -Force `
+            -UpdateProfile:$false `
+            -ErrorAction SilentlyContinue
     }
 }
