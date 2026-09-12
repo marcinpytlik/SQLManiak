@@ -10,7 +10,6 @@ Cel tego etapu: potwierdzić pełny przepływ wykonawczy **SQL Agent -> SSIS Pro
 - Proxy: `POC_SSIS_Export_Proxy`
 - lokalny katalog pakietu na SQL64: `C:\SSIS\POC`
 - package: `WriteShareTest.dtsx`
-- package variable: `User::OutputShare`
 - test share: `\\DC01\SSISLab$`
 - SQL Agent job: `POC_SSIS_Secure_Export_Stage4`
 
@@ -22,39 +21,54 @@ Jako administrator systemu na `SQL64`:
 New-Item -ItemType Directory -Path 'C:\SSIS\POC' -Force
 ```
 
-Konto `SQLLAB\poc-ssis-export` potrzebuje tylko prawa odczytu i wykonania do katalogu/pakietu. Nie potrzebuje Modify do `C:\SSIS\POC`.
-
-Przykład:
+Konto `SQLLAB\poc-ssis-export` potrzebuje tylko prawa odczytu i wykonania do katalogu/pakietu:
 
 ```powershell
-$path = 'C:\SSIS\POC'
-icacls $path /grant 'SQLLAB\poc-ssis-export:(OI)(CI)(RX)'
+icacls 'C:\SSIS\POC' /grant 'SQLLAB\poc-ssis-export:(OI)(CI)(RX)'
 ```
 
-## 2. Utwórz minimalny pakiet SSIS
+## 2. Skopiuj gotowy pakiet
 
-Utwórz Integration Services Project w Visual Studio / SSDT. Projekt służy wyłącznie do zbudowania pojedynczego pakietu - nie wdrażamy go do SSISDB.
+Pakiet `WriteShareTest.dtsx` jest już w repozytorium. Nie wymaga Visual Studio ani SSDT do przygotowania.
 
-W pakiecie `WriteShareTest.dtsx`:
+Po `git pull` skopiuj go na `SQL64`:
 
-1. Dodaj zmienną pakietową `User::OutputShare` typu `String`.
-2. Ustaw jej wartość na `\\DC01\SSISLab$`.
-3. Dodaj `Script Task`.
-4. W `ReadOnlyVariables` wskaż `User::OutputShare`.
-5. W Script Task podmień zawartość `Main()` kodem z pliku `stage4-script-task-main.cs`.
-6. Ustaw `ProtectionLevel` pakietu tak, aby pakiet nie wymagał sekretu zależnego od profilu dewelopera. Dla tego POC pakiet nie zawiera żadnych sekretów.
+```powershell
+Copy-Item `
+  '.\scripts\ssis-secure-export-poc\WriteShareTest.dtsx' `
+  'C:\SSIS\POC\WriteShareTest.dtsx' `
+  -Force
+```
 
-Po zapisaniu projektu skopiuj gotowy `WriteShareTest.dtsx` na `SQL64` do:
+Pakiet zawiera pojedynczy `Execute Process Task`. Uruchamia lokalny Windows PowerShell, który zapisuje plik diagnostyczny na `\\DC01\SSISLab$`.
+
+Plik zawiera:
 
 ```text
-C:\SSIS\POC\WriteShareTest.dtsx
+POC Secure SSIS Export - Stage 4
+Timestamp=...
+MachineName=SQL64
+WindowsIdentity=SQLLAB\poc-ssis-export
+OutputFile=\\DC01\SSISLab$\ssis-proxy-test-....txt
 ```
 
-## 3. Test pakietu lokalnie - opcjonalny
+Pakiet ma `ProtectionLevel=DontSaveSensitive` i nie przechowuje żadnych sekretów.
 
-Jeżeli chcesz zweryfikować sam pakiet przed SQL Agentem, uruchom go ręcznie na SQL64 jako administrator. Ten test nie potwierdza jeszcze działania Proxy - potwierdza jedynie poprawność pakietu.
+## 3. Opcjonalna walidacja pliku pakietu
 
-Docelowy test bezpieczeństwa wykonujemy wyłącznie przez SQL Agent.
+Na `SQL64` możesz sprawdzić, czy plik jest na miejscu:
+
+```powershell
+Test-Path 'C:\SSIS\POC\WriteShareTest.dtsx'
+```
+
+Oczekiwane:
+
+```text
+True
+```
+
+Nie uruchamiaj pakietu ręcznie jako administrator, jeżeli celem jest test tożsamości Proxy. Właściwy test wykonujemy przez SQL Agent.
 
 ## 4. Utwórz SQL Agent Job
 
@@ -68,11 +82,10 @@ Skrypt:
 
 - sprawdza obecność `POC_SSIS_Export_Proxy`,
 - sprawdza przypisanie Proxy do subsystemu `SSIS`,
-- sprawdza obecność pakietu `C:\SSIS\POC\WriteShareTest.dtsx`,
 - tworzy job `POC_SSIS_Secure_Export_Stage4`,
 - tworzy krok typu `SSIS`,
 - ustawia uruchamianie kroku przez `POC_SSIS_Export_Proxy`,
-- uruchamia pakiet ze źródła `File system`.
+- uruchamia `C:\SSIS\POC\WriteShareTest.dtsx` ze źródła `File system`.
 
 Nie jest wymagane `SSISDB`.
 
@@ -90,15 +103,16 @@ Oczekiwany rezultat:
 
 ```text
 JobOutcome = Succeeded
+STAGE4_JOB_TEST_OK
 ```
 
-oraz na `\\DC01\SSISLab$` powinien pojawić się plik:
+Na `\\DC01\SSISLab$` powinien pojawić się plik:
 
 ```text
 ssis-proxy-test-yyyyMMdd-HHmmss-fff.txt
 ```
 
-W środku powinny znaleźć się m.in.:
+W środku oczekujemy:
 
 ```text
 MachineName=SQL64
