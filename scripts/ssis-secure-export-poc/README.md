@@ -30,6 +30,12 @@ Network share
 
 Konto aplikacyjne kończy swoją rolę na SQL Serverze. Nie jest delegowane do SSIS ani do udziału sieciowego.
 
+## Finalna decyzja architektoniczna
+
+Pełne podsumowanie POC, model bezpieczeństwa, argumentacja przeciw `Unconstrained Delegation`, konsekwencje i rekomendacje produkcyjne znajdują się w:
+
+- `ADR-001-secure-export-without-unconstrained-delegation.md`
+
 ## Środowisko POC
 
 - serwer SQL/Agent: `SQL64`
