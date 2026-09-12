@@ -85,12 +85,12 @@ Dlatego Stage 4 używa `CmdExec Proxy`, aby jednoznacznie potwierdzić najważni
 
 Pliki:
 
-- `13-create-cmdexec-proxy.sql` - tworzy `POC_Export_CmdExec_Proxy` na istniejącym Credential,
-- `14-create-stage4-job.sql` - tworzy job `CmdExec` uruchamiający PowerShell przez Proxy,
-- `15-test-stage4.sql` - uruchamia job i sprawdza wynik,
-- `STAGE4.md` - pełny runbook.
+- `13-create-cmdexec-proxy.sql`
+- `14-create-stage4-job.sql`
+- `15-test-stage4.sql`
+- `STAGE4.md`
 
-Rezultat Stage 4 ma potwierdzić:
+Potwierdzony tor:
 
 ```text
 SQL Agent
@@ -100,13 +100,58 @@ SQL Agent
   -> \\DC01\SSISLab$
 ```
 
-W pliku wynikowym sprawdzamy m.in.:
+W pliku wynikowym potwierdzamy:
 
 ```text
 WindowsIdentity=SQLLAB\poc-ssis-export
 ```
 
 Na środowisku z pełnym SSIS executor `CmdExec` można zastąpić krokiem `SSIS`, zachowując ten sam model Credential/Proxy i tę samą dedykowaną tożsamość wykonawczą.
+
+## Stage 5 - kolejka, worker, retry i end-to-end
+
+Stage 5 zamyka POC pełnym przepływem od zlecenia aplikacyjnego do pliku na SMB.
+
+Pliki:
+
+- `16-upgrade-stage5-queue.sql` - rozszerza kolejkę, dodaje retry i procedury workera,
+- `17-stage5-worker.ps1` - atomowo pobiera żądania, wykonuje eksport testowy i aktualizuje status,
+- `18-create-stage5-job.sql` - tworzy worker job co 1 minutę przez `POC_Export_CmdExec_Proxy`,
+- `19-test-stage5.sql` - testuje dwa żądania end-to-end,
+- `STAGE5.md` - pełny runbook.
+
+Statusy:
+
+```text
+NEW -> PROCESSING -> DONE
+        |
+        +-> RETRY -> PROCESSING
+        |
+        +-> FAILED
+```
+
+Worker używa `UPDLOCK + READPAST + ROWLOCK` do atomowego przejęcia rekordu oraz `WorkerToken` do ochrony przed ukończeniem żądania przez niewłaściwego workera.
+
+Domyślnie:
+
+```text
+MaxAttempts = 3
+RetryDelay  = 60 s
+MaxItems    = 10 / uruchomienie
+Schedule    = co 1 minutę
+```
+
+Docelowy tor POC:
+
+```text
+SQLLAB\poc-ssis-app
+  -> dbo.usp_RequestExport
+  -> dbo.ExportRequest
+  -> SQL Agent Stage5 Worker
+  -> POC_Export_CmdExec_Proxy
+  -> SQLLAB\poc-ssis-export
+  -> \\DC01\SSISLab$
+```
 
 ## Założenia bezpieczeństwa
 
@@ -116,9 +161,16 @@ Na środowisku z pełnym SSIS executor `CmdExec` można zastąpić krokiem `SSIS
 - aplikacja nie ma bezpośredniego dostępu do tabeli kolejki,
 - `ORIGINAL_LOGIN()` służy do audytu zlecającego,
 - konto wykonawcze jest oddzielone od konta aplikacyjnego,
+- konto wykonawcze ma tylko `EXECUTE` do wewnętrznych procedur workera i nie ma bezpośredniego CRUD do kolejki,
 - konta POC nie wymagają `Unconstrained Delegation`,
 - hasła nie są przechowywane w repozytorium.
 
-## Następny etap
+## Wynik POC
 
-Stage 5 połączy działający model wykonawczy z `dbo.ExportRequest` i doda obsługę statusów `NEW -> RUNNING -> COMPLETED/FAILED`, retry oraz kontrolę współbieżności.
+POC potwierdza model, w którym tożsamość aplikacji kończy się na SQL Serverze, a dalsze wykonanie odbywa się przez osobne konto techniczne.
+
+```text
+application identity != execution identity
+```
+
+To usuwa potrzebę delegowania konta aplikacyjnego do zasobu SMB i pozwala zachować zasadę najmniejszych uprawnień.
