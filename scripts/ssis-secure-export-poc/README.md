@@ -32,9 +32,14 @@ Konto aplikacyjne kończy swoją rolę na SQL Serverze. Nie jest delegowane do S
 
 ## Finalna decyzja architektoniczna
 
-Pełne podsumowanie POC, model bezpieczeństwa, argumentacja przeciw `Unconstrained Delegation`, konsekwencje i rekomendacje produkcyjne znajdują się w:
+Pełne podsumowanie POC, model bezpieczeństwa, argumentacja przeciw `Unconstrained Delegation`, konsekwencje i rekomendacje produkcyjne znajdują się w dwóch wersjach językowych:
 
-- `ADR-001-secure-export-without-unconstrained-delegation.md`
+- `ADR-001-secure-export-without-unconstrained-delegation.md` - wersja angielska,
+- `ADR-001-bezpieczny-eksport-bez-unconstrained-delegation-PL.md` - wersja polska.
+
+Materiał do nagrania:
+
+- `PROMPTER-PL.md` - gotowy prompter do piątkowego materiału.
 
 ## Środowisko POC
 
@@ -158,6 +163,45 @@ SQLLAB\poc-ssis-app
   -> SQLLAB\poc-ssis-export
   -> \\DC01\SSISLab$
 ```
+
+## Cleanup POC
+
+Pełne sprzątanie środowiska realizuje:
+
+```text
+20-cleanup-poc.ps1
+```
+
+Skrypt usuwa elementy utworzone przez POC:
+
+- joby i harmonogram SQL Agent,
+- Proxy SSIS/CmdExec,
+- Credential,
+- loginy POC,
+- bazę `SSIS_Delegation_Lab`,
+- `C:\SSIS\POC`,
+- udział `\\DC01\SSISLab$` i katalog testowy,
+- konta AD `poc-ssis-app` i `poc-ssis-export`,
+- `OU=POC`, ale tylko wtedy, gdy po usunięciu kont jest puste.
+
+Skrypt wspiera `-WhatIf`, dlatego przed właściwym cleanupem zalecane jest:
+
+```powershell
+.\20-cleanup-poc.ps1 -WhatIf
+```
+
+Pełne usunięcie POC wymaga jawnego potwierdzenia tekstem `DELETE-POC`. Automatyczne wykonanie można wymusić parametrem `-Force`.
+
+Można zachować wybrane elementy przez:
+
+```text
+-KeepAdAccounts
+-KeepShare
+-KeepLocalFiles
+-KeepDatabase
+```
+
+Skrypt używa `Invoke-Sqlcmd` oraz PowerShell Remoting do `SQL64`/`DC01`, jeśli dany krok nie jest wykonywany lokalnie.
 
 ## Założenia bezpieczeństwa
 
