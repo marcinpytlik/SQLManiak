@@ -1,6 +1,6 @@
 /*
-    POC: Secure SSIS Export without unconstrained delegation
-    Stage 4 - run and verify the SQL Agent SSIS job using File System package deployment
+    POC: Secure export without unconstrained delegation
+    Stage 4 - run and verify the SQL Agent CmdExec job
 
     Expected:
       job outcome = Succeeded
@@ -12,7 +12,7 @@ GO
 
 SET NOCOUNT ON;
 
-DECLARE @JobName sysname = N'POC_SSIS_Secure_Export_Stage4';
+DECLARE @JobName sysname = N'POC_Secure_Export_Stage4';
 DECLARE @JobId uniqueidentifier;
 DECLARE @SessionId int;
 DECLARE @Counter int = 0;
@@ -27,7 +27,7 @@ WHERE name = @JobName;
 
 IF @JobId IS NULL
 BEGIN
-    THROW 55001, 'Stage 4 SQL Agent job was not found.', 1;
+    THROW 58001, 'Stage 4 SQL Agent job was not found.', 1;
 END;
 
 SELECT @SessionId = MAX(session_id)
@@ -43,7 +43,7 @@ IF EXISTS
       AND stop_execution_date IS NULL
 )
 BEGIN
-    THROW 55002, 'Stage 4 SQL Agent job is already running.', 1;
+    THROW 58002, 'Stage 4 SQL Agent job is already running.', 1;
 END;
 
 EXEC dbo.sp_start_job @job_id = @JobId;
@@ -93,7 +93,7 @@ END;
 
 IF @IsRunning = 1
 BEGIN
-    THROW 55003, 'Stage 4 job did not finish within 120 seconds.', 1;
+    THROW 58003, 'Stage 4 job did not finish within 120 seconds.', 1;
 END;
 
 SELECT TOP (1)
@@ -131,10 +131,10 @@ ORDER BY h.instance_id DESC;
 
 IF ISNULL(@RunStatus, -1) <> 1
 BEGIN
-    THROW 55004, 'Stage 4 job did not finish successfully. Review SQL Agent job history.', 1;
+    THROW 58004, 'Stage 4 job did not finish successfully. Review SQL Agent job history.', 1;
 END;
 
 PRINT 'STAGE4_JOB_TEST_OK';
-PRINT 'Verify that a new ssis-proxy-test-*.txt file exists on \\DC01\SSISLab$.';
+PRINT 'Verify that a new cmdexec-proxy-test-*.txt file exists on \\DC01\SSISLab$.';
 PRINT 'Verify inside the file: WindowsIdentity=SQLLAB\poc-ssis-export.';
 GO
