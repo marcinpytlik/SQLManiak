@@ -1,6 +1,6 @@
 /*
     POC: Secure SSIS Export without unconstrained delegation
-    Stage 4 - run and verify the SQL Agent SSIS job
+    Stage 4 - run and verify the SQL Agent SSIS job using File System package deployment
 
     Expected:
       job outcome = Succeeded
@@ -48,7 +48,6 @@ END;
 
 EXEC dbo.sp_start_job @job_id = @JobId;
 
--- Wait until SQL Agent records the execution as started.
 WHILE @Counter < 10
 BEGIN
     IF EXISTS
@@ -130,41 +129,12 @@ FROM dbo.sysjobhistory AS h
 WHERE h.job_id = @JobId
 ORDER BY h.instance_id DESC;
 
-IF DB_ID(N'SSISDB') IS NOT NULL
-BEGIN
-    SELECT TOP (10)
-        e.execution_id,
-        e.folder_name,
-        e.project_name,
-        e.package_name,
-        e.executed_as_name,
-        e.status,
-        CASE e.status
-            WHEN 1 THEN N'Created'
-            WHEN 2 THEN N'Running'
-            WHEN 3 THEN N'Canceled'
-            WHEN 4 THEN N'Failed'
-            WHEN 5 THEN N'Pending'
-            WHEN 6 THEN N'Ended unexpectedly'
-            WHEN 7 THEN N'Succeeded'
-            WHEN 8 THEN N'Stopping'
-            WHEN 9 THEN N'Completed'
-            ELSE N'Unknown'
-        END AS SsisStatus,
-        e.start_time,
-        e.end_time
-    FROM SSISDB.catalog.executions AS e
-    WHERE e.folder_name = N'POC_SSIS_Export'
-      AND e.project_name = N'POC_SSIS_Export'
-      AND e.package_name = N'WriteShareTest.dtsx'
-    ORDER BY e.execution_id DESC;
-END;
-
 IF ISNULL(@RunStatus, -1) <> 1
 BEGIN
-    THROW 55004, 'Stage 4 job did not finish successfully. Review job history and SSISDB execution details.', 1;
+    THROW 55004, 'Stage 4 job did not finish successfully. Review SQL Agent job history.', 1;
 END;
 
 PRINT 'STAGE4_JOB_TEST_OK';
 PRINT 'Verify that a new ssis-proxy-test-*.txt file exists on \\DC01\SSISLab$.';
+PRINT 'Verify inside the file: WindowsIdentity=SQLLAB\poc-ssis-export.';
 GO
