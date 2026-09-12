@@ -32,68 +32,29 @@ Konto aplikacyjne kończy swoją rolę na SQL Serverze. Nie jest delegowane do S
 
 ## Środowisko POC
 
+- serwer SQL/Agent: `SQL64`
 - domena AD: `SQLLAB.LOCAL`
-- format loginów Windows w SQL Server: `SQLLAB\<konto>`
+- konto aplikacyjne: `SQLLAB\poc-ssis-app`
+- konto wykonawcze: `SQLLAB\poc-ssis-export`
 - baza POC: `SSIS_Delegation_Lab`
+- testowy udział SMB: `\\DC01\SSISLab$`
+- SSISDB: nieużywane w tym POC
 
 ## Stage 1 - warstwa SQL
 
-1. `01-create-database.sql` - tworzy bazę `SSIS_Delegation_Lab`.
-2. `02-create-schema.sql` - tworzy kolejkę `dbo.ExportRequest`.
-3. `03-create-request-procedure.sql` - tworzy procedurę `dbo.usp_RequestExport`.
-4. `04-test-stage1.sql` - wykonuje podstawowe testy funkcjonalne.
+1. `01-create-database.sql`
+2. `02-create-schema.sql`
+3. `03-create-request-procedure.sql`
+4. `04-test-stage1.sql`
 
-Po wykonaniu testu tabela `dbo.ExportRequest` powinna zawierać rekord ze statusem `NEW` oraz wartością `RequestedBy` odpowiadającą loginowi, który wywołał procedurę.
+Rezultat: aplikacja może utworzyć rekord `NEW` w `dbo.ExportRequest`, a `RequestedBy` przechowuje `ORIGINAL_LOGIN()`.
 
 ## Stage 2 - konto aplikacyjne i minimalne uprawnienia
 
 5. `05-create-application-security.sql`
-   - tworzy login Windows dla konta aplikacyjnego, jeśli jeszcze nie istnieje,
-   - tworzy użytkownika w `SSIS_Delegation_Lab`,
-   - nadaje wyłącznie `EXECUTE` do `dbo.usp_RequestExport`,
-   - jawnie blokuje bezpośredni `SELECT/INSERT/UPDATE/DELETE` do `dbo.ExportRequest`.
-
 6. `06-test-application-security.sql`
-   - należy uruchomić w osobnej sesji zalogowanej jako konto aplikacyjne,
-   - potwierdza, że procedura może zostać wykonana,
-   - potwierdza, że bezpośredni dostęp do kolejki jest zabroniony,
-   - wyświetla efektywne prawa przez `HAS_PERMS_BY_NAME`.
 
-### Ważne przed uruchomieniem Stage 2
-
-W pliku `05-create-application-security.sql` zmień jedną wartość:
-
-```sql
-DECLARE @AppLogin sysname = N'SQLLAB\konto';
-```
-
-na rzeczywisty login konta aplikacyjnego, np.:
-
-```sql
-DECLARE @AppLogin sysname = N'SQLLAB\app_ssis_export';
-```
-
-Tę samą nazwę należy wykorzystać do zalogowania się podczas testu `06-test-application-security.sql`.
-
-## Kolejność uruchamiania
-
-Jako administrator SQL Server:
-
-```text
-01-create-database.sql
-02-create-schema.sql
-03-create-request-procedure.sql
-04-test-stage1.sql
-05-create-application-security.sql
-```
-
-Następnie jako konto aplikacyjne:
-
-```text
-06-test-application-security.sql
-```
-
-Oczekiwany wynik końcowy Stage 2:
+Rezultat:
 
 ```text
 CanExecuteRequestProcedure = 1
@@ -103,23 +64,59 @@ CanUpdateQueue             = 0
 CanDeleteQueue             = 0
 ```
 
+## Stage 3 - konto wykonawcze, SMB, Credential i Proxy
+
+7. `07-create-export-account.ps1`
+8. `08-create-test-share.ps1`
+9. `09-test-share-access.ps1`
+10. `10-create-sql-agent-credential.ps1`
+11. `11-create-ssis-proxy.sql`
+12. `12-verify-stage3.sql`
+
+Szczegóły: `STAGE3.md`.
+
+Rezultat: `SQLLAB\poc-ssis-export` może zapisywać do `\\DC01\SSISLab$`, Credential i Proxy działają, a Proxy ma wyłącznie subsystem `SSIS`.
+
+## Stage 4 - pierwszy pakiet SSIS przez Proxy
+
+Stage 4 używa **File System deployment**, ponieważ na `SQL64` nie korzystamy z `SSISDB`.
+
+Pliki:
+
+- `14-create-stage4-job.sql`
+- `15-test-stage4.sql`
+- `stage4-script-task-main.cs`
+- `STAGE4.md`
+
+Pakiet znajduje się lokalnie na `SQL64`:
+
+```text
+C:\SSIS\POC\WriteShareTest.dtsx
+```
+
+Rezultat Stage 4 ma potwierdzić:
+
+```text
+SQL Agent
+  -> POC_SSIS_Export_Proxy
+  -> SQLLAB\poc-ssis-export
+  -> C:\SSIS\POC\WriteShareTest.dtsx
+  -> \\DC01\SSISLab$
+```
+
+W pliku wynikowym sprawdzamy m.in. `WindowsIdentity=SQLLAB\poc-ssis-export`.
+
 ## Założenia bezpieczeństwa
 
 - aplikacja nie przekazuje ścieżki UNC,
 - aplikacja nie uruchamia bezpośrednio pakietu SSIS,
-- aplikacja nie otrzymuje uprawnień do SQL Agenta ani SSISDB,
+- konto aplikacyjne nie otrzymuje praw do SQL Agenta, Credential, Proxy ani udziału,
 - aplikacja nie ma bezpośredniego dostępu do tabeli kolejki,
 - `ORIGINAL_LOGIN()` służy do audytu zlecającego,
-- konto wykonujące pakiet będzie oddzielone od konta aplikacyjnego,
-- konto aplikacyjne nie będzie wymagało `Unconstrained Delegation`.
+- konto wykonawcze jest oddzielone od konta aplikacyjnego,
+- konta POC nie wymagają `Unconstrained Delegation`,
+- hasła nie są przechowywane w repozytorium.
 
 ## Następny etap
 
-Stage 3 będzie obejmował:
-
-- dedykowane konto techniczne eksportu,
-- Credential,
-- SQL Agent Proxy,
-- testowy udział sieciowy,
-- pierwszy pakiet SSIS zapisujący plik,
-- test działania bez delegowania konta aplikacyjnego do zasobu sieciowego.
+Stage 5 połączy działający tor SSIS z `dbo.ExportRequest` i doda obsługę statusów `NEW -> RUNNING -> COMPLETED/FAILED`, retry oraz kontrolę współbieżności.
