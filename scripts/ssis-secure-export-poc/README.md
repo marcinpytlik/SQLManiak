@@ -1,6 +1,6 @@
 # Secure SSIS Export POC
 
-POC bezpiecznego uruchamiania eksportu SSIS bez `Unconstrained Delegation` dla konta aplikacyjnego.
+POC bezpiecznego uruchamiania eksportu bez `Unconstrained Delegation` dla konta aplikacyjnego.
 
 ## Cel
 
@@ -20,9 +20,9 @@ ExportRequest queue
     v
 SQL Server Agent Job
     |
-    | SSIS Proxy / dedicated service account
+    | dedicated execution identity
     v
-SSIS package
+executor (SSIS / CmdExec)
     |
     v
 Network share
@@ -75,44 +75,44 @@ CanDeleteQueue             = 0
 
 Szczegóły: `STAGE3.md`.
 
-Rezultat: `SQLLAB\poc-ssis-export` może zapisywać do `\\DC01\SSISLab$`, Credential i Proxy działają, a Proxy ma wyłącznie subsystem `SSIS`.
+Rezultat: `SQLLAB\poc-ssis-export` może zapisywać do `\\DC01\SSISLab$`, Credential działa, a SQL Agent może uruchomić krok pod dedykowaną tożsamością.
 
-## Stage 4 - pierwszy pakiet SSIS przez Proxy
+## Stage 4 - proof of execution identity przez CmdExec Proxy
 
-Stage 4 używa **File System deployment**, ponieważ na `SQL64` nie korzystamy z `SSISDB`.
+Na `SQL64` subsystem `SSIS` istnieje, ale nie ma pełnego object modelu SSIS (`Microsoft.SqlServer.ManagedDTS.dll`) ani SSDT. Nie instalujemy dodatkowych komponentów wyłącznie na potrzeby POC.
 
-Pakiet nie jest przechowywany jako ręcznie napisany XML. Jest generowany na `SQL64` przez zainstalowany runtime SSIS, bez Visual Studio i SSDT.
+Dlatego Stage 4 używa `CmdExec Proxy`, aby jednoznacznie potwierdzić najważniejszy element architektury: konto aplikacyjne nie jest delegowane do udziału SMB, a dostęp do zasobu wykonuje osobne konto techniczne.
 
 Pliki:
 
-- `13-generate-stage4-package.ps1` - generuje i ponownie ładuje `WriteShareTest.dtsx` przez `Microsoft.SqlServer.Dts.Runtime`,
-- `14-create-stage4-job.sql`,
-- `15-test-stage4.sql`,
-- `STAGE4.md`.
-
-Docelowy pakiet:
-
-```text
-C:\SSIS\POC\WriteShareTest.dtsx
-```
+- `13-create-cmdexec-proxy.sql` - tworzy `POC_Export_CmdExec_Proxy` na istniejącym Credential,
+- `14-create-stage4-job.sql` - tworzy job `CmdExec` uruchamiający PowerShell przez Proxy,
+- `15-test-stage4.sql` - uruchamia job i sprawdza wynik,
+- `STAGE4.md` - pełny runbook.
 
 Rezultat Stage 4 ma potwierdzić:
 
 ```text
 SQL Agent
-  -> POC_SSIS_Export_Proxy
+  -> POC_Export_CmdExec_Proxy
   -> SQLLAB\poc-ssis-export
-  -> C:\SSIS\POC\WriteShareTest.dtsx
+  -> PowerShell
   -> \\DC01\SSISLab$
 ```
 
-W pliku wynikowym sprawdzamy m.in. `WindowsIdentity=SQLLAB\poc-ssis-export`.
+W pliku wynikowym sprawdzamy m.in.:
+
+```text
+WindowsIdentity=SQLLAB\poc-ssis-export
+```
+
+Na środowisku z pełnym SSIS executor `CmdExec` można zastąpić krokiem `SSIS`, zachowując ten sam model Credential/Proxy i tę samą dedykowaną tożsamość wykonawczą.
 
 ## Założenia bezpieczeństwa
 
 - aplikacja nie przekazuje ścieżki UNC,
-- aplikacja nie uruchamia bezpośrednio pakietu SSIS,
-- konto aplikacyjne nie otrzymuje praw do SQL Agenta, Credential, Proxy ani udziału,
+- aplikacja nie uruchamia bezpośrednio SQL Agenta,
+- konto aplikacyjne nie otrzymuje praw do Credential, Proxy ani udziału,
 - aplikacja nie ma bezpośredniego dostępu do tabeli kolejki,
 - `ORIGINAL_LOGIN()` służy do audytu zlecającego,
 - konto wykonawcze jest oddzielone od konta aplikacyjnego,
@@ -121,4 +121,4 @@ W pliku wynikowym sprawdzamy m.in. `WindowsIdentity=SQLLAB\poc-ssis-export`.
 
 ## Następny etap
 
-Stage 5 połączy działający tor SSIS z `dbo.ExportRequest` i doda obsługę statusów `NEW -> RUNNING -> COMPLETED/FAILED`, retry oraz kontrolę współbieżności.
+Stage 5 połączy działający model wykonawczy z `dbo.ExportRequest` i doda obsługę statusów `NEW -> RUNNING -> COMPLETED/FAILED`, retry oraz kontrolę współbieżności.
