@@ -32,11 +32,13 @@ Konto aplikacyjne kończy swoją rolę na SQL Serverze. Nie jest delegowane do S
 
 ## Środowisko POC
 
+- serwer SQL/Agent: `SQL64`
 - domena AD: `SQLLAB.LOCAL`
 - konto aplikacyjne: `SQLLAB\poc-ssis-app`
 - konto wykonawcze: `SQLLAB\poc-ssis-export`
 - baza POC: `SSIS_Delegation_Lab`
 - testowy udział SMB: `\\DC01\SSISLab$`
+- SSISDB: nieużywane w tym POC
 
 ## Stage 1 - warstwa SQL
 
@@ -77,14 +79,20 @@ Rezultat: `SQLLAB\poc-ssis-export` może zapisywać do `\\DC01\SSISLab$`, Creden
 
 ## Stage 4 - pierwszy pakiet SSIS przez Proxy
 
-13. `13-grant-stage4-ssisdb-rights.sql`
-14. `14-create-stage4-job.sql`
-15. `15-test-stage4.sql`
+Stage 4 używa **File System deployment**, ponieważ na `SQL64` nie korzystamy z `SSISDB`.
 
-Dodatkowo:
+Pliki:
 
-- `stage4-script-task-main.cs` - kod minimalnego Script Task,
-- `STAGE4.md` - instrukcja utworzenia, wdrożenia i przetestowania pakietu `WriteShareTest.dtsx`.
+- `14-create-stage4-job.sql`
+- `15-test-stage4.sql`
+- `stage4-script-task-main.cs`
+- `STAGE4.md`
+
+Pakiet znajduje się lokalnie na `SQL64`:
+
+```text
+C:\SSIS\POC\WriteShareTest.dtsx
+```
 
 Rezultat Stage 4 ma potwierdzić:
 
@@ -92,15 +100,17 @@ Rezultat Stage 4 ma potwierdzić:
 SQL Agent
   -> POC_SSIS_Export_Proxy
   -> SQLLAB\poc-ssis-export
-  -> SSISDB package
+  -> C:\SSIS\POC\WriteShareTest.dtsx
   -> \\DC01\SSISLab$
 ```
+
+W pliku wynikowym sprawdzamy m.in. `WindowsIdentity=SQLLAB\poc-ssis-export`.
 
 ## Założenia bezpieczeństwa
 
 - aplikacja nie przekazuje ścieżki UNC,
 - aplikacja nie uruchamia bezpośrednio pakietu SSIS,
-- konto aplikacyjne nie otrzymuje praw do SQL Agenta, Credential, Proxy, SSISDB ani udziału,
+- konto aplikacyjne nie otrzymuje praw do SQL Agenta, Credential, Proxy ani udziału,
 - aplikacja nie ma bezpośredniego dostępu do tabeli kolejki,
 - `ORIGINAL_LOGIN()` służy do audytu zlecającego,
 - konto wykonawcze jest oddzielone od konta aplikacyjnego,
