@@ -41,12 +41,14 @@ $ou = Get-ADOrganizationalUnit -LDAPFilter "(ou=$OuName)" -SearchBase $domainDn 
 
 if (-not $ou) {
     if ($PSCmdlet.ShouldProcess($ouDn, 'Create POC organizational unit')) {
-        $ou = New-ADOrganizationalUnit \
-            -Name $OuName \
-            -Path $domainDn \
-            -ProtectedFromAccidentalDeletion $true \
-            -PassThru
+        $ouParams = @{
+            Name                            = $OuName
+            Path                            = $domainDn
+            ProtectedFromAccidentalDeletion = $true
+            PassThru                        = $true
+        }
 
+        $ou = New-ADOrganizationalUnit @ouParams
         Write-Host "Created OU: $($ou.DistinguishedName)"
     }
 }
@@ -60,17 +62,19 @@ if (-not $user) {
     $securePassword = Read-Host "Enter password for $netbiosName\$SamAccountName" -AsSecureString
 
     if ($PSCmdlet.ShouldProcess("$netbiosName\$SamAccountName", 'Create POC application account')) {
-        New-ADUser \
-            -Name $DisplayName \
-            -DisplayName $DisplayName \
-            -SamAccountName $SamAccountName \
-            -UserPrincipalName $upn \
-            -Path $ouDn \
-            -AccountPassword $securePassword \
-            -Enabled $true \
-            -ChangePasswordAtLogon $false \
-            -PasswordNeverExpires:$PasswordNeverExpires.IsPresent
+        $userParams = @{
+            Name                  = $DisplayName
+            DisplayName           = $DisplayName
+            SamAccountName        = $SamAccountName
+            UserPrincipalName     = $upn
+            Path                  = $ouDn
+            AccountPassword       = $securePassword
+            Enabled               = $true
+            ChangePasswordAtLogon = $false
+            PasswordNeverExpires  = $PasswordNeverExpires.IsPresent
+        }
 
+        New-ADUser @userParams
         Write-Host "Created account: $netbiosName\$SamAccountName"
     }
 }
@@ -83,23 +87,24 @@ else {
 }
 
 # Security hardening for the POC account.
-# AccountNotDelegated = 'Account is sensitive and cannot be delegated'.
+# AccountNotDelegated = "Account is sensitive and cannot be delegated".
 # TrustedForDelegation / TrustedToAuthForDelegation explicitly remain disabled.
 if ($PSCmdlet.ShouldProcess("$netbiosName\$SamAccountName", 'Disable delegation and mark account as sensitive')) {
-    Set-ADAccountControl \
-        -Identity $SamAccountName \
-        -AccountNotDelegated $true \
-        -TrustedForDelegation $false \
-        -TrustedToAuthForDelegation $false
+    $accountControlParams = @{
+        Identity                   = $SamAccountName
+        AccountNotDelegated        = $true
+        TrustedForDelegation       = $false
+        TrustedToAuthForDelegation = $false
+    }
+
+    Set-ADAccountControl @accountControlParams
 }
 
-$user = Get-ADUser \
-    -Identity $SamAccountName \
-    -Properties Enabled,PasswordNeverExpires,AccountNotDelegated,TrustedForDelegation,TrustedToAuthForDelegation,MemberOf,DistinguishedName
+$user = Get-ADUser -Identity $SamAccountName -Properties Enabled,PasswordNeverExpires,AccountNotDelegated,TrustedForDelegation,TrustedToAuthForDelegation,MemberOf,DistinguishedName
 
 Write-Host ''
 Write-Host '=== Verification ==='
-$user | Select-Object \
+$user | Select-Object `
     SamAccountName,
     UserPrincipalName,
     DistinguishedName,
