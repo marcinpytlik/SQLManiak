@@ -13,6 +13,12 @@ Cel tego etapu: potwierdzić pełny przepływ wykonawczy **SQL Agent -> SSIS Pro
 - test share: `\\DC01\SSISLab$`
 - SQL Agent job: `POC_SSIS_Secure_Export_Stage4`
 
+## Ważne
+
+Pakiet `.dtsx` nie jest już przechowywany w repo jako ręcznie napisany XML. Taki plik może być niezgodny z konkretną wersją runtime SSIS.
+
+Pakiet generujemy bez Visual Studio / SSDT **bezpośrednio na SQL64** przy użyciu zainstalowanego `Microsoft.SqlServer.Dts.Runtime`.
+
 ## 1. Utwórz katalog dla pakietu na SQL64
 
 Jako administrator systemu na `SQL64`:
@@ -27,36 +33,46 @@ Konto `SQLLAB\poc-ssis-export` potrzebuje tylko prawa odczytu i wykonania do kat
 icacls 'C:\SSIS\POC' /grant 'SQLLAB\poc-ssis-export:(OI)(CI)(RX)'
 ```
 
-## 2. Skopiuj gotowy pakiet
+## 2. Wygeneruj poprawny pakiet przy użyciu runtime SSIS
 
-Pakiet `WriteShareTest.dtsx` jest już w repozytorium. Nie wymaga Visual Studio ani SSDT do przygotowania.
-
-Po `git pull` skopiuj go na `SQL64`:
+Uruchom na `SQL64` w **Windows PowerShell 5.1 (`powershell.exe`)**, nie w PowerShell 7:
 
 ```powershell
-Copy-Item `
-  '.\scripts\ssis-secure-export-poc\WriteShareTest.dtsx' `
-  'C:\SSIS\POC\WriteShareTest.dtsx' `
-  -Force
+.\13-generate-stage4-package.ps1
 ```
 
-Pakiet zawiera pojedynczy `Execute Process Task`. Uruchamia lokalny Windows PowerShell, który zapisuje plik diagnostyczny na `\\DC01\SSISLab$`.
-
-Plik zawiera:
+Domyślnie skrypt zapisuje:
 
 ```text
-POC Secure SSIS Export - Stage 4
-Timestamp=...
-MachineName=SQL64
-WindowsIdentity=SQLLAB\poc-ssis-export
-OutputFile=\\DC01\SSISLab$\ssis-proxy-test-....txt
+C:\SSIS\POC\WriteShareTest.dtsx
 ```
 
-Pakiet ma `ProtectionLevel=DontSaveSensitive` i nie przechowuje żadnych sekretów.
+oraz konfiguruje zapis pliku testowego do:
 
-## 3. Opcjonalna walidacja pliku pakietu
+```text
+\\DC01\SSISLab$
+```
 
-Na `SQL64` możesz sprawdzić, czy plik jest na miejscu:
+Generator:
+
+- lokalizuje zainstalowany `Microsoft.SqlServer.ManagedDTS.dll`,
+- tworzy obiekt `Microsoft.SqlServer.Dts.Runtime.Package`,
+- dodaje `STOCK:ExecuteProcessTask`,
+- zapisuje pakiet przez `Application.SaveToXml`,
+- natychmiast ładuje zapisany plik ponownie przez ten sam runtime,
+- kończy się `PACKAGE_GENERATION_OK` tylko wtedy, gdy pakiet można poprawnie załadować.
+
+Oczekiwany wynik:
+
+```text
+PACKAGE_GENERATION_OK
+Package      : C:\SSIS\POC\WriteShareTest.dtsx
+Output share : \\DC01\SSISLab$
+Package name : WriteShareTest
+Tasks        : 1
+```
+
+## 3. Sprawdź plik
 
 ```powershell
 Test-Path 'C:\SSIS\POC\WriteShareTest.dtsx'
