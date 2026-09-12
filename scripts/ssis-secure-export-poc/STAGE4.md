@@ -1,80 +1,82 @@
-# Stage 4 - SSIS package executed through SQL Agent Proxy
+# Stage 4 - SSIS package executed from File System through SQL Agent Proxy
 
-Cel tego etapu: potwierdzić pełny przepływ wykonawczy **SQL Agent -> SSIS Proxy -> SSISDB -> pakiet -> \\DC01\SSISLab$** bez delegowania tożsamości konta aplikacyjnego.
+Cel tego etapu: potwierdzić pełny przepływ wykonawczy **SQL Agent -> SSIS Proxy -> lokalny pakiet .dtsx -> \\DC01\SSISLab$** bez użycia SSISDB i bez delegowania tożsamości konta aplikacyjnego.
 
 ## Założone nazwy POC
 
+- serwer SQL/Agent: `SQL64`
 - konto wykonawcze: `SQLLAB\poc-ssis-export`
 - Credential: `POC_SSIS_Export_Credential`
 - Proxy: `POC_SSIS_Export_Proxy`
-- SSISDB folder: `POC_SSIS_Export`
-- SSIS project: `POC_SSIS_Export`
+- lokalny katalog pakietu na SQL64: `C:\SSIS\POC`
 - package: `WriteShareTest.dtsx`
-- project parameter: `OutputShare`
+- package variable: `User::OutputShare`
 - test share: `\\DC01\SSISLab$`
 - SQL Agent job: `POC_SSIS_Secure_Export_Stage4`
 
-## 1. Utwórz minimalny projekt SSIS w Visual Studio / SSDT
+## 1. Utwórz katalog dla pakietu na SQL64
 
-Utwórz Integration Services Project o nazwie `POC_SSIS_Export`.
+Jako administrator systemu na `SQL64`:
 
-W projekcie:
-
-1. Dodaj project parameter `OutputShare` typu `String`.
-2. Ustaw wartość projektową na `\\DC01\SSISLab$`.
-3. Zmień nazwę pakietu na `WriteShareTest.dtsx`.
-4. Dodaj `Script Task`.
-5. W `ReadOnlyVariables` wskaż `$Project::OutputShare`.
-6. W Script Task podmień zawartość `Main()` kodem z pliku `stage4-script-task-main.cs`.
-
-Skrypt tworzy plik tekstowy o nazwie `ssis-proxy-test-yyyyMMdd-HHmmss-fff.txt` w udziale przekazanym parametrem projektu.
-
-## 2. Deploy do SSISDB
-
-Utwórz w SSISDB folder `POC_SSIS_Export` i wdroż projekt `POC_SSIS_Export`.
-
-Po deploy sprawdź w SSMS:
-
-```text
-Integration Services Catalogs
-  SSISDB
-    POC_SSIS_Export
-      Projects
-        POC_SSIS_Export
-          Packages
-            WriteShareTest.dtsx
+```powershell
+New-Item -ItemType Directory -Path 'C:\SSIS\POC' -Force
 ```
 
-Nie uruchamiaj jeszcze pakietu z SQL Agenta.
+Konto `SQLLAB\poc-ssis-export` potrzebuje tylko prawa odczytu i wykonania do katalogu/pakietu. Nie potrzebuje Modify do `C:\SSIS\POC`.
 
-## 3. Minimalne prawa konta Proxy w SSISDB
+Przykład:
 
-Uruchom jako administrator SQL Server:
-
-```text
-13-grant-stage4-ssisdb-rights.sql
+```powershell
+$path = 'C:\SSIS\POC'
+icacls $path /grant 'SQLLAB\poc-ssis-export:(OI)(CI)(RX)'
 ```
 
-Skrypt:
+## 2. Utwórz minimalny pakiet SSIS
 
-- tworzy Windows login `SQLLAB\poc-ssis-export`, jeśli go nie ma,
-- tworzy użytkownika w SSISDB,
-- nadaje tylko `READ` i `EXECUTE` do projektu `POC_SSIS_Export`,
-- nie nadaje `db_owner`, `ssis_admin`, `sysadmin` ani praw do innych projektów.
+Utwórz Integration Services Project w Visual Studio / SSDT. Projekt służy wyłącznie do zbudowania pojedynczego pakietu - nie wdrażamy go do SSISDB.
+
+W pakiecie `WriteShareTest.dtsx`:
+
+1. Dodaj zmienną pakietową `User::OutputShare` typu `String`.
+2. Ustaw jej wartość na `\\DC01\SSISLab$`.
+3. Dodaj `Script Task`.
+4. W `ReadOnlyVariables` wskaż `User::OutputShare`.
+5. W Script Task podmień zawartość `Main()` kodem z pliku `stage4-script-task-main.cs`.
+6. Ustaw `ProtectionLevel` pakietu tak, aby pakiet nie wymagał sekretu zależnego od profilu dewelopera. Dla tego POC pakiet nie zawiera żadnych sekretów.
+
+Po zapisaniu projektu skopiuj gotowy `WriteShareTest.dtsx` na `SQL64` do:
+
+```text
+C:\SSIS\POC\WriteShareTest.dtsx
+```
+
+## 3. Test pakietu lokalnie - opcjonalny
+
+Jeżeli chcesz zweryfikować sam pakiet przed SQL Agentem, uruchom go ręcznie na SQL64 jako administrator. Ten test nie potwierdza jeszcze działania Proxy - potwierdza jedynie poprawność pakietu.
+
+Docelowy test bezpieczeństwa wykonujemy wyłącznie przez SQL Agent.
 
 ## 4. Utwórz SQL Agent Job
 
-Uruchom:
+Uruchom jako administrator SQL Server:
 
 ```text
 14-create-stage4-job.sql
 ```
 
-Job ma jeden krok typu `SSIS`, uruchamiany jako `POC_SSIS_Export_Proxy`.
+Skrypt:
 
-Pakiet jest uruchamiany z SSISDB, a `OutputShare` jest jawnie ustawiany na `\\DC01\SSISLab$` w definicji kroku. Konto aplikacyjne nie ma dostępu do tego joba ani do udziału.
+- sprawdza obecność `POC_SSIS_Export_Proxy`,
+- sprawdza przypisanie Proxy do subsystemu `SSIS`,
+- sprawdza obecność pakietu `C:\SSIS\POC\WriteShareTest.dtsx`,
+- tworzy job `POC_SSIS_Secure_Export_Stage4`,
+- tworzy krok typu `SSIS`,
+- ustawia uruchamianie kroku przez `POC_SSIS_Export_Proxy`,
+- uruchamia pakiet ze źródła `File system`.
 
-## 5. Test
+Nie jest wymagane `SSISDB`.
+
+## 5. Test pełnego toru
 
 Uruchom:
 
@@ -82,7 +84,7 @@ Uruchom:
 15-test-stage4.sql
 ```
 
-Skrypt uruchamia job, czeka na zakończenie (maks. 120 sekund), pokazuje ostatnią historię joba oraz ostatnie wykonania SSISDB.
+Skrypt uruchamia job, czeka na zakończenie do 120 sekund i pokazuje historię SQL Agent.
 
 Oczekiwany rezultat:
 
@@ -96,10 +98,25 @@ oraz na `\\DC01\SSISLab$` powinien pojawić się plik:
 ssis-proxy-test-yyyyMMdd-HHmmss-fff.txt
 ```
 
-W środku powinny znaleźć się m.in. `MachineName`, `WindowsIdentity` i czas wykonania. `WindowsIdentity` powinno wskazywać konto wykonawcze `SQLLAB\poc-ssis-export`.
+W środku powinny znaleźć się m.in.:
+
+```text
+MachineName=SQL64
+WindowsIdentity=SQLLAB\poc-ssis-export
+```
+
+Jeżeli `WindowsIdentity` wskazuje `SQLLAB\poc-ssis-export`, mamy bezpośrednie potwierdzenie, że pakiet działa pod dedykowanym kontem technicznym, a nie pod kontem aplikacyjnym.
 
 ## Granica Stage 4
 
-Stage 4 **nie pobiera jeszcze rekordów z `dbo.ExportRequest`**. Najpierw potwierdzamy sam tor wykonawczy SSIS i tożsamość Proxy.
+Stage 4 **nie pobiera jeszcze rekordów z `dbo.ExportRequest`**. Potwierdzamy tylko:
 
-Dopiero Stage 5 połączy kolejkę z jobem/workerem i będzie zmieniał statusy `NEW -> RUNNING -> COMPLETED/FAILED`.
+```text
+SQL Agent
+  -> SSIS Proxy
+  -> SQLLAB\poc-ssis-export
+  -> C:\SSIS\POC\WriteShareTest.dtsx
+  -> \\DC01\SSISLab$
+```
+
+Dopiero Stage 5 połączy kolejkę z workerem/jobem i będzie zmieniał statusy `NEW -> RUNNING -> COMPLETED/FAILED`.
