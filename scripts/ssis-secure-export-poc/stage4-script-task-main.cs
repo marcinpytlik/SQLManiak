@@ -7,11 +7,11 @@ public void Main()
 {
     try
     {
-        string outputShare = Dts.Variables["$Project::OutputShare"].Value.ToString();
+        string outputShare = Dts.Variables["User::OutputShare"].Value.ToString();
 
         if (string.IsNullOrWhiteSpace(outputShare))
         {
-            throw new InvalidOperationException("Project parameter OutputShare is empty.");
+            throw new InvalidOperationException("Package variable User::OutputShare is empty.");
         }
 
         string fileName = $"ssis-proxy-test-{DateTime.Now:yyyyMMdd-HHmmss-fff}.txt";
