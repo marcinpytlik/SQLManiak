@@ -1,6 +1,6 @@
 /*
-    POC: Secure SSIS Export without unconstrained delegation
-    Stage 4 - SQL Agent job executing a File System SSIS package through SSIS Proxy
+    POC: Secure export without unconstrained delegation
+    Stage 4 - SQL Agent CmdExec job executed through dedicated Proxy
 */
 
 USE [msdb];
@@ -8,13 +8,13 @@ GO
 
 SET NOCOUNT ON;
 
-DECLARE @JobName sysname = N'POC_SSIS_Secure_Export_Stage4';
-DECLARE @ProxyName sysname = N'POC_SSIS_Export_Proxy';
-DECLARE @PackagePath nvarchar(4000) = N'C:\SSIS\POC\WriteShareTest.dtsx';
+DECLARE @JobName sysname = N'POC_Secure_Export_Stage4';
+DECLARE @ProxyName sysname = N'POC_Export_CmdExec_Proxy';
+DECLARE @OutputShare nvarchar(4000) = N'\\DC01\SSISLab$';
 DECLARE @Command nvarchar(max);
 DECLARE @JobId uniqueidentifier;
-DECLARE @SsisSubsystemId int;
 DECLARE @ProxyId int;
+DECLARE @CmdExecSubsystemId int;
 
 SELECT @ProxyId = proxy_id
 FROM dbo.sysproxies
@@ -23,16 +23,16 @@ WHERE name = @ProxyName
 
 IF @ProxyId IS NULL
 BEGIN
-    THROW 54001, 'Required SQL Agent SSIS proxy was not found or is disabled.', 1;
+    THROW 57001, 'Required SQL Agent CmdExec proxy was not found or is disabled.', 1;
 END;
 
-SELECT @SsisSubsystemId = subsystem_id
+SELECT @CmdExecSubsystemId = subsystem_id
 FROM dbo.syssubsystems
-WHERE subsystem = N'SSIS';
+WHERE subsystem = N'CmdExec';
 
-IF @SsisSubsystemId IS NULL
+IF @CmdExecSubsystemId IS NULL
 BEGIN
-    THROW 54002, 'SQL Agent SSIS subsystem was not found.', 1;
+    THROW 57002, 'SQL Agent CmdExec subsystem was not found.', 1;
 END;
 
 IF NOT EXISTS
@@ -40,23 +40,32 @@ IF NOT EXISTS
     SELECT 1
     FROM dbo.sysproxysubsystem
     WHERE proxy_id = @ProxyId
-      AND subsystem_id = @SsisSubsystemId
+      AND subsystem_id = @CmdExecSubsystemId
 )
 BEGIN
-    THROW 54003, 'POC proxy is not granted to the SSIS subsystem.', 1;
+    THROW 57003, 'POC CmdExec proxy is not granted to the CmdExec subsystem.', 1;
 END;
 
 /*
-    SQL Server cannot reliably validate a local file path from T-SQL without
-    enabling extra features such as xp_cmdshell. We deliberately do not enable
-    anything for this POC. Verify C:\SSIS\POC\WriteShareTest.dtsx on SQL64
-    before running this script.
+    The job step launches Windows PowerShell under the Proxy identity.
+    No credentials are embedded in the command. SMB authentication is performed
+    directly by SQLLAB\poc-ssis-export using the Credential behind the Proxy.
 */
-
 SET @Command =
-      N'/FILE "' + @PackagePath + N'"'
-    + N' /CHECKPOINTING OFF'
-    + N' /REPORTING E';
+    N'powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "'
+  + N'$ErrorActionPreference = ''Stop''; '
+  + N'$share = ''' + REPLACE(@OutputShare, '''', '''''') + N'''; '
+  + N'$file = Join-Path -Path $share -ChildPath (''cmdexec-proxy-test-{0}.txt'' -f (Get-Date -Format ''yyyyMMdd-HHmmss-fff'')); '
+  + N'$identity = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name; '
+  + N'$content = @(''POC Secure Export - Stage 4 CmdExec'', '
+  + N'(''Timestamp={0}'' -f (Get-Date -Format ''o'')), '
+  + N'(''MachineName={0}'' -f $env:COMPUTERNAME), '
+  + N'(''WindowsIdentity={0}'' -f $identity), '
+  + N'(''OutputFile={0}'' -f $file)); '
+  + N'$content | Set-Content -LiteralPath $file -Encoding UTF8; '
+  + N'if (-not (Test-Path -LiteralPath $file)) { throw ''Output file was not created.'' }; '
+  + N'Write-Output (''Created: {0}'' -f $file); '
+  + N'Write-Output (''WindowsIdentity: {0}'' -f $identity)"';
 
 IF EXISTS (SELECT 1 FROM dbo.sysjobs WHERE name = @JobName)
 BEGIN
@@ -68,16 +77,15 @@ END;
 EXEC dbo.sp_add_job
      @job_name = @JobName,
      @enabled = 1,
-     @description = N'POC Stage 4 - execute File System SSIS package through dedicated SSIS Proxy and write to SMB share.',
+     @description = N'POC Stage 4 - execute PowerShell through dedicated CmdExec Proxy and write to SMB share.',
      @owner_login_name = N'sa',
      @job_id = @JobId OUTPUT;
 
 EXEC dbo.sp_add_jobstep
      @job_id = @JobId,
-     @step_name = N'Run WriteShareTest through SSIS Proxy',
-     @subsystem = N'SSIS',
+     @step_name = N'Write SMB test file through CmdExec Proxy',
+     @subsystem = N'CmdExec',
      @command = @Command,
-     @database_name = N'master',
      @proxy_name = @ProxyName,
      @on_success_action = 1,
      @on_fail_action = 2,
@@ -92,11 +100,14 @@ SELECT
     js.step_name,
     js.subsystem,
     p.name AS ProxyName,
+    c.credential_identity,
     js.command
 FROM dbo.sysjobs AS j
 JOIN dbo.sysjobsteps AS js
     ON js.job_id = j.job_id
 LEFT JOIN dbo.sysproxies AS p
     ON p.proxy_id = js.proxy_id
+LEFT JOIN master.sys.credentials AS c
+    ON c.credential_id = p.credential_id
 WHERE j.job_id = @JobId;
 GO
