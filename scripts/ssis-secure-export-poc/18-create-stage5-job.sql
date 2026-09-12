@@ -16,6 +16,7 @@ DECLARE @JobName sysname = N'POC_Secure_Export_Stage5_Worker';
 DECLARE @ProxyName sysname = N'POC_Export_CmdExec_Proxy';
 DECLARE @ScheduleName sysname = N'POC_Secure_Export_Stage5_EveryMinute';
 DECLARE @WorkerScript nvarchar(4000) = N'C:\SSIS\POC\Stage5Worker.ps1';
+DECLARE @PowerShellExe nvarchar(4000) = N'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe';
 DECLARE @Command nvarchar(max);
 DECLARE @JobId uniqueidentifier;
 DECLARE @ProxyId int;
@@ -51,8 +52,14 @@ BEGIN
     THROW 59003, 'POC CmdExec proxy is not granted to the CmdExec subsystem.', 1;
 END;
 
+/*
+    Important: T-SQL does not use backslash as an escape character.
+    The SQL Agent command must contain real double quotes around paths and values,
+    e.g. -File "C:\SSIS\POC\Stage5Worker.ps1" in the final command text,
+    not a literal backslash followed by a quote.
+*/
 SET @Command =
-      N'powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass '
+      N'"' + @PowerShellExe + N'" -NoProfile -NonInteractive -ExecutionPolicy Bypass '
     + N'-File "' + @WorkerScript + N'" '
     + N'-SqlInstance "localhost" '
     + N'-Database "SSIS_Delegation_Lab" '
