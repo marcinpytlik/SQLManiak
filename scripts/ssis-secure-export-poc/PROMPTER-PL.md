@@ -376,6 +376,351 @@ To rozróżnienie jest kluczowe.
 
 ---
 
+## Scenariusz demo – kolejność uruchamiania skryptów
+
+Poniższa część jest przeznaczona bezpośrednio do nagrania. Pokazuje dokładnie **co uruchomić, gdzie i w jakiej kolejności**.
+
+### Przygotowanie
+
+Repozytorium klonujemy lub aktualizujemy na stacji administracyjnej albo bezpośrednio na `SQL64`.
+
+Katalog roboczy:
+
+```text
+scripts\ssis-secure-export-poc
+```
+
+W POC używamy trzech maszyn logicznych:
+
+```text
+SQL64  - SQL Server + SQL Server Agent
+DC01   - Active Directory + udział SMB
+stacja administracyjna - PowerShell / SSMS; może to być również SQL64
+```
+
+### Krok 1 – baza i kolejka
+
+**Gdzie:** połączenie SSMS do `SQL64`.
+
+Uruchamiamy kolejno:
+
+```text
+01-create-database.sql
+02-create-schema.sql
+03-create-request-procedure.sql
+04-test-stage1.sql
+```
+
+Po tym etapie mamy bazę `SSIS_Delegation_Lab`, tabelę `dbo.ExportRequest`, procedurę `dbo.usp_RequestExport` i pierwszy test kolejki.
+
+### Krok 2 – konto aplikacyjne i minimalne prawa
+
+**Gdzie:** SSMS połączony z `SQL64`.
+
+Uruchamiamy:
+
+```text
+05-create-application-security.sql
+06-test-application-security.sql
+```
+
+Oczekiwany rezultat: konto `SQLLAB\poc-ssis-app` może wykonać `dbo.usp_RequestExport`, ale nie ma bezpośredniego CRUD do `dbo.ExportRequest`.
+
+> Konto domenowe `poc-ssis-app` musi wcześniej istnieć w Active Directory. Jeżeli budujemy POC od zera, konto aplikacyjne tworzymy przez skrypt `Initialize-POCActiveDirectory.ps1` z katalogu `scripts\poc-active-directory` uruchomiony na `DC01` lub ze stacji z modułem ActiveDirectory i uprawnieniami domenowymi.
+
+### Krok 3 – konto wykonawcze
+
+**Gdzie:** PowerShell uruchomiony z uprawnieniami domenowymi; najprościej na `DC01`.
+
+Uruchamiamy:
+
+```powershell
+.\07-create-export-account.ps1
+```
+
+Powstaje konto:
+
+```text
+SQLLAB\poc-ssis-export
+```
+
+Nie ustawiamy dla niego `Unconstrained Delegation`.
+
+### Krok 4 – udział SMB
+
+**Gdzie:** `DC01`, PowerShell jako administrator.
+
+Uruchamiamy:
+
+```powershell
+.\08-create-test-share.ps1
+```
+
+Powstaje:
+
+```text
+C:\POC\SSISLab
+\\DC01\SSISLab$
+```
+
+Prawo zapisu otrzymuje konto `SQLLAB\poc-ssis-export`.
+
+### Krok 5 – test dostępu do udziału
+
+**Gdzie:** stacja administracyjna albo `SQL64`, PowerShell.
+
+Uruchamiamy:
+
+```powershell
+.\09-test-share-access.ps1
+```
+
+Test uwierzytelnia się bezpośrednio kontem wykonawczym i sprawdza utworzenie, odczyt oraz usunięcie pliku na `\\DC01\SSISLab$`.
+
+### Krok 6 – Credential SQL Server Agent
+
+**Gdzie:** najlepiej `SQL64`, PowerShell z uprawnieniami administracyjnymi do SQL Servera.
+
+Uruchamiamy:
+
+```powershell
+.\10-create-sql-agent-credential.ps1
+```
+
+Skrypt poprosi o hasło konta `SQLLAB\poc-ssis-export` i utworzy:
+
+```text
+POC_SSIS_Export_Credential
+```
+
+Hasło nie trafia do repozytorium.
+
+### Krok 7 – Proxy SSIS i weryfikacja Stage 3
+
+**Gdzie:** SSMS połączony z `SQL64`.
+
+Uruchamiamy:
+
+```text
+11-create-ssis-proxy.sql
+12-verify-stage3.sql
+```
+
+W tym miejscu potwierdzamy Credential, Proxy i mapowanie do subsystemu SQL Server Agent.
+
+### Krok 8 – CmdExec Proxy
+
+Ponieważ na naszym `SQL64` nie było pełnych komponentów potrzebnych do wygodnego zbudowania pakietu `.dtsx`, dalszy POC realizujemy przez CmdExec.
+
+**Gdzie:** SSMS połączony z `SQL64`.
+
+Uruchamiamy:
+
+```text
+13-create-cmdexec-proxy.sql
+```
+
+Powstaje:
+
+```text
+POC_Export_CmdExec_Proxy
+```
+
+korzystający z tego samego Credential i tego samego konta `SQLLAB\poc-ssis-export`.
+
+### Krok 9 – dowód tożsamości wykonawczej
+
+**Gdzie:** SSMS połączony z `SQL64`.
+
+Uruchamiamy:
+
+```text
+14-create-stage4-job.sql
+15-test-stage4.sql
+```
+
+Po sukcesie na `\\DC01\SSISLab$` pojawia się plik `cmdexec-proxy-test-*.txt`.
+
+Otwieramy go i pokazujemy:
+
+```text
+WindowsIdentity=SQLLAB\poc-ssis-export
+MachineName=SQL64
+```
+
+To jest najważniejszy dowód techniczny w Stage 4.
+
+### Krok 10 – rozszerzenie kolejki do pełnego workera
+
+**Gdzie:** SSMS połączony z `SQL64`.
+
+Uruchamiamy:
+
+```text
+16-upgrade-stage5-queue.sql
+```
+
+Skrypt dodaje mechanizm retry, `WorkerToken` i wewnętrzne procedury workera.
+
+### Krok 11 – skrypt workera
+
+Plik:
+
+```text
+17-stage5-worker.ps1
+```
+
+nie jest uruchamiany ręcznie jako główny test. Najpierw kopiujemy go na `SQL64`.
+
+**Gdzie:** `SQL64`, PowerShell jako administrator.
+
+```powershell
+New-Item -ItemType Directory -Path 'C:\SSIS\POC' -Force
+
+Copy-Item `
+  '.\17-stage5-worker.ps1' `
+  'C:\SSIS\POC\Stage5Worker.ps1' `
+  -Force
+
+Test-Path 'C:\SSIS\POC\Stage5Worker.ps1'
+```
+
+Oczekiwane:
+
+```text
+True
+```
+
+### Krok 12 – job Stage 5
+
+**Gdzie:** SSMS połączony z `SQL64`.
+
+Uruchamiamy:
+
+```text
+18-create-stage5-job.sql
+```
+
+Job:
+
+```text
+POC_Secure_Export_Stage5_Worker
+```
+
+uruchamia:
+
+```text
+C:\SSIS\POC\Stage5Worker.ps1
+```
+
+przez `POC_Export_CmdExec_Proxy`.
+
+### Krok 13 – test end-to-end
+
+**Gdzie:** SSMS połączony z `SQL64`.
+
+Uruchamiamy:
+
+```text
+19-test-stage5.sql
+```
+
+Test tworzy żądania w kolejce i czeka na ich przetworzenie.
+
+Oczekiwany rezultat:
+
+```text
+STAGE5_END_TO_END_OK
+```
+
+Następnie pokazujemy rekordy w `dbo.ExportRequest` oraz pliki utworzone na:
+
+```text
+\\DC01\SSISLab$
+```
+
+W pliku wynikowym ponownie pokazujemy:
+
+```text
+WorkerIdentity=SQLLAB\poc-ssis-export
+MachineName=SQL64
+```
+
+### Krok 14 – cleanup po nagraniu
+
+Po nagraniu możemy usunąć całe środowisko POC.
+
+**Gdzie:** stacja administracyjna z dostępem PowerShell Remoting do `SQL64` i `DC01`, `Invoke-Sqlcmd` oraz uprawnieniami do SQL Servera i Active Directory.
+
+Najpierw wykonujemy tylko symulację:
+
+```powershell
+.\20-cleanup-poc.ps1 -WhatIf
+```
+
+Dopiero po sprawdzeniu zakresu:
+
+```powershell
+.\20-cleanup-poc.ps1
+```
+
+Skrypt poprosi o wpisanie:
+
+```text
+DELETE-POC
+```
+
+Można zachować wybrane elementy:
+
+```text
+-KeepAdAccounts
+-KeepShare
+-KeepLocalFiles
+-KeepDatabase
+```
+
+### Skrócona ściąga do nagrania
+
+```text
+DC01 / AD:
+  Initialize-POCActiveDirectory.ps1
+  07-create-export-account.ps1
+  08-create-test-share.ps1
+
+SQL64 / SSMS:
+  01-create-database.sql
+  02-create-schema.sql
+  03-create-request-procedure.sql
+  04-test-stage1.sql
+  05-create-application-security.sql
+  06-test-application-security.sql
+
+PowerShell:
+  09-test-share-access.ps1
+  10-create-sql-agent-credential.ps1
+
+SQL64 / SSMS:
+  11-create-ssis-proxy.sql
+  12-verify-stage3.sql
+  13-create-cmdexec-proxy.sql
+  14-create-stage4-job.sql
+  15-test-stage4.sql
+  16-upgrade-stage5-queue.sql
+
+SQL64 / PowerShell:
+  copy 17-stage5-worker.ps1 -> C:\SSIS\POC\Stage5Worker.ps1
+
+SQL64 / SSMS:
+  18-create-stage5-job.sql
+  19-test-stage5.sql
+
+Po nagraniu / PowerShell:
+  20-cleanup-poc.ps1 -WhatIf
+  20-cleanup-poc.ps1
+```
+
+---
+
 ## Zakończenie
 
 Jeżeli więc macie architekturę, w której aplikacja łączy się do SQL Servera, a później SQL Server albo SSIS musi dostać się do kolejnego zasobu sieciowego, to zanim zaczniecie konfigurować delegację, zadajcie sobie jedno pytanie:
