@@ -1,6 +1,6 @@
 /*
     POC: Secure SSIS Export without unconstrained delegation
-    Stage 4 - SQL Agent job executing SSISDB package through SSIS Proxy
+    Stage 4 - SQL Agent job executing a File System SSIS package through SSIS Proxy
 */
 
 USE [msdb];
@@ -10,11 +10,7 @@ SET NOCOUNT ON;
 
 DECLARE @JobName sysname = N'POC_SSIS_Secure_Export_Stage4';
 DECLARE @ProxyName sysname = N'POC_SSIS_Export_Proxy';
-DECLARE @FolderName sysname = N'POC_SSIS_Export';
-DECLARE @ProjectName sysname = N'POC_SSIS_Export';
-DECLARE @PackageName sysname = N'WriteShareTest.dtsx';
-DECLARE @OutputShare nvarchar(4000) = N'\\DC01\SSISLab$';
-DECLARE @ServerName nvarchar(256) = CONVERT(nvarchar(256), SERVERPROPERTY('ServerName'));
+DECLARE @PackagePath nvarchar(4000) = N'C:\SSIS\POC\WriteShareTest.dtsx';
 DECLARE @Command nvarchar(max);
 DECLARE @JobId uniqueidentifier;
 DECLARE @SsisSubsystemId int;
@@ -50,32 +46,17 @@ BEGIN
     THROW 54003, 'POC proxy is not granted to the SSIS subsystem.', 1;
 END;
 
-IF DB_ID(N'SSISDB') IS NULL
-BEGIN
-    THROW 54004, 'SSISDB does not exist on this instance.', 1;
-END;
-
-IF NOT EXISTS
-(
-    SELECT 1
-    FROM SSISDB.catalog.packages AS pkg
-    JOIN SSISDB.catalog.projects AS p
-        ON p.project_id = pkg.project_id
-    JOIN SSISDB.catalog.folders AS f
-        ON f.folder_id = p.folder_id
-    WHERE f.name = @FolderName
-      AND p.name = @ProjectName
-      AND pkg.name = @PackageName
-)
-BEGIN
-    THROW 54005, 'Stage 4 package was not found in SSISDB. Deploy POC_SSIS_Export/WriteShareTest.dtsx first.', 1;
-END;
+/*
+    SQL Server cannot reliably validate a local file path from T-SQL without
+    enabling extra features such as xp_cmdshell. We deliberately do not enable
+    anything for this POC. Verify C:\SSIS\POC\WriteShareTest.dtsx on SQL64
+    before running this script.
+*/
 
 SET @Command =
-      N'/ISSERVER "\"\SSISDB\' + @FolderName + N'\' + @ProjectName + N'\' + @PackageName + N'\""'
-    + N' /SERVER "\"' + @ServerName + N'\""'
-    + N' /Par "\"$Project::OutputShare\"";"\"' + @OutputShare + N'\""'
-    + N' /CALLERINFO SQLAGENT /REPORTING E';
+      N'/FILE "' + @PackagePath + N'"'
+    + N' /CHECKPOINTING OFF'
+    + N' /REPORTING E';
 
 IF EXISTS (SELECT 1 FROM dbo.sysjobs WHERE name = @JobName)
 BEGIN
@@ -87,7 +68,7 @@ END;
 EXEC dbo.sp_add_job
      @job_name = @JobName,
      @enabled = 1,
-     @description = N'POC Stage 4 - execute SSIS package through dedicated SSIS Proxy and write to SMB share.',
+     @description = N'POC Stage 4 - execute File System SSIS package through dedicated SSIS Proxy and write to SMB share.',
      @owner_login_name = N'sa',
      @job_id = @JobId OUTPUT;
 
