@@ -19,16 +19,18 @@ if ($SharePath -notmatch '^\\\\[^\\]+\\[^\\]+') {
 Import-Module SmbShare -ErrorAction Stop
 
 $credential = Get-Credential -UserName $UserName -Message "Credentials for $UserName"
+$plainPassword = $credential.GetNetworkCredential().Password
 $testFileName = "poc-write-test-{0:yyyyMMdd-HHmmss-fff}.txt" -f (Get-Date)
 $testFile = Join-Path -Path $SharePath -ChildPath $testFileName
 $mappingCreated = $false
 
 try {
-    # Establish an SMB session with the dedicated export account without
-    # starting a local interactive process as that account.
+    # Older SmbShare module versions do not expose -Credential on New-SmbMapping.
+    # Use the broadly supported -UserName / -Password parameters instead.
     New-SmbMapping `
         -RemotePath $SharePath `
-        -Credential $credential `
+        -UserName $credential.UserName `
+        -Password $plainPassword `
         -Persistent $false `
         -ErrorAction Stop | Out-Null
 
@@ -60,6 +62,8 @@ try {
     Write-Host "Create/read/delete test succeeded on $SharePath"
 }
 finally {
+    $plainPassword = $null
+
     if ($mappingCreated) {
         Remove-SmbMapping `
             -RemotePath $SharePath `
