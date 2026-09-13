@@ -31,7 +31,7 @@ param(
 
     [Parameter()]
     [ValidateNotNullOrEmpty()]
-    [string]$RemoteWorkerPath = 'C:\SSIS\POC\17-stage5-worker.ps1'
+    [string]$RemoteWorkerPath = 'C:\SSIS\POC\Stage5Worker.ps1'
 )
 
 Set-StrictMode -Version Latest
@@ -64,9 +64,9 @@ if ($DeployToSql64) {
 
         $item = Get-Item -LiteralPath $Path -ErrorAction Stop
         [pscustomobject]@{
-            ComputerName = $env:COMPUTERNAME
-            Path         = $item.FullName
-            Length       = $item.Length
+            ComputerName  = $env:COMPUTERNAME
+            Path          = $item.FullName
+            Length        = $item.Length
             LastWriteTime = $item.LastWriteTime
         }
     } -ArgumentList $RemoteWorkerPath, $scriptContent
