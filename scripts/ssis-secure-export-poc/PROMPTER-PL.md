@@ -75,8 +75,6 @@ Nie przechodzi dalej do SQL Agenta, SSIS ani udziału sieciowego.
 
 ## Nowa architektura
 
-Schemat wygląda tak:
-
 ```text
 Windows application
     |
@@ -99,7 +97,7 @@ Dedicated execution account
 Network share
 ```
 
-W naszym POC konto aplikacyjne to:
+W POC konto aplikacyjne to:
 
 ```text
 SQLLAB\poc-ssis-app
@@ -111,53 +109,37 @@ A konto wykonawcze:
 SQLLAB\poc-ssis-export
 ```
 
-I to właśnie konto `poc-ssis-export` ma prawo zapisu do udziału sieciowego.
-
-Konto aplikacyjne tego prawa nie ma.
+To właśnie `poc-ssis-export` ma prawo zapisu do udziału sieciowego. Konto aplikacyjne tego prawa nie ma.
 
 ---
 
 ## Stage 1 – kolejka
 
-Zaczęliśmy od prostej kolejki w SQL Serverze.
-
-Tabela nazywa się:
+Tabela kolejki:
 
 ```text
 dbo.ExportRequest
 ```
 
-Aplikacja nie robi bezpośrednio `INSERT` do tej tabeli.
-
-Ma jedynie prawo `EXECUTE` do:
+Aplikacja nie wykonuje bezpośredniego `INSERT` do tej tabeli. Ma jedynie prawo `EXECUTE` do:
 
 ```text
 dbo.usp_RequestExport
 ```
 
-Procedura przyjmuje parametry biznesowe, na przykład `CustomerId` i `ReportDate`.
-
-Dodatkowo zapisujemy:
-
-```sql
-ORIGINAL_LOGIN()
-```
-
-czyli wiemy, kto faktycznie zlecił eksport.
+Procedura zapisuje również `ORIGINAL_LOGIN()`, więc wiemy, kto rzeczywiście zlecił eksport.
 
 ---
 
 ## Stage 2 – minimalne uprawnienia aplikacji
 
-Następnie ograniczyliśmy konto aplikacyjne.
-
-Ma ono:
+Konto aplikacyjne ma:
 
 ```text
 EXECUTE dbo.usp_RequestExport
 ```
 
-ale nie ma:
+ale nie ma bezpośredniego:
 
 ```text
 SELECT
@@ -166,61 +148,35 @@ UPDATE
 DELETE
 ```
 
-na tabeli kolejki.
+na `dbo.ExportRequest`.
 
-Nie ma również uprawnień do SQL Agenta, Credential, Proxy ani udziału sieciowego.
-
-To jest bardzo ważne.
-
-Aplikacja zgłasza zadanie biznesowe.
-
-Nie steruje mechanizmem wykonawczym.
+Nie ma też uprawnień do SQL Agenta, Credential, Proxy ani udziału SMB.
 
 ---
 
 ## Stage 3 – dedykowana tożsamość wykonawcza
 
-Następnie utworzyliśmy osobne konto techniczne:
+Tworzymy osobne konto techniczne:
 
 ```text
 SQLLAB\poc-ssis-export
 ```
 
-To konto otrzymało prawo zapisu do konkretnego udziału:
+Dostaje ono prawo zapisu wyłącznie do:
 
 ```text
 \\DC01\SSISLab$
 ```
 
-W SQL Server Agent utworzyliśmy Credential oraz Proxy.
-
-Dzięki temu SQL Agent może uruchomić krok joba właśnie jako:
-
-```text
-SQLLAB\poc-ssis-export
-```
-
-I nie potrzebujemy przekazywać dalej tożsamości aplikacji.
+W SQL Server Agent tworzymy Credential oraz Proxy. Dzięki temu SQL Agent może uruchamiać proces jako `SQLLAB\poc-ssis-export` bez przekazywania dalej tożsamości aplikacji.
 
 ---
 
 ## Stage 4 – dowód tożsamości
 
-Tu pojawiła się ciekawa rzecz.
+Na SQL64 subsystem SSIS był widoczny, ale środowisko nie miało pełnego zestawu komponentów potrzebnych do wygodnego przygotowania pakietu `.dtsx`.
 
-Na naszym serwerze SQL64 subsystem SSIS był widoczny, ale środowisko nie miało pełnego zestawu komponentów potrzebnych do wygodnego przygotowania pakietu SSIS.
-
-Nie było między innymi:
-
-```text
-Microsoft.SqlServer.ManagedDTS.dll
-```
-
-Nie chcieliśmy instalować dodatkowych komponentów tylko po to, żeby udowodnić model bezpieczeństwa.
-
-Dlatego do testu użyliśmy `CmdExec Proxy` i PowerShella.
-
-Schemat był taki:
+Dlatego do testu użyliśmy `CmdExec Proxy` i PowerShella:
 
 ```text
 SQL Agent
@@ -230,47 +186,20 @@ SQL Agent
   -> SMB
 ```
 
-PowerShell zapisał do pliku aktualną tożsamość procesu.
-
-I dostaliśmy:
+Plik testowy pokazał:
 
 ```text
 WindowsIdentity=SQLLAB\poc-ssis-export
+MachineName=SQL64
 ```
 
-To był kluczowy moment POC.
-
-SQL Agent rzeczywiście uruchomił proces pod dedykowanym kontem technicznym.
+To jest kluczowy dowód, że proces wykonawczy działa pod dedykowaną tożsamością.
 
 ---
 
 ## Stage 5 – pełny worker
 
-Na końcu spięliśmy wszystko razem.
-
-Aplikacja dodaje rekord `NEW`.
-
-Worker SQL Agenta pobiera zadanie i przełącza status na `PROCESSING`.
-
-Po sukcesie mamy:
-
-```text
-DONE
-```
-
-W przypadku błędu:
-
-```text
-RETRY
-```
-
-lub po wyczerpaniu prób:
-
-```text
-FAILED
-```
-
-Pełny cykl wygląda tak:
+Worker SQL Agenta pobiera zadania z kolejki i obsługuje stany:
 
 ```text
 NEW -> PROCESSING -> DONE
@@ -280,21 +209,21 @@ NEW -> PROCESSING -> DONE
         +-> FAILED
 ```
 
-Do przejęcia zadania używamy:
+Do bezpiecznego przejęcia rekordu używamy:
 
 ```sql
 UPDLOCK, READPAST, ROWLOCK
 ```
 
-oraz `WorkerToken`, żeby inny worker nie zakończył rekordu, którego sam nie przejął.
+oraz `WorkerToken`, aby inny worker nie zakończył zadania, którego sam nie przejął.
 
-Domyślnie ustawiliśmy trzy próby i minutę przerwy przed ponowieniem.
+Domyślnie mamy trzy próby i minutę przerwy przed kolejną próbą.
 
 ---
 
 ## Co udowodnił POC
 
-Ostateczny przepływ wygląda tak:
+Końcowy przepływ:
 
 ```text
 SQLLAB\poc-ssis-app
@@ -314,19 +243,13 @@ Application account -> SQL Server
 Execution account   -> SMB share
 ```
 
-Nie przekazujemy tożsamości aplikacji z SQL Servera do serwera plików.
-
-A skoro nie przekazujemy jej dalej, to nie potrzebujemy `Unconstrained Delegation`.
+Nie przekazujemy tożsamości aplikacji z SQL Servera do serwera plików, więc nie potrzebujemy `Unconstrained Delegation`.
 
 ---
 
 ## A co z SSIS?
 
-W środowisku docelowym możemy użyć SSIS.
-
-Zmienia się executor, ale nie zmienia się model bezpieczeństwa.
-
-W POC mamy:
+W POC:
 
 ```text
 SQL Agent -> CmdExec Proxy -> execution account -> PowerShell -> SMB
@@ -338,69 +261,67 @@ W produkcji możemy mieć:
 SQL Agent -> SSIS Proxy -> execution account -> SSIS -> SMB
 ```
 
-Najważniejsze jest to, że konto aplikacyjne nadal kończy swoją rolę na SQL Serverze.
-
----
-
-## Dlaczego ten model jest bezpieczniejszy
-
-Po pierwsze — zasada najmniejszych uprawnień.
-
-Konto aplikacyjne nie ma dostępu do udziału sieciowego.
-
-Po drugie — separacja odpowiedzialności.
-
-Aplikacja zleca zadanie, a infrastruktura wykonuje je pod kontrolowaną tożsamością.
-
-Po trzecie — nie przekazujemy ścieżki UNC z aplikacji.
-
-Miejsce docelowe jest zdefiniowane po stronie serwera.
-
-Po czwarte — mamy kolejkę, retry, audyt i kontrolę statusu.
-
-I po piąte — eliminujemy potrzebę używania `Unconstrained Delegation`.
-
----
-
-## Jedna ważna uwaga
-
-Jeżeli wymaganiem biznesowym byłoby zachowanie oryginalnej tożsamości użytkownika aż do udziału sieciowego, wtedy temat KCD albo RBCD nadal byłby aktualny.
-
-Ale w naszym przypadku nie było takiego wymagania.
-
-Potrzebowaliśmy wykonać eksport.
-
-Nie potrzebowaliśmy, żeby serwer plików widział konto aplikacyjne jako użytkownika wykonującego zapis.
-
-To rozróżnienie jest kluczowe.
+Zmienia się executor, ale model bezpieczeństwa pozostaje ten sam.
 
 ---
 
 ## Scenariusz demo – kolejność uruchamiania skryptów
 
-Poniższa część jest przeznaczona bezpośrednio do nagrania. Pokazuje dokładnie **co uruchomić, gdzie i w jakiej kolejności**.
-
 ### Przygotowanie
 
-Repozytorium klonujemy lub aktualizujemy na stacji administracyjnej albo bezpośrednio na `SQL64`.
+Całym POC administrujemy ze stacji:
 
-Katalog roboczy:
+```text
+DEWELOPER
+```
+
+Nie używamy RDP do SQL64 ani DC01.
+
+PowerShell uruchamiamy lokalnie na DEWELOPER przez `pwsh` z poświadczeniami domenowymi używanymi do połączeń sieciowych:
+
+```cmd
+runas /netonly /user:SQLLAB\Administrator pwsh.exe
+```
+
+Visual Studio Code również uruchamiamy przez `runas /netonly`:
+
+```cmd
+runas /netonly /user:SQLLAB\Administrator "C:\Program Files\Microsoft VS Code\Code.exe"
+```
+
+Skrypty `.sql` uruchamiamy z Visual Studio Code na:
+
+```text
+sql64.sqllab.local,1433
+Windows Authentication
+```
+
+Skrypty `.ps1` uruchamiamy z `pwsh` na DEWELOPER. Skrypty wymagające AD lub zasobów SQL64 wykonują zdalne operacje przez WinRM.
+
+Architektura administracyjna:
+
+```text
+DEWELOPER -> SQL64
+DEWELOPER -> DC01
+```
+
+Nie używamy łańcucha `DEWELOPER -> SQL64 -> DC01`, dzięki czemu nie wchodzimy w problem WinRM second-hop.
+
+Katalog POC:
 
 ```text
 scripts\ssis-secure-export-poc
 ```
 
-W POC używamy trzech maszyn logicznych:
+Skrypt konta aplikacyjnego znajduje się katalog wyżej:
 
 ```text
-SQL64  - SQL Server + SQL Server Agent
-DC01   - Active Directory + udział SMB
-stacja administracyjna - PowerShell / SSMS; może to być również SQL64
+scripts\poc-active-directory\Initialize-POCActiveDirectory.ps1
 ```
 
 ### Krok 1 – baza i kolejka
 
-**Gdzie:** połączenie SSMS do `SQL64`.
+**Gdzie:** VS Code na DEWELOPER, połączenie do `sql64.sqllab.local,1433`.
 
 Uruchamiamy kolejno:
 
@@ -413,9 +334,45 @@ Uruchamiamy kolejno:
 
 Po tym etapie mamy bazę `SSIS_Delegation_Lab`, tabelę `dbo.ExportRequest`, procedurę `dbo.usp_RequestExport` i pierwszy test kolejki.
 
-### Krok 2 – konto aplikacyjne i minimalne prawa
+### Krok 2 – konto aplikacyjne w Active Directory
 
-**Gdzie:** SSMS połączony z `SQL64`.
+**Gdzie:** `pwsh` na DEWELOPER.
+
+Przechodzimy do katalogu:
+
+```powershell
+Set-Location ..\poc-active-directory
+```
+
+Uruchamiamy:
+
+```powershell
+.\Initialize-POCActiveDirectory.ps1
+```
+
+Skrypt łączy się bezpośrednio przez WinRM z `dc01.sqllab.local`, tworzy lub weryfikuje konto:
+
+```text
+SQLLAB\poc-ssis-app
+```
+
+i ustawia:
+
+```text
+AccountNotDelegated          = True
+TrustedForDelegation         = False
+TrustedToAuthForDelegation   = False
+```
+
+Wracamy do katalogu POC:
+
+```powershell
+Set-Location ..\ssis-secure-export-poc
+```
+
+### Krok 3 – minimalne prawa konta aplikacyjnego
+
+**Gdzie:** VS Code na DEWELOPER, połączenie do SQL64 jako `SQLLAB\Administrator` przez `runas /netonly`.
 
 Uruchamiamy:
 
@@ -424,70 +381,88 @@ Uruchamiamy:
 06-test-application-security.sql
 ```
 
-Oczekiwany rezultat: konto `SQLLAB\poc-ssis-app` może wykonać `dbo.usp_RequestExport`, ale nie ma bezpośredniego CRUD do `dbo.ExportRequest`.
+Skrypt `05` używa jawnie konta:
 
-> Konto domenowe `poc-ssis-app` musi wcześniej istnieć w Active Directory. Jeżeli budujemy POC od zera, konto aplikacyjne tworzymy przez skrypt `Initialize-POCActiveDirectory.ps1` z katalogu `scripts\poc-active-directory` uruchomiony na `DC01` lub ze stacji z modułem ActiveDirectory i uprawnieniami domenowymi.
+```text
+SQLLAB\poc-ssis-app
+```
 
-### Krok 3 – konto wykonawcze
+Skrypt `06` wykonuje test pod tą tożsamością przez:
 
-**Gdzie:** PowerShell uruchomiony z uprawnieniami domenowymi; najprościej na `DC01`.
+```sql
+EXECUTE AS LOGIN = N'SQLLAB\poc-ssis-app';
+```
 
-Uruchamiamy:
+a po zakończeniu wykonuje:
+
+```sql
+REVERT;
+```
+
+Nie trzeba zamykać VS Code ani uruchamiać osobnej sesji jako konto aplikacyjne.
+
+Oczekiwany wynik:
+
+```text
+EXECUTE dbo.usp_RequestExport = dozwolone
+SELECT dbo.ExportRequest      = zabronione
+INSERT dbo.ExportRequest      = zabronione
+UPDATE dbo.ExportRequest      = zabronione
+DELETE dbo.ExportRequest      = zabronione
+```
+
+### Krok 4 – konto wykonawcze
+
+**Gdzie:** `pwsh` na DEWELOPER.
 
 ```powershell
 .\07-create-export-account.ps1
 ```
 
-Powstaje konto:
+Powstaje lub zostaje zweryfikowane konto:
 
 ```text
 SQLLAB\poc-ssis-export
 ```
 
-Nie ustawiamy dla niego `Unconstrained Delegation`.
+Skrypt wykonuje operacje AD bezpośrednio na DC01 przez WinRM.
 
-### Krok 4 – udział SMB
+### Krok 5 – udział SMB
 
-**Gdzie:** `DC01`, PowerShell jako administrator.
-
-Uruchamiamy:
+**Gdzie:** `pwsh` na DEWELOPER.
 
 ```powershell
 .\08-create-test-share.ps1
 ```
 
-Powstaje:
+Na DC01 powstaje:
 
 ```text
 C:\POC\SSISLab
 \\DC01\SSISLab$
 ```
 
-Prawo zapisu otrzymuje konto `SQLLAB\poc-ssis-export`.
+Prawo zapisu otrzymuje `SQLLAB\poc-ssis-export`.
 
-### Krok 5 – test dostępu do udziału
+### Krok 6 – test SMB
 
-**Gdzie:** stacja administracyjna albo `SQL64`, PowerShell.
-
-Uruchamiamy:
+**Gdzie:** `pwsh` na DEWELOPER.
 
 ```powershell
 .\09-test-share-access.ps1
 ```
 
-Test uwierzytelnia się bezpośrednio kontem wykonawczym i sprawdza utworzenie, odczyt oraz usunięcie pliku na `\\DC01\SSISLab$`.
+Podajemy hasło `SQLLAB\poc-ssis-export`. Test wykonuje create/read/delete na `\\dc01.sqllab.local\SSISLab$`.
 
-### Krok 6 – Credential SQL Server Agent
+### Krok 7 – SQL Agent Credential
 
-**Gdzie:** najlepiej `SQL64`, PowerShell z uprawnieniami administracyjnymi do SQL Servera.
-
-Uruchamiamy:
+**Gdzie:** `pwsh` na DEWELOPER.
 
 ```powershell
 .\10-create-sql-agent-credential.ps1
 ```
 
-Skrypt poprosi o hasło konta `SQLLAB\poc-ssis-export` i utworzy:
+Skrypt łączy się z `sql64.sqllab.local,1433`, prosi o hasło konta wykonawczego i tworzy:
 
 ```text
 POC_SSIS_Export_Credential
@@ -495,26 +470,20 @@ POC_SSIS_Export_Credential
 
 Hasło nie trafia do repozytorium.
 
-### Krok 7 – Proxy SSIS i weryfikacja Stage 3
+### Krok 8 – Proxy SSIS
 
-**Gdzie:** SSMS połączony z `SQL64`.
-
-Uruchamiamy:
+**Gdzie:** VS Code na DEWELOPER.
 
 ```text
 11-create-ssis-proxy.sql
 12-verify-stage3.sql
 ```
 
-W tym miejscu potwierdzamy Credential, Proxy i mapowanie do subsystemu SQL Server Agent.
+Weryfikujemy Credential, Proxy i subsystem SSIS.
 
-### Krok 8 – CmdExec Proxy
+### Krok 9 – CmdExec Proxy
 
-Ponieważ na naszym `SQL64` nie było pełnych komponentów potrzebnych do wygodnego zbudowania pakietu `.dtsx`, dalszy POC realizujemy przez CmdExec.
-
-**Gdzie:** SSMS połączony z `SQL64`.
-
-Uruchamiamy:
+**Gdzie:** VS Code na DEWELOPER.
 
 ```text
 13-create-cmdexec-proxy.sql
@@ -526,180 +495,128 @@ Powstaje:
 POC_Export_CmdExec_Proxy
 ```
 
-korzystający z tego samego Credential i tego samego konta `SQLLAB\poc-ssis-export`.
+### Krok 10 – dowód tożsamości wykonawczej
 
-### Krok 9 – dowód tożsamości wykonawczej
-
-**Gdzie:** SSMS połączony z `SQL64`.
-
-Uruchamiamy:
+**Gdzie:** VS Code na DEWELOPER.
 
 ```text
 14-create-stage4-job.sql
 15-test-stage4.sql
 ```
 
-Po sukcesie na `\\DC01\SSISLab$` pojawia się plik `cmdexec-proxy-test-*.txt`.
-
-Otwieramy go i pokazujemy:
+Na `\\DC01\SSISLab$` powinien pojawić się plik `cmdexec-proxy-test-*.txt` z:
 
 ```text
 WindowsIdentity=SQLLAB\poc-ssis-export
 MachineName=SQL64
 ```
 
-To jest najważniejszy dowód techniczny w Stage 4.
+### Krok 11 – rozszerzenie kolejki Stage 5
 
-### Krok 10 – rozszerzenie kolejki do pełnego workera
-
-**Gdzie:** SSMS połączony z `SQL64`.
-
-Uruchamiamy:
+**Gdzie:** VS Code na DEWELOPER.
 
 ```text
 16-upgrade-stage5-queue.sql
 ```
 
-Skrypt dodaje mechanizm retry, `WorkerToken` i wewnętrzne procedury workera.
+### Krok 12 – deployment workera
 
-### Krok 11 – skrypt workera
+**Gdzie:** `pwsh` na DEWELOPER.
 
-Plik:
-
-```text
-17-stage5-worker.ps1
-```
-
-nie jest uruchamiany ręcznie jako główny test. Najpierw kopiujemy go na `SQL64`.
-
-**Gdzie:** `SQL64`, PowerShell jako administrator.
+Nie kopiujemy pliku ręcznie na SQL64. Uruchamiamy:
 
 ```powershell
-New-Item -ItemType Directory -Path 'C:\SSIS\POC' -Force
-
-Copy-Item `
-  '.\17-stage5-worker.ps1' `
-  'C:\SSIS\POC\Stage5Worker.ps1' `
-  -Force
-
-Test-Path 'C:\SSIS\POC\Stage5Worker.ps1'
+.\17-stage5-worker.ps1 -DeployToSql64
 ```
 
-Oczekiwane:
-
-```text
-True
-```
-
-### Krok 12 – job Stage 5
-
-**Gdzie:** SSMS połączony z `SQL64`.
-
-Uruchamiamy:
-
-```text
-18-create-stage5-job.sql
-```
-
-Job:
-
-```text
-POC_Secure_Export_Stage5_Worker
-```
-
-uruchamia:
+Skrypt używa WinRM i zapisuje worker na SQL64 jako:
 
 ```text
 C:\SSIS\POC\Stage5Worker.ps1
 ```
 
-przez `POC_Export_CmdExec_Proxy`.
+Oczekiwane zakończenie:
 
-### Krok 13 – test end-to-end
+```text
+Stage5 worker deployed successfully.
+```
 
-**Gdzie:** SSMS połączony z `SQL64`.
+### Krok 13 – job Stage 5
 
-Uruchamiamy:
+**Gdzie:** VS Code na DEWELOPER.
+
+```text
+18-create-stage5-job.sql
+```
+
+Job `POC_Secure_Export_Stage5_Worker` uruchamia `C:\SSIS\POC\Stage5Worker.ps1` przez `POC_Export_CmdExec_Proxy`.
+
+### Krok 14 – test end-to-end
+
+**Gdzie:** VS Code na DEWELOPER.
 
 ```text
 19-test-stage5.sql
 ```
 
-Test tworzy żądania w kolejce i czeka na ich przetworzenie.
-
-Oczekiwany rezultat:
+Oczekiwany wynik:
 
 ```text
 STAGE5_END_TO_END_OK
 ```
 
-Następnie pokazujemy rekordy w `dbo.ExportRequest` oraz pliki utworzone na:
-
-```text
-\\DC01\SSISLab$
-```
-
-W pliku wynikowym ponownie pokazujemy:
+W pliku wynikowym pokazujemy:
 
 ```text
 WorkerIdentity=SQLLAB\poc-ssis-export
 MachineName=SQL64
 ```
 
-### Krok 14 – cleanup po nagraniu
+### Krok 15 – cleanup
 
-Po nagraniu możemy usunąć całe środowisko POC.
+**Gdzie:** `pwsh` na DEWELOPER.
 
-**Gdzie:** stacja administracyjna z dostępem PowerShell Remoting do `SQL64` i `DC01`, `Invoke-Sqlcmd` oraz uprawnieniami do SQL Servera i Active Directory.
-
-Najpierw wykonujemy tylko symulację:
+Najpierw:
 
 ```powershell
 .\20-cleanup-poc.ps1 -WhatIf
 ```
 
-Dopiero po sprawdzeniu zakresu:
+Po sprawdzeniu zakresu:
 
 ```powershell
-.\20-cleanup-poc.ps1
+.\20-cleanup-poc.ps1 -Force
 ```
 
-Skrypt poprosi o wpisanie:
+Cleanup łączy się osobno z SQL64 i DC01, dzięki czemu nie występuje WinRM second-hop.
+
+Końcowa weryfikacja powinna pokazać zero jobów, proxy, Credential i bazy POC oraz brak katalogu workera i udziału SMB.
+
+---
+
+## Skrócona ściąga do nagrania
 
 ```text
-DELETE-POC
-```
-
-Można zachować wybrane elementy:
-
-```text
--KeepAdAccounts
--KeepShare
--KeepLocalFiles
--KeepDatabase
-```
-
-### Skrócona ściąga do nagrania
-
-```text
-DC01 / AD:
-  Initialize-POCActiveDirectory.ps1
-  07-create-export-account.ps1
-  08-create-test-share.ps1
-
-SQL64 / SSMS:
+VS Code / DEWELOPER -> SQL64:
   01-create-database.sql
   02-create-schema.sql
   03-create-request-procedure.sql
   04-test-stage1.sql
+
+pwsh / DEWELOPER -> DC01:
+  ..\poc-active-directory\Initialize-POCActiveDirectory.ps1
+
+VS Code / DEWELOPER -> SQL64:
   05-create-application-security.sql
   06-test-application-security.sql
 
-PowerShell:
+pwsh / DEWELOPER:
+  07-create-export-account.ps1
+  08-create-test-share.ps1
   09-test-share-access.ps1
   10-create-sql-agent-credential.ps1
 
-SQL64 / SSMS:
+VS Code / DEWELOPER -> SQL64:
   11-create-ssis-proxy.sql
   12-verify-stage3.sql
   13-create-cmdexec-proxy.sql
@@ -707,29 +624,29 @@ SQL64 / SSMS:
   15-test-stage4.sql
   16-upgrade-stage5-queue.sql
 
-SQL64 / PowerShell:
-  copy 17-stage5-worker.ps1 -> C:\SSIS\POC\Stage5Worker.ps1
+pwsh / DEWELOPER -> SQL64:
+  17-stage5-worker.ps1 -DeployToSql64
 
-SQL64 / SSMS:
+VS Code / DEWELOPER -> SQL64:
   18-create-stage5-job.sql
   19-test-stage5.sql
 
-Po nagraniu / PowerShell:
+pwsh / DEWELOPER:
   20-cleanup-poc.ps1 -WhatIf
-  20-cleanup-poc.ps1
+  20-cleanup-poc.ps1 -Force
 ```
 
 ---
 
 ## Zakończenie
 
-Jeżeli więc macie architekturę, w której aplikacja łączy się do SQL Servera, a później SQL Server albo SSIS musi dostać się do kolejnego zasobu sieciowego, to zanim zaczniecie konfigurować delegację, zadajcie sobie jedno pytanie:
+Jeżeli macie architekturę, w której aplikacja łączy się do SQL Servera, a później SQL Server albo SSIS musi dostać się do kolejnego zasobu sieciowego, to zanim zaczniecie konfigurować delegację, zadajcie sobie jedno pytanie:
 
 **czy naprawdę potrzebujemy przenosić tożsamość użytkownika dalej?**
 
 Bardzo często odpowiedź brzmi: nie.
 
-I wtedy prostszy oraz bezpieczniejszy wzorzec to:
+Wtedy prostszy i bezpieczniejszy wzorzec to:
 
 ```text
 submit request
@@ -737,8 +654,4 @@ submit request
 -> execute asynchronously under dedicated identity
 ```
 
-W naszym POC zadziałało to od początku do końca.
-
-Bez `Unconstrained Delegation`.
-
-Repozytorium ze wszystkimi skryptami oraz ADR-em znajdziecie w opisie materiału.
+W naszym POC działa to od początku do końca bez `Unconstrained Delegation`, a cała administracja odbywa się z DEWELOPER bez RDP.

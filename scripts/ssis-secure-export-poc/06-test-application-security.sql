@@ -2,11 +2,14 @@
     POC: Secure SSIS Export without unconstrained delegation
     Stage 2 - Security tests for the application account
 
-    Run this script in a session connected as the real application account,
-    e.g. SQLLAB\poc-ssis-app after replacing the placeholder in script 05.
+    Run this script from the administrative VS Code session connected to SQL64.
+    The script impersonates SQLLAB\poc-ssis-app for the duration of the tests.
 */
 
 USE [SSIS_Delegation_Lab];
+GO
+
+EXECUTE AS LOGIN = N'SQLLAB\poc-ssis-app';
 GO
 
 SELECT
@@ -80,7 +83,15 @@ SELECT
     HAS_PERMS_BY_NAME(N'dbo.ExportRequest', N'OBJECT', N'DELETE')      AS CanDeleteQueue;
 GO
 
-/* Expected final result:
+REVERT;
+GO
+
+SELECT
+    ORIGINAL_LOGIN() AS OriginalLoginAfterRevert,
+    SUSER_SNAME()     AS CurrentLoginAfterRevert;
+GO
+
+/* Expected final result while impersonated:
 
 CanExecuteRequestProcedure = 1
 CanSelectQueue             = 0
