@@ -3,16 +3,13 @@
     Stage 2 - Application login security
 
     Domain: SQLLAB.LOCAL
-    SQL login format: SQLLAB\<account>
-
-    IMPORTANT:
-    Change @AppLogin below to the real application account before execution.
+    Application account: SQLLAB\poc-ssis-app
 */
 
 USE [master];
 GO
 
-DECLARE @AppLogin sysname = N'SQLLAB\konto';
+DECLARE @AppLogin sysname = N'SQLLAB\poc-ssis-app';
 DECLARE @sql nvarchar(max);
 
 IF SUSER_ID(@AppLogin) IS NULL
@@ -25,7 +22,7 @@ GO
 USE [SSIS_Delegation_Lab];
 GO
 
-DECLARE @AppLogin sysname = N'SQLLAB\konto';
+DECLARE @AppLogin sysname = N'SQLLAB\poc-ssis-app';
 DECLARE @sql nvarchar(max);
 
 IF USER_ID(@AppLogin) IS NULL
@@ -56,6 +53,6 @@ SELECT
 FROM sys.database_principals AS dp
 LEFT JOIN sys.database_permissions AS p
     ON p.grantee_principal_id = dp.principal_id
-WHERE dp.name = N'SQLLAB\konto'
+WHERE dp.name = N'SQLLAB\poc-ssis-app'
 ORDER BY ObjectName, p.permission_name;
 GO
