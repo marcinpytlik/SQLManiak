@@ -36,27 +36,37 @@ if ($PSCmdlet.ShouldProcess($FileServer, "Create/update SMB share $ShareName for
     $result = Invoke-Command -ComputerName $FileServer -ScriptBlock {
         param($LocalPath, $ShareName, $ExportAccount)
 
+        Set-StrictMode -Version Latest
         $ErrorActionPreference = 'Stop'
 
         if (-not (Test-Path -LiteralPath $LocalPath)) {
             New-Item -Path $LocalPath -ItemType Directory -Force | Out-Null
         }
 
-        $share = Get-SmbShare -Name $ShareName -ErrorAction SilentlyContinue
-        if (-not $share) {
-            New-SmbShare -Name $ShareName -Path $LocalPath -ChangeAccess $ExportAccount | Out-Null
+        # Do not depend on the SmbShare PowerShell module here. In some WinRM
+        # sessions on Server 2022 the cmdlets are discoverable but the module
+        # cannot be imported. net.exe is available on the file server and is
+        # sufficient for this POC.
+        $existingShare = Get-CimInstance -ClassName Win32_Share -Filter "Name='$($ShareName.Replace("'", "''"))'" -ErrorAction SilentlyContinue
+
+        if ($existingShare) {
+            if ($existingShare.Path -ine $LocalPath) {
+                throw "Share $ShareName already exists but points to '$($existingShare.Path)', expected '$LocalPath'."
+            }
+
+            & net.exe share $ShareName "/GRANT:$ExportAccount,CHANGE" | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+                throw "net share failed while updating permissions for $ShareName. ExitCode=$LASTEXITCODE"
+            }
         }
-        elseif ($share.Path -ine $LocalPath) {
-            throw "Share $ShareName already exists but points to '$($share.Path)', expected '$LocalPath'."
+        else {
+            & net.exe share "$ShareName=$LocalPath" "/GRANT:$ExportAccount,CHANGE" | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+                throw "net share failed while creating $ShareName. ExitCode=$LASTEXITCODE"
+            }
         }
 
-        Grant-SmbShareAccess `
-            -Name $ShareName `
-            -AccountName $ExportAccount `
-            -AccessRight Change `
-            -Force `
-            -ErrorAction Stop | Out-Null
-
+        # NTFS: Modify for the export account on this folder and child objects.
         $acl = Get-Acl -LiteralPath $LocalPath
         $rule = New-Object System.Security.AccessControl.FileSystemAccessRule(
             $ExportAccount,
@@ -68,18 +78,27 @@ if ($PSCmdlet.ShouldProcess($FileServer, "Create/update SMB share $ShareName for
         $acl.SetAccessRule($rule)
         Set-Acl -LiteralPath $LocalPath -AclObject $acl
 
-        $verifiedShare = Get-SmbShare -Name $ShareName -ErrorAction Stop
-        $shareAccess = Get-SmbShareAccess -Name $ShareName |
-            Where-Object { $_.AccountName -ieq $ExportAccount -and $_.AccessRight -eq 'Change' -and $_.AccessControlType -eq 'Allow' }
+        $verifiedShare = Get-CimInstance -ClassName Win32_Share -Filter "Name='$($ShareName.Replace("'", "''"))'" -ErrorAction Stop
+        if (-not $verifiedShare) {
+            throw "Share $ShareName was not found after creation/update."
+        }
+
+        $aclVerify = Get-Acl -LiteralPath $LocalPath
+        $ntfsModify = @($aclVerify.Access | Where-Object {
+            $_.IdentityReference.Value -ieq $ExportAccount -and
+            $_.AccessControlType -eq 'Allow' -and
+            (($_.FileSystemRights -band [System.Security.AccessControl.FileSystemRights]::Modify) -ne 0)
+        }).Count -gt 0
 
         [pscustomobject]@{
-            ComputerName     = $env:COMPUTERNAME
-            ShareName        = $verifiedShare.Name
-            SharePath        = $verifiedShare.Path
-            UncPath          = "\\$env:COMPUTERNAME\$ShareName"
-            ExportAccount    = $ExportAccount
-            ShareChange      = [bool]$shareAccess
-            LocalPathExists  = Test-Path -LiteralPath $LocalPath
+            ComputerName    = $env:COMPUTERNAME
+            ShareName       = $verifiedShare.Name
+            SharePath       = $verifiedShare.Path
+            UncPath         = "\\$env:COMPUTERNAME\$ShareName"
+            ExportAccount   = $ExportAccount
+            LocalPathExists = Test-Path -LiteralPath $LocalPath
+            NtfsModify      = $ntfsModify
+            Backend         = 'net.exe + Win32_Share'
         }
     } -ArgumentList $LocalPath, $ShareName, $ExportAccount
 
