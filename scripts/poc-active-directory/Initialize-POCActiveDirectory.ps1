@@ -1,5 +1,11 @@
+#requires -Version 5.1
+
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
+    [Parameter()]
+    [ValidateNotNullOrEmpty()]
+    [string]$DomainController = 'dc01.sqllab.local',
+
     [Parameter()]
     [ValidateNotNullOrEmpty()]
     [string]$DomainDnsName = 'sqllab.local',
@@ -23,102 +29,123 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-Import-Module ActiveDirectory -ErrorAction Stop
+Write-Host "Orchestrator : $env:COMPUTERNAME"
+Write-Host "AD target    : $DomainController"
+Write-Host "Domain       : $DomainDnsName"
+Write-Host "Account      : $SamAccountName"
 
-$domain = Get-ADDomain -Identity $DomainDnsName
-$domainDn = $domain.DistinguishedName
-$netbiosName = $domain.NetBIOSName
-$ouDn = "OU=$OuName,$domainDn"
-$upn = "$SamAccountName@$DomainDnsName"
+if (-not $WhatIfPreference) {
+    Test-WSMan -ComputerName $DomainController -ErrorAction Stop | Out-Null
+}
 
-Write-Host "Domain DNS : $DomainDnsName"
-Write-Host "Domain DN  : $domainDn"
-Write-Host "NetBIOS    : $netbiosName"
-Write-Host "POC OU     : $ouDn"
-Write-Host "Account    : $netbiosName\$SamAccountName"
+$state = Invoke-Command -ComputerName $DomainController -ScriptBlock {
+    param($DomainDnsName, $OuName, $SamAccountName)
 
-$ou = Get-ADOrganizationalUnit -LDAPFilter "(ou=$OuName)" -SearchBase $domainDn -SearchScope OneLevel -ErrorAction SilentlyContinue
+    Import-Module ActiveDirectory -ErrorAction Stop
 
-if (-not $ou) {
-    if ($PSCmdlet.ShouldProcess($ouDn, 'Create POC organizational unit')) {
-        $ouParams = @{
-            Name                            = $OuName
-            Path                            = $domainDn
-            ProtectedFromAccidentalDeletion = $true
-            PassThru                        = $true
+    $domain = Get-ADDomain -Identity $DomainDnsName
+    $domainDn = $domain.DistinguishedName
+    $ouDn = "OU=$OuName,$domainDn"
+    $user = Get-ADUser -Filter "SamAccountName -eq '$SamAccountName'" -ErrorAction SilentlyContinue
+
+    [pscustomobject]@{
+        DomainDn    = $domainDn
+        NetBIOSName = $domain.NetBIOSName
+        OuDn        = $ouDn
+        UserExists  = [bool]$user
+    }
+} -ArgumentList $DomainDnsName, $OuName, $SamAccountName
+
+$securePassword = $null
+if (-not $state.UserExists -and -not $WhatIfPreference) {
+    $securePassword = Read-Host "Enter password for $($state.NetBIOSName)\$SamAccountName" -AsSecureString
+}
+
+if ($PSCmdlet.ShouldProcess("$DomainController / $($state.NetBIOSName)\$SamAccountName", 'Create or harden POC application account')) {
+    $result = Invoke-Command -ComputerName $DomainController -ScriptBlock {
+        param(
+            $DomainDnsName,
+            $OuName,
+            $SamAccountName,
+            $DisplayName,
+            $SecurePassword,
+            $PasswordNeverExpires
+        )
+
+        Import-Module ActiveDirectory -ErrorAction Stop
+
+        $domain = Get-ADDomain -Identity $DomainDnsName
+        $domainDn = $domain.DistinguishedName
+        $netbiosName = $domain.NetBIOSName
+        $ouDn = "OU=$OuName,$domainDn"
+        $upn = "$SamAccountName@$DomainDnsName"
+
+        $ou = Get-ADOrganizationalUnit -LDAPFilter "(ou=$OuName)" -SearchBase $domainDn -SearchScope OneLevel -ErrorAction SilentlyContinue
+        if (-not $ou) {
+            $ou = New-ADOrganizationalUnit `
+                -Name $OuName `
+                -Path $domainDn `
+                -ProtectedFromAccidentalDeletion $true `
+                -PassThru
         }
 
-        $ou = New-ADOrganizationalUnit @ouParams
-        Write-Host "Created OU: $($ou.DistinguishedName)"
-    }
-}
-else {
-    Write-Host "OU already exists: $($ou.DistinguishedName)"
-}
+        $user = Get-ADUser -Filter "SamAccountName -eq '$SamAccountName'" -Properties DistinguishedName -ErrorAction SilentlyContinue
+        $created = $false
 
-$user = Get-ADUser -Filter "SamAccountName -eq '$SamAccountName'" -Properties AccountNotDelegated,TrustedForDelegation,TrustedToAuthForDelegation,PasswordNeverExpires -ErrorAction SilentlyContinue
+        if (-not $user) {
+            if ($null -eq $SecurePassword) {
+                throw "Password was not supplied for new account $netbiosName\$SamAccountName."
+            }
 
-if (-not $user) {
-    $securePassword = Read-Host "Enter password for $netbiosName\$SamAccountName" -AsSecureString
+            New-ADUser `
+                -Name $DisplayName `
+                -DisplayName $DisplayName `
+                -SamAccountName $SamAccountName `
+                -UserPrincipalName $upn `
+                -Path $ouDn `
+                -AccountPassword $SecurePassword `
+                -Enabled $true `
+                -ChangePasswordAtLogon $false `
+                -PasswordNeverExpires ([bool]$PasswordNeverExpires)
 
-    if ($PSCmdlet.ShouldProcess("$netbiosName\$SamAccountName", 'Create POC application account')) {
-        $userParams = @{
-            Name                  = $DisplayName
-            DisplayName           = $DisplayName
-            SamAccountName        = $SamAccountName
-            UserPrincipalName     = $upn
-            Path                  = $ouDn
-            AccountPassword       = $securePassword
-            Enabled               = $true
-            ChangePasswordAtLogon = $false
-            PasswordNeverExpires  = $PasswordNeverExpires.IsPresent
+            $created = $true
         }
 
-        New-ADUser @userParams
-        Write-Host "Created account: $netbiosName\$SamAccountName"
-    }
+        Set-ADAccountControl `
+            -Identity $SamAccountName `
+            -AccountNotDelegated $true `
+            -TrustedForDelegation $false `
+            -TrustedToAuthForDelegation $false
+
+        $user = Get-ADUser -Identity $SamAccountName -Properties `
+            Enabled,
+            PasswordNeverExpires,
+            AccountNotDelegated,
+            TrustedForDelegation,
+            TrustedToAuthForDelegation,
+            DistinguishedName
+
+        [pscustomobject]@{
+            Created                    = $created
+            NetBIOSName                = $netbiosName
+            SamAccountName             = $user.SamAccountName
+            DistinguishedName          = $user.DistinguishedName
+            Enabled                    = $user.Enabled
+            PasswordNeverExpires       = $user.PasswordNeverExpires
+            AccountNotDelegated        = $user.AccountNotDelegated
+            TrustedForDelegation       = $user.TrustedForDelegation
+            TrustedToAuthForDelegation = $user.TrustedToAuthForDelegation
+        }
+    } -ArgumentList $DomainDnsName, $OuName, $SamAccountName, $DisplayName, $securePassword, $PasswordNeverExpires.IsPresent
+
+    Write-Host ''
+    Write-Host '=== Verification ==='
+    $result | Format-List
+    Write-Host ''
+    Write-Host 'Expected security state:'
+    Write-Host '  AccountNotDelegated          = True'
+    Write-Host '  TrustedForDelegation         = False'
+    Write-Host '  TrustedToAuthForDelegation   = False'
+    Write-Host ''
+    Write-Host "Expected SQL login: [$($result.NetBIOSName)\$SamAccountName]"
 }
-else {
-    Write-Host "Account already exists: $netbiosName\$SamAccountName"
-
-    if ($user.DistinguishedName -notlike "*,$ouDn") {
-        Write-Warning "Account exists outside $ouDn. It will not be moved automatically."
-    }
-}
-
-# Security hardening for the POC account.
-# AccountNotDelegated = "Account is sensitive and cannot be delegated".
-# TrustedForDelegation / TrustedToAuthForDelegation explicitly remain disabled.
-if ($PSCmdlet.ShouldProcess("$netbiosName\$SamAccountName", 'Disable delegation and mark account as sensitive')) {
-    $accountControlParams = @{
-        Identity                   = $SamAccountName
-        AccountNotDelegated        = $true
-        TrustedForDelegation       = $false
-        TrustedToAuthForDelegation = $false
-    }
-
-    Set-ADAccountControl @accountControlParams
-}
-
-$user = Get-ADUser -Identity $SamAccountName -Properties Enabled,PasswordNeverExpires,AccountNotDelegated,TrustedForDelegation,TrustedToAuthForDelegation,MemberOf,DistinguishedName
-
-Write-Host ''
-Write-Host '=== Verification ==='
-$user | Select-Object `
-    SamAccountName,
-    UserPrincipalName,
-    DistinguishedName,
-    Enabled,
-    PasswordNeverExpires,
-    AccountNotDelegated,
-    TrustedForDelegation,
-    TrustedToAuthForDelegation
-
-Write-Host ''
-Write-Host 'Expected security state:'
-Write-Host '  AccountNotDelegated          = True'
-Write-Host '  TrustedForDelegation         = False'
-Write-Host '  TrustedToAuthForDelegation   = False'
-Write-Host ''
-Write-Host 'SQL Server login name:'
-Write-Host "  [$netbiosName\$SamAccountName]"
