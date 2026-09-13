@@ -1,8 +1,10 @@
+#requires -Version 5.1
+
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter()]
     [ValidateNotNullOrEmpty()]
-    [string]$SharePath,
+    [string]$SharePath = '\\dc01.sqllab.local\SSISLab$',
 
     [Parameter()]
     [ValidateNotNullOrEmpty()]
@@ -13,8 +15,12 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 if ($SharePath -notmatch '^\\\\[^\\]+\\[^\\]+') {
-    throw "SharePath must be a UNC path, e.g. \\DC01\SSISLab$. Received: $SharePath"
+    throw "SharePath must be a UNC path, e.g. \\dc01.sqllab.local\SSISLab$. Received: $SharePath"
 }
+
+Write-Host "Orchestrator : $env:COMPUTERNAME"
+Write-Host "SharePath    : $SharePath"
+Write-Host "UserName     : $UserName"
 
 Import-Module SmbShare -ErrorAction Stop
 
@@ -25,8 +31,6 @@ $testFile = Join-Path -Path $SharePath -ChildPath $testFileName
 $mappingCreated = $false
 
 try {
-    # Older SmbShare module versions do not expose -Credential on New-SmbMapping.
-    # Use the broadly supported -UserName / -Password parameters instead.
     New-SmbMapping `
         -RemotePath $SharePath `
         -UserName $credential.UserName `
@@ -35,9 +39,6 @@ try {
         -ErrorAction Stop | Out-Null
 
     $mappingCreated = $true
-
-    Write-Host "SharePath = $SharePath"
-    Write-Host "TestFile  = $testFile"
 
     "POC SSIS share write test - $(Get-Date -Format o)" |
         Set-Content -LiteralPath $testFile -Encoding UTF8 -ErrorAction Stop
@@ -57,7 +58,9 @@ try {
         throw 'Test file could not be deleted.'
     }
 
-    Write-Host 'WRITE_TEST_OK'
+    Write-Host ''
+    Write-Host '=== Verification ==='
+    Write-Host 'WRITE_TEST_OK' -ForegroundColor Green
     Write-Host "SMB authentication succeeded for $UserName"
     Write-Host "Create/read/delete test succeeded on $SharePath"
 }

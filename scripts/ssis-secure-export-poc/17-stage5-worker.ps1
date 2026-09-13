@@ -4,6 +4,10 @@
 param(
     [Parameter()]
     [ValidateNotNullOrEmpty()]
+    [string]$SqlComputer = 'sql64.sqllab.local',
+
+    [Parameter()]
+    [ValidateNotNullOrEmpty()]
     [string]$SqlInstance = 'localhost',
 
     [Parameter()]
@@ -12,7 +16,7 @@ param(
 
     [Parameter()]
     [ValidateNotNullOrEmpty()]
-    [string]$OutputShare = '\\DC01\SSISLab$',
+    [string]$OutputShare = '\\dc01.sqllab.local\SSISLab$',
 
     [Parameter()]
     [ValidateRange(1, 100)]
@@ -20,11 +24,63 @@ param(
 
     [Parameter()]
     [ValidateRange(0, 3600)]
-    [int]$RetryDelaySeconds = 60
+    [int]$RetryDelaySeconds = 60,
+
+    [Parameter()]
+    [switch]$DeployToSql64,
+
+    [Parameter()]
+    [ValidateNotNullOrEmpty()]
+    [string]$RemoteWorkerPath = 'C:\SSIS\POC\Stage5Worker.ps1'
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+
+$targetShortName = ($SqlComputer -split '\.')[0]
+
+if ($DeployToSql64) {
+    Write-Host "Orchestrator : $env:COMPUTERNAME"
+    Write-Host "SQL target   : $SqlComputer"
+    Write-Host "Deploy path  : $RemoteWorkerPath"
+
+    if (-not $PSCommandPath) {
+        throw 'Cannot determine the current script path for deployment.'
+    }
+
+    Test-WSMan -ComputerName $SqlComputer -ErrorAction Stop | Out-Null
+
+    $scriptContent = Get-Content -LiteralPath $PSCommandPath -Raw -ErrorAction Stop
+
+    $deployResult = Invoke-Command -ComputerName $SqlComputer -ScriptBlock {
+        param($Path, $Content)
+
+        $directory = Split-Path -Path $Path -Parent
+        if (-not (Test-Path -LiteralPath $directory)) {
+            New-Item -Path $directory -ItemType Directory -Force | Out-Null
+        }
+
+        Set-Content -LiteralPath $Path -Value $Content -Encoding UTF8 -Force
+
+        $item = Get-Item -LiteralPath $Path -ErrorAction Stop
+        [pscustomobject]@{
+            ComputerName  = $env:COMPUTERNAME
+            Path          = $item.FullName
+            Length        = $item.Length
+            LastWriteTime = $item.LastWriteTime
+        }
+    } -ArgumentList $RemoteWorkerPath, $scriptContent
+
+    Write-Host ''
+    Write-Host '=== Deployment verification ==='
+    $deployResult | Format-List
+    Write-Host 'Stage5 worker deployed successfully.' -ForegroundColor Green
+    return
+}
+
+if ($env:COMPUTERNAME -ine $targetShortName) {
+    throw "This script is the Stage5 runtime worker and must execute on $targetShortName under SQL Agent. From DEWELOPER use: .\17-stage5-worker.ps1 -DeployToSql64"
+}
 
 function New-DbConnection {
     param(
@@ -151,6 +207,7 @@ function Invoke-FailRequest {
 
 $identity = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
 Write-Output "Stage5 worker identity: $identity"
+Write-Output "Machine               : $env:COMPUTERNAME"
 Write-Output "SQL instance          : $SqlInstance"
 Write-Output "Database              : $Database"
 Write-Output "Output share          : $OutputShare"
@@ -176,7 +233,6 @@ try {
             $request.RequestId, $request.CustomerId, $request.AttemptCount, $request.MaxAttempts)
 
         try {
-            # Deterministic filename makes retries idempotent for this POC.
             $fileName = 'export-{0}-customer-{1}-{2}.txt' -f `
                 $request.RequestId.ToString('D'), `
                 $request.CustomerId, `
