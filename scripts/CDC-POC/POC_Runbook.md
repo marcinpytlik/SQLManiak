@@ -2,6 +2,45 @@
 
 Ten dokument opisuje dokładną kolejność wykonania POC od pustego środowiska do testów odporności i cleanupu.
 
+## Tryb zalecany — uruchamianie ze stacji developerskiej
+
+Z katalogu:
+
+```powershell
+cd .\scripts\CDC-POC
+```
+
+uruchamiaj kolejno:
+
+```powershell
+.\Stage1.ps1
+.\Stage2.ps1
+.\Stage3.ps1 -FromBeginning
+.\Stage4.ps1 -Test 1
+.\Stage5.ps1
+```
+
+Cleanup:
+
+```powershell
+.\Cleanup.ps1
+```
+
+Wrappery używają `sqlcmd` do wykonywania plików SQL na zdalnym `sql64`, a Docker Desktop uruchamia Kafka i Debezium lokalnie na stacji developerskiej.
+
+Domyślnie używane jest Windows Integrated Authentication. Dla SQL Authentication można przekazać `-SqlUser` i `-SqlPassword`.
+
+Przykład:
+
+```powershell
+$pwd = Read-Host 'SQL password' -AsSecureString
+.\Stage1.ps1 -ServerInstance 'sql64' -SqlUser 'laboperator' -SqlPassword $pwd
+```
+
+Stage 2 dodatkowo pyta o hasło loginu `debezium` i przekazuje je tymczasowo do skryptu tworzącego login oraz konfiguracji connectora. Hasło nie jest zapisywane do repo.
+
+---
+
 ## Zasada pracy
 
 Każdy Stage wykonujemy osobno. Po każdym etapie zatrzymujemy się i sprawdzamy kryterium PASS. Nie przechodzimy dalej, jeżeli poprzednia warstwa nie działa.
@@ -10,93 +49,25 @@ Każdy Stage wykonujemy osobno. Po każdym etapie zatrzymujemy się i sprawdzamy
 
 # Stage 1 — SQL Server CDC
 
-## 1.1. Utworzenie bazy
+Tryb operatorski:
 
-Uruchom w SSMS:
+```powershell
+.\Stage1.ps1
+```
+
+Wrapper wykona:
 
 ```text
 00_CreateDatabase.sql
-```
-
-Sprawdź:
-
-- baza `CDC_Lab` istnieje,
-- recovery model = FULL,
-- istnieje filegroup `CDC_CT`,
-- istnieje osobny plik NDF dla `CDC_CT`.
-
-## 1.2. Tabele źródłowe
-
-Uruchom:
-
-```text
 01_CreateTables.sql
-```
-
-Powinny powstać:
-
-```text
-dbo.Customer
-dbo.CustomerOrder
-```
-
-## 1.3. Włączenie CDC
-
-Uruchom:
-
-```text
 02_EnableCDC.sql
-```
-
-Sprawdź:
-
-```sql
-USE CDC_Lab;
-GO
-EXEC sys.sp_cdc_help_change_data_capture;
-EXEC sys.sp_cdc_help_jobs;
-GO
-```
-
-Najważniejsze: job `cdc.CDC_Lab_capture` musi działać.
-
-## 1.4. Generowanie zmian
-
-Uruchom:
-
-```text
 03_GenerateData.sql
-```
-
-## 1.5. Odczyt CDC
-
-Uruchom:
-
-```text
 04_ReadChanges.sql
-```
-
-Potwierdź obecność danych w `cdc.*_CT`.
-
-## 1.6. Monitoring
-
-Uruchom:
-
-```text
 05_CDC_Monitoring.sql
-```
-
-Sprawdź sesje skanowania, błędy, joby i latencję.
-
-## 1.7. Retention
-
-Uruchom:
-
-```text
 06_CDC_Retention.sql
 ```
 
-Nie skracaj agresywnie retention poza testami laboratoryjnymi.
+Na końcu wykona kontrolę konfiguracji CDC, capture instances, filegroup i jobów.
 
 ### PASS Stage 1
 
@@ -108,87 +79,51 @@ source DML -> transaction log -> capture job -> cdc.*_CT
 
 # Stage 2 — Debezium + Kafka
 
-Przejdź do:
+Tryb operatorski:
 
 ```powershell
-cd .\scripts\CDC-POC\Debezium
+.\Stage2.ps1
 ```
 
-## 2.1. Login SQL
-
-Uruchom w SSMS:
+Dla bieżącego SQLLab wrapper używa domyślnie:
 
 ```text
-00_CreateDebeziumLogin.sql
+ServerInstance = sql64
+SqlHost dla kontenera = 192.168.50.24
 ```
 
-## 2.2. Start infrastruktury
+Można nadpisać:
 
 ```powershell
-.\01_Start.ps1
+.\Stage2.ps1 -ServerInstance 'sql64' -SqlHost '192.168.50.24'
 ```
 
-Kontrola:
+Wrapper:
 
-```powershell
-docker ps
-```
+1. tworzy/aktualizuje login `debezium`,
+2. startuje Kafka i Connect,
+3. rejestruje connector,
+4. sprawdza status,
+5. wyświetla topiki.
 
-Powinny działać:
-
-```text
-sqllab-kafka
-sqllab-debezium-connect
-```
-
-## 2.3. Rejestracja connectora
-
-```powershell
-.\02_RegisterConnector.ps1
-```
-
-## 2.4. Status
-
-```powershell
-.\03_Status.ps1
-```
-
-Oczekujemy:
+### PASS Stage 2
 
 ```text
 connector RUNNING
 task      RUNNING
 ```
 
-## 2.5. Topiki
-
-```powershell
-.\04_ListTopics.ps1
-```
-
-### PASS Stage 2
-
-Debezium potrafi połączyć się z SQL Server i Kafka.
-
 ---
 
 # Stage 3 — End-to-end
 
-## 3.1. Consumer
-
-W pierwszym oknie PowerShell:
+Tryb operatorski:
 
 ```powershell
-.\05_Consume.ps1 -FromBeginning
+.\Stage3.ps1 -FromBeginning
 ```
 
-## 3.2. Zmiany testowe
-
-W SSMS:
-
-```text
-06_TestChanges.sql
-```
+Wrapper otwiera osobne okno consumer-a, a następnie wykonuje `Debezium/06_TestChanges.sql` na SQL Serverze.
 
 Sprawdź eventy `c`, `u`, `d` oraz snapshot `r`, jeśli wykonany.
 
@@ -200,38 +135,39 @@ Każda zatwierdzona zmiana trafia do Kafka. Wycofana transakcja nie generuje zat
 
 # Stage 4 — Recovery i failure tests
 
-Przejdź do:
+Lista testów:
 
-```text
-Tests/README.md
+```powershell
+.\Stage4.ps1
 ```
 
-Wykonuj testy w kolejności 01–09. Po każdym teście wpisz wynik PASS/FAIL i notatkę.
+Uruchomienie konkretnego testu:
 
-Szczególnie ważne:
+```powershell
+.\Stage4.ps1 -Test 1
+```
 
-- restart Connect,
-- restart Kafka,
-- restart SQL,
-- backlog recovery,
-- rollback,
-- schema evolution,
-- utrata LSN,
-- ordering i duplicate delivery.
+Wrapper automatycznie uruchamia test PowerShell/SQL. Testy wymagające ręcznej operacji infrastrukturalnej otwierają dokument z instrukcją. Test 07 wymaga jawnego potwierdzenia `LAB-ONLY`.
 
-Test retention/LSN gap wykonuj na końcu — jest destrukcyjny względem historii CDC.
+Po każdym teście wpisz wynik PASS/FAIL i notatkę do `Tests/README.md`.
 
 ---
 
 # Stage 5 — Production Readiness
 
-Przejdź do:
+Tryb operatorski:
+
+```powershell
+.\Stage5.ps1
+```
+
+Wrapper uruchamia `09_OperationalChecks.sql`, a następnie otwiera checklistę:
 
 ```text
 Stages/Stage-05-Production-Readiness.md
 ```
 
-Wypełnij checklistę oraz decyzję GO/NO-GO.
+Stage 5 kończy się świadomą decyzją GO/NO-GO.
 
 ---
 
@@ -256,35 +192,20 @@ Realny przypadek z POC: connector był poprawny, ale `cdc.CDC_Lab_capture` nie d
 
 # Cleanup
 
-## Krok 1 — zatrzymaj consumer
-
-`Ctrl+C` w oknie konsumenta.
-
-## Krok 2 — usuń connector i kontenery
+Z katalogu głównego POC:
 
 ```powershell
-cd .\scripts\CDC-POC\Debezium
-.\99_StopAndCleanup.ps1
+.\Cleanup.ps1
 ```
 
-## Krok 3 — usuń warstwę SQL
-
-W SSMS:
+Bez `-Force` wrapper wymaga wpisania:
 
 ```text
-99_Cleanup.sql
+CLEANUP
 ```
 
-## Krok 4 — kontrola
+Następnie:
 
-```powershell
-docker ps -a
-```
-
-oraz:
-
-```sql
-SELECT DB_ID(N'CDC_Lab') AS CDC_Lab_DatabaseId;
-```
-
-Po pełnym cleanupie baza powinna nie istnieć, a kontenery POC powinny być usunięte.
+1. zatrzymuje i usuwa labowy stack Debezium/Kafka,
+2. uruchamia `99_Cleanup.sql`,
+3. sprawdza, czy `CDC_Lab` nadal istnieje.
