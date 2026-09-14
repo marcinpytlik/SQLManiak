@@ -22,8 +22,14 @@ if ([string]::IsNullOrWhiteSpace($password)) {
     }
 }
 
+$sqlHost = $env:DEBEZIUM_SQL_HOST
+if ([string]::IsNullOrWhiteSpace($sqlHost)) {
+    $sqlHost = 'sql64'
+}
+
 $config = Get-Content $templatePath -Raw | ConvertFrom-Json
 $config.config.'database.password' = $password
+$config.config.'database.hostname' = $sqlHost
 
 $name = $config.name
 $existing = $null
@@ -37,12 +43,12 @@ catch {
 if ($null -eq $existing) {
     $body = $config | ConvertTo-Json -Depth 20
     $result = Invoke-RestMethod -Uri "$connectUrl/connectors" -Method Post -ContentType 'application/json' -Body $body
-    Write-Host "Connector '$name' created."
+    Write-Host "Connector '$name' created for SQL host '$sqlHost'."
 }
 else {
     $body = $config.config | ConvertTo-Json -Depth 20
     $result = Invoke-RestMethod -Uri "$connectUrl/connectors/$name/config" -Method Put -ContentType 'application/json' -Body $body
-    Write-Host "Connector '$name' configuration updated."
+    Write-Host "Connector '$name' configuration updated for SQL host '$sqlHost'."
 }
 
 Write-Host ''
