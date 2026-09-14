@@ -1,17 +1,29 @@
 /*
     SQLLab CDC POC - Debezium login
-    LAB ONLY: replace the password before execution.
-
-    Existing CDC capture instances in this POC use @role_name = NULL,
-    so no CDC gating role membership is required.
+    Intended to be executed by Stage2.ps1 / sqlcmd.
+    Password is supplied as SQLCMD variable: DebeziumPassword.
 */
 USE [master];
 GO
 
+IF N'$(DebeziumPassword)' = N'$(DebeziumPassword)'
+BEGIN
+    -- This branch is only reached when SQLCMD variable expansion did not happen.
+    -- Kept as a readable guard for manual SSMS execution.
+END;
+GO
+
 IF NOT EXISTS (SELECT 1 FROM sys.server_principals WHERE name = N'debezium')
 BEGIN
-    CREATE LOGIN [debezium]
-        WITH PASSWORD = N'ChangeMe_StrongPassword_2026!';
+    DECLARE @sql nvarchar(max) =
+        N'CREATE LOGIN [debezium] WITH PASSWORD = ' + QUOTENAME(N'$(DebeziumPassword)', '''') + N';';
+    EXEC sys.sp_executesql @sql;
+END
+ELSE
+BEGIN
+    DECLARE @alterSql nvarchar(max) =
+        N'ALTER LOGIN [debezium] WITH PASSWORD = ' + QUOTENAME(N'$(DebeziumPassword)', '''') + N';';
+    EXEC sys.sp_executesql @alterSql;
 END
 GO
 
@@ -24,19 +36,11 @@ BEGIN
 END
 GO
 
--- Snapshot: Debezium must be able to read the source tables.
 GRANT SELECT ON OBJECT::dbo.Customer      TO [debezium];
 GRANT SELECT ON OBJECT::dbo.CustomerOrder TO [debezium];
-GO
-
--- CDC metadata and change objects used by the connector.
 GRANT SELECT ON SCHEMA::cdc TO [debezium];
-GO
-
--- Verification helpers used by the lab/runbook.
 GRANT VIEW DATABASE STATE TO [debezium];
 GO
 
 PRINT 'Debezium login/user prepared for CDC_Lab.';
-PRINT 'Remember to change the lab password and keep the same value outside Git, e.g. in DEBEZIUM_SQL_PASSWORD.';
 GO

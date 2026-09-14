@@ -3,7 +3,7 @@
   "config": {
     "connector.class": "io.debezium.connector.sqlserver.SqlServerConnector",
     "tasks.max": "1",
-    "database.hostname": "sql64",
+    "database.hostname": "__SQL_HOST__",
     "database.port": "1433",
     "database.user": "debezium",
     "database.password": "__PASSWORD__",

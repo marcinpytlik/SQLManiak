@@ -2,6 +2,37 @@
 
 Ten POC jest prowadzony etapami, tak aby każdy krok miał jasno określony cel, sposób uruchomienia, kryterium PASS/FAIL i możliwość powrotu do poprzedniego stanu.
 
+## Uruchamianie ze stacji developerskiej
+
+Tak jak w POC SSIS, cały scenariusz może być sterowany ze stacji developerskiej. Na stacji potrzebujesz:
+
+- PowerShell 5.1 lub 7,
+- `sqlcmd` w PATH,
+- Docker Desktop,
+- dostępu sieciowego do SQL Server,
+- lokalnego klona repozytorium.
+
+Najprostszy przebieg:
+
+```powershell
+cd .\scripts\CDC-POC
+.\Stage1.ps1
+.\Stage2.ps1
+.\Stage3.ps1 -FromBeginning
+.\Stage4.ps1 -Test 1
+.\Stage5.ps1
+```
+
+Cleanup:
+
+```powershell
+.\Cleanup.ps1
+```
+
+Domyślny SQL Server dla wrapperów to `sql64`. Stage 2 ma dodatkowo parametr `-SqlHost` używany przez kontener Debezium; dla bieżącego SQLLab domyślnie jest to `192.168.50.24`, ponieważ Docker Desktop nie rozwiązywał nazwy `sql64` przez DNS domeny labowej.
+
+Jeżeli chcesz użyć SQL Authentication dla konta operatorskiego, wrappery obsługują `-SqlUser` i `-SqlPassword`. Bez tych parametrów używane jest Windows Integrated Authentication.
+
 ## Architektura
 
 ```text
@@ -151,30 +182,26 @@ Szczegóły: `Stages/Stage-05-Production-Readiness.md`.
 ## Dokumentacja
 
 - `POC_Runbook.md` — pełna kolejność wykonania POC,
+- `POC.Common.ps1` — wspólne funkcje dla wrapperów ze stacji developerskiej,
+- `Stage1.ps1` ... `Stage5.ps1` — uruchamianie etapów,
+- `Cleanup.ps1` — pełny cleanup POC,
 - `CDC_Requirements_and_Limitations.md` — wymagania i ograniczenia CDC,
 - `CDC_Operational_Runbook.md` — operacje administracyjne,
 - `CDC_Troubleshooting.md` — diagnostyka warstwa po warstwie,
 - `Architecture/ADR-001-CDC-Debezium-Kafka.md` — decyzja architektoniczna,
-- `Architecture/Connector-Offsets-Retry.md` — szczegółowo: connector, offsety, retry i recovery,
+- `Architecture/Connector-Offsets-Retry.md` — connector, offsety, retry i recovery,
 - `Tests/README.md` — matryca testów odporności,
 - `PROMPTER.md` — kolejność i scenariusz do nagrania/demo.
 
 ## Cleanup
 
-SQL Server:
-
-```text
-99_Cleanup.sql
-```
-
-Debezium/Kafka:
+Z poziomu katalogu głównego POC:
 
 ```powershell
-cd .\Debezium
-.\99_StopAndCleanup.ps1
+.\Cleanup.ps1
 ```
 
-Pełna kolejność cleanupu jest opisana w `POC_Runbook.md`.
+Wrapper zatrzyma/wyczyści warstwę Debezium/Kafka oraz uruchomi `99_Cleanup.sql` na SQL Serverze.
 
 ## Definicja sukcesu POC
 
