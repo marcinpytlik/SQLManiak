@@ -39,6 +39,7 @@ Punkt startowy dokumentacji:
 - [Pełny inwentarz szablonu](docs/01-template-inventory.md)
 - [Mapowanie Excel → implementacja](docs/02-excel-mapping.md)
 - [Instrukcja instalacji](docs/03-installation.md)
+- [Słownik pojęć i skrótów](docs/04-slownik.md)
 
 ## Szablon v1.6
 
@@ -103,20 +104,24 @@ config/
 sql/
   01_monitoring_permissions.sql
 
+source/
+  README.md
+
 docs/
   README.md
   01-template-inventory.md
   02-excel-mapping.md
   03-installation.md
+  04-slownik.md
   inventory/
   excel-mapping/
 ```
 
 ## Źródło wymagań
 
-Implementacja została porównana z arkuszem:
+Źródłowym materiałem jest arkusz `MSSQL_alerty_Grafana_macierz_v6_complete_CPU_SQL.xlsx`. Jego identyfikację, docelową lokalizację i SHA256 opisuje [`source/README.md`](source/README.md).
 
-`MSSQL_alerty_Grafana_macierz_v6_complete_CPU_SQL(2).xlsx`
+Dokumentacja mapowania arkusza na implementację znajduje się w [`docs/02-excel-mapping.md`](docs/02-excel-mapping.md).
 
 W mapowaniu używane są oznaczenia:
 
