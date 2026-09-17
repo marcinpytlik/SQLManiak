@@ -1,29 +1,31 @@
-# Instalacja SQLManiak MSSQL Zabbix 7.4
+# Instalacja SQLManiak MSSQL w Zabbix 7.4
 
-Dokument odtwarza konfigurację, którą faktycznie uruchomiliśmy i przetestowaliśmy.
+Dokument odtwarza konfigurację, którą faktycznie uruchomiliśmy i przetestowaliśmy w laboratorium.
 
 ## 1. Architektura
 
+Podstawowy tor monitoringu:
+
 ```text
-Zabbix Server 7.4 (Docker/Compose)
+Zabbix Server 7.4 (Docker Compose)
         |
-        | standardowe items + external E2E
+        | standardowe itemy + test E2E
         v
 Zabbix Agent 2 (Windows, SQL64)
         |
-        | MSSQL plugin, named session SQL3
+        | dodatek MSSQL, nazwana sesja SQL3
         v
-SQL Server named instance SQL3
+SQL Server — nazwana instancja SQL3
 ```
 
-Dla E2E:
+Pełny pomiar E2E:
 
 ```text
-Zabbix Server container
- -> external script
+kontener Zabbix Server
+ -> skrypt zewnętrzny
  -> zabbix_get
  -> Agent 2 :10050
- -> MSSQL plugin
+ -> dodatek MSSQL
  -> SQL3
  -> sqlmaniak_e2e.sql
  -> odpowiedź
@@ -31,18 +33,26 @@ Zabbix Server container
 
 ## 2. Wymagania
 
-- Zabbix Server 7.4.
-- Zabbix Agent 2 + MSSQL plugin 7.4 na serwerze SQL.
-- Dostęp Zabbix Server/Proxy do Agent 2 na TCP/10050.
-- Monitoring login SQL z uprawnieniami opisanymi niżej.
-- `CustomQueriesEnabled=true`.
-- Dla E2E: `zabbix_get` dostępny w środowisku wykonującym external check. W testowanym obrazie Docker był dostępny.
+- Zabbix Server 7.4,
+- Zabbix Agent 2 z dodatkiem MSSQL 7.4 na serwerze SQL,
+- łączność Zabbix Server/Proxy → Agent 2 na TCP/10050,
+- login SQL do monitoringu z uprawnieniami opisanymi w dalszej części,
+- włączone własne zapytania MSSQL: `CustomQueriesEnabled=true`,
+- dla E2E: polecenie `zabbix_get` dostępne w środowisku wykonującym test zewnętrzny.
 
-## 3. Agent 2 na Windows / SQL Server
+W testowanym obrazie Docker `zabbix_get` był dostępny w kontenerze Zabbix Server.
 
-### 3.1 Custom queries
+## 3. Zabbix Agent 2 na Windows / SQL Server
 
-Skopiuj wszystkie pliki z `custom-queries/` do:
+### 3.1. Własne zapytania SQL
+
+Skopiuj wszystkie pliki z katalogu repozytorium:
+
+```text
+custom-queries/
+```
+
+do katalogu Zabbix Agent 2:
 
 ```text
 C:\Program Files\Zabbix Agent 2\Custom Queries\MSSQL
@@ -60,84 +70,96 @@ Pliki:
 - `sqlmaniak_vlf_count.sql`
 - `sqlmaniak_e2e.sql`
 
-### 3.2 Konfiguracja custom queries
+### 3.2. Włączenie własnych zapytań
 
-W konfiguracji pluginu MSSQL ustaw:
+W konfiguracji dodatku MSSQL ustaw:
 
 ```text
 Plugins.MSSQL.CustomQueriesEnabled=true
 Plugins.MSSQL.CustomQueriesDir=C:\Program Files\Zabbix Agent 2\Custom Queries\MSSQL
 ```
 
-Gotowy fragment jest w `config/mssql_custom_queries_snippet.conf`.
+Gotowy fragment konfiguracji znajduje się w:
 
-Po dodaniu lub zmianie pliku SQL:
+```text
+config/mssql_custom_queries_snippet.conf
+```
+
+Po dodaniu albo zmianie dowolnego pliku SQL zrestartuj Agent 2:
 
 ```powershell
 Restart-Service "Zabbix Agent 2"
 ```
 
-### 3.3 Named session
+### 3.3. Nazwana sesja MSSQL
 
-W środowisku testowym użyto named session:
+W środowisku testowym użyliśmy nazwanej sesji:
 
 ```text
 SQL3
 ```
 
-Credentials są przechowywane w konfiguracji MSSQL pluginu, dlatego testy działały z pustym user/password:
+Dane logowania są przechowywane w konfiguracji dodatku MSSQL, dlatego podczas testów można było pozostawić parametry użytkownika i hasła puste.
+
+Przykład testu kolektora CPU:
 
 ```powershell
 & "C:\Program Files\Zabbix Agent 2\zabbix_agent2.exe" `
   -t 'mssql.custom.query[SQL3,,,sqlmaniak_cpu_health]'
 ```
 
-Test E2E query:
+Test zapytania E2E:
 
 ```powershell
 & "C:\Program Files\Zabbix Agent 2\zabbix_agent2.exe" `
   -t 'mssql.custom.query[SQL3,,,sqlmaniak_e2e]'
 ```
 
-Oczekiwany wynik:
+Przykładowy poprawny wynik:
 
 ```json
 [{"ok":1,"sql_utc":"2026-09-17T18:52:56.1328646"}]
 ```
 
-## 4. Uprawnienia SQL
+## 4. Uprawnienia SQL Server
 
-Gotowy skrypt: `sql/01_monitoring_permissions.sql`.
+Gotowy skrypt znajduje się w:
+
+```text
+sql/01_monitoring_permissions.sql
+```
+
+Zakres wymaganych uprawnień zależy od wersji SQL Server i używanych kolektorów.
+
+### 4.1. Poziom serwera
 
 W testowanym środowisku potrzebne były:
 
-### Server level
-
-- `VIEW SERVER STATE` (typowo SQL Server 2016/2019),
-- `VIEW SERVER PERFORMANCE STATE` (SQL Server 2022 dla performance-state DMVs),
+- `VIEW SERVER STATE` — typowo SQL Server 2016/2019,
+- `VIEW SERVER PERFORMANCE STATE` — SQL Server 2022 dla części DMV związanych z wydajnością,
 - `VIEW ANY DEFINITION`,
-- `VIEW SERVER SECURITY STATE` — wymagane w teście SQL Server 2022 dla `sys.dm_database_encryption_keys` / TDE.
+- `VIEW SERVER SECURITY STATE` — wymagane w naszym teście SQL Server 2022 dla `sys.dm_database_encryption_keys` i monitoringu TDE.
 
-### msdb
+### 4.2. Baza `msdb`
 
-Read na:
+Login monitoringu potrzebuje odczytu informacji o jobach SQL Server Agent, m.in. z:
 
-- `dbo.sysjobs`
-- `dbo.sysjobhistory`
-- `dbo.sysjobschedules`
+- `dbo.sysjobs`,
+- `dbo.sysjobhistory`,
+- `dbo.sysjobschedules`.
 
-### Każda monitorowana baza użytkownika
+### 4.3. Każda monitorowana baza użytkownika
 
-Monitoring user:
+W każdej bazie użytkownika konto monitoringu powinno mieć użytkownika bazy oraz:
 
-- `VIEW DATABASE STATE`
-- `VIEW DEFINITION`
+- `VIEW DATABASE STATE`,
+- `VIEW DEFINITION`.
 
-To było potrzebne m.in. dla DB space i filegroup collectorów. Bez dostępu do bazy `HAS_DBACCESS` było 0 i filegroup query zwracało `null`.
+Było to potrzebne m.in. dla kolektorów przestrzeni bazy i filegroupów. Bez dostępu do bazy `HAS_DBACCESS` zwracało `0`, a zapytanie filegroupów zwracało `null`.
 
-## 5. Makra hosta / template
+## 5. Makra hosta i szablonu
 
-W testowanym hoście:
+W testowanym hoście ustawiono:
 
 ```text
 {$MSSQL.HOST} = 192.168.50.24
@@ -145,13 +167,52 @@ W testowanym hoście:
 {$MSSQL.URI}  = SQL3
 ```
 
-`{$MSSQL.USER}` / `{$MSSQL.PASSWORD}` nie były ustawione na hoście, ponieważ named session `SQL3` przechowuje credentials w konfiguracji Agent 2.
+Makra:
 
-Dostosuj wartości do własnego hosta.
+```text
+{$MSSQL.USER}
+{$MSSQL.PASSWORD}
+```
 
-## 6. Import template
+nie były ustawione na hoście, ponieważ dane logowania przechowuje nazwana sesja `SQL3` w konfiguracji Zabbix Agent 2.
 
-Zaimportuj:
+Dostosuj host, port i nazwę sesji do własnego środowiska.
+
+## 6. Odbudowanie pliku YAML szablonu
+
+W repozytorium pełny YAML jest zapisany jako pięć skompresowanych fragmentów. Najpierw odbuduj plik.
+
+### Linux
+
+```bash
+cd scripts/zabbix-mssql-monitoring/templates
+sh rebuild-template.sh
+```
+
+### Windows / PowerShell
+
+```powershell
+Set-Location scripts\zabbix-mssql-monitoring\templates
+.\rebuild-template.ps1
+```
+
+Powstanie plik:
+
+```text
+SQLManiak_MSSQL_Zabbix_7.4_matrix_v1.6_baseline_anomaly.yaml
+```
+
+Oczekiwana suma SHA256:
+
+```text
+2b47546f54ad8e9aaa78fb1ebec7b7f51ab044d137abedc6a0bf041cf500f40d
+```
+
+Skrypty odbudowujące automatycznie sprawdzają tę sumę.
+
+## 7. Import szablonu do Zabbixa
+
+Zaimportuj plik:
 
 ```text
 templates/SQLManiak_MSSQL_Zabbix_7.4_matrix_v1.6_baseline_anomaly.yaml
@@ -159,46 +220,70 @@ templates/SQLManiak_MSSQL_Zabbix_7.4_matrix_v1.6_baseline_anomaly.yaml
 
 Po imporcie:
 
-1. Podłącz template do hosta SQL.
-2. Sprawdź `Monitoring -> Latest data`.
-3. Wymuś `Get database`, jeżeli nowe prototypes nie pojawiły się od razu.
-4. `Database discovery` ma heartbeat `5m`.
+1. Podłącz szablon do hosta SQL Server.
+2. Ustaw wymagane makra hosta.
+3. Otwórz `Monitoring → Latest data` i sprawdź, czy pojawiają się dane.
+4. Jeżeli nowe prototypy baz danych nie pojawiły się od razu, wymuś wykonanie itemu `Get database` i reguły `Database discovery`.
+5. `Database discovery` ma heartbeat ustawiony na `5m`.
 
-## 7. External E2E — Docker/Compose
+## 8. Pełny pomiar E2E — Docker Compose
 
-W testowanej instalacji kontener:
+W testowanej instalacji Zabbix Server działał w kontenerze:
 
 ```text
 zabbix-zabbix-server-1
+```
+
+na obrazie:
+
+```text
 zabbix/zabbix-server-pgsql:alpine-7.4-latest
 ```
 
-Katalog external scripts wewnątrz kontenera:
+### 8.1. Katalog skryptów zewnętrznych
+
+Wewnątrz kontenera:
 
 ```text
 /usr/lib/zabbix/externalscripts
 ```
 
-Był zamontowany **read-only** z hosta:
+Katalog był zamontowany tylko do odczytu z hosta:
 
 ```text
 /opt/zabbix/zbx_env/usr/lib/zabbix/externalscripts
     -> /usr/lib/zabbix/externalscripts
 ```
 
-Dlatego skrypt kopiujemy na **hosta**, do źródła bind mount:
+Dlatego skrypt trzeba skopiować do katalogu źródłowego bind mounta na hoście, a nie bezpośrednio do kontenera.
+
+Przykład:
 
 ```bash
-sudo cp sqlmaniak_mssql_e2e.sh \
+sudo cp external-scripts/sqlmaniak_mssql_e2e.sh \
   /opt/zabbix/zbx_env/usr/lib/zabbix/externalscripts/
 
 sudo chmod 755 \
   /opt/zabbix/zbx_env/usr/lib/zabbix/externalscripts/sqlmaniak_mssql_e2e.sh
 ```
 
-W repo jest finalna wersja zgodna z Alpine/BusyBox. Nie używa `date +%s%N`, bo w tym obrazie `%N` nie dawało nanosekund. Pomiar korzysta z monotonicznego `/proc/uptime`.
+### 8.2. Dlaczego skrypt używa `/proc/uptime`
 
-Test wewnątrz kontenera:
+Finalna wersja skryptu jest zgodna z Alpine/BusyBox. Nie używa:
+
+```bash
+date +%s%N
+```
+
+ponieważ w użytym obrazie `%N` nie zwracało nanosekund. W rezultacie krótki pomiar E2E potrafił zwracać `0 ms`.
+
+Czas mierzony jest z użyciem monotonicznego zegara:
+
+```text
+/proc/uptime
+```
+
+### 8.3. Test z wnętrza kontenera
 
 ```bash
 docker exec -it zabbix-zabbix-server-1 \
@@ -206,47 +291,83 @@ docker exec -it zabbix-zabbix-server-1 \
   192.168.50.24 10050 SQL3
 ```
 
-Oczekiwany wynik:
+Przykładowy poprawny wynik:
 
 ```json
 {"status":1,"response_ms":10,"zabbix_get_rc":0,"sql_utc":"..."}
 ```
 
-## 8. Testy collectorów
+Interpretacja:
 
-Przykład:
+- `status = 1` — pełna ścieżka E2E działa,
+- `response_ms` — całkowity czas przejścia przez cały tor,
+- `zabbix_get_rc = 0` — `zabbix_get` zakończył się sukcesem,
+- `sql_utc` — znacznik czasu zwrócony przez SQL Server.
+
+## 9. Testowanie własnych kolektorów
+
+Przykład dla VLF:
 
 ```powershell
 & "C:\Program Files\Zabbix Agent 2\zabbix_agent2.exe" `
   -t 'mssql.custom.query[SQL3,,,sqlmaniak_vlf_count]'
 ```
 
-Do testów kolejnych collectorów zmień ostatni parametr na nazwę pliku bez `.sql`.
+Dla kolejnych kolektorów zmień ostatni parametr na nazwę odpowiedniego pliku bez rozszerzenia `.sql`.
 
-## 9. Baseline / anomaly
+## 10. Linia bazowa i anomalie E2E
 
-v1.6 dodaje dla E2E:
+Wersja v1.6 dodaje:
 
-- rolling average 1h,
-- rolling average 24h,
-- MAD 24h,
-- anomaly score 24h,
-- current / 24h baseline ratio,
-- seasonal baseline same hour z 7 dni,
-- seasonal deviation z 7 dni.
+- średnią kroczącą 1 h,
+- średnią kroczącą 24 h,
+- MAD z 24 h,
+- wynik anomalii z 24 h,
+- współczynnik bieżącej wartości do linii bazowej 24 h,
+- sezonową linię bazową dla tej samej godziny dnia z siedmiu poprzednich dni,
+- sezonowe odchylenie dla tej samej godziny dnia.
 
-Pierwsze rolling metrics zaczynają działać szybko. Seasonal metrics wymagają historii z poprzednich dni. **Nie ustawiono jeszcze progów anomaly/latency** — najpierw zbieramy rzeczywisty baseline.
+Metryki kroczące zaczynają działać szybko, natomiast metryki sezonowe wymagają historii z poprzednich dni.
 
-## 10. Ważne ograniczenie capacity
+**W wersji v1.6 nie ustawiliśmy jeszcze progów alarmowych dla anomalii i opóźnienia E2E.** Najpierw zbieramy rzeczywiste dane bazowe.
 
-`mssql.db.rows_data.timeleft["{#DBNAME}"]` przewiduje zapełnienie **aktualnie zaalokowanej przestrzeni ROWS**. To nie jest prognoza zapełnienia woluminu / filesystemu. Autogrowth może przesunąć granicę. Osobny filesystem time-to-full pozostaje potencjalnym kolejnym etapem.
+## 11. Ważne ograniczenie prognozy pojemności
 
-## 11. Upgrade
+Item:
 
-Przy aktualizacji:
+```text
+mssql.db.rows_data.timeleft["{#DBNAME}"]
+```
 
-1. Zachowaj custom queries i external script.
-2. Zaimportuj nowszy YAML z opcją aktualizacji istniejącego template.
-3. Sprawdź item prototypes i discovery.
-4. Sprawdź `Latest data` dla custom raw items.
-5. Nie zmieniaj progów produkcyjnych bez zebranych danych/baseline.
+przewiduje czas do zapełnienia **aktualnie zaalokowanej przestrzeni ROWS**.
+
+Nie jest to prognoza zapełnienia całego woluminu lub filesystemu. Autogrowth może zwiększyć rozmiar plików i przesunąć moment faktycznego braku przestrzeni.
+
+Osobny monitoring czasu do zapełnienia filesystemu pozostaje możliwym kolejnym etapem.
+
+## 12. Aktualizacja do nowszej wersji
+
+Przy aktualizacji szablonu:
+
+1. Zachowaj własne zapytania SQL oraz skrypt E2E.
+2. Odbuduj i zaimportuj nowszy plik YAML z opcją aktualizacji istniejącego szablonu.
+3. Sprawdź reguły wykrywania i prototypy itemów.
+4. Sprawdź `Latest data` dla własnych itemów `raw`.
+5. Zweryfikuj, czy własne makra hosta nie zostały nadpisane.
+6. Nie zmieniaj progów produkcyjnych bez danych historycznych i zebranej linii bazowej.
+
+## 13. Szybka lista kontrolna
+
+Po zakończeniu instalacji potwierdź:
+
+- [ ] Agent 2 odpowiada na porcie 10050,
+- [ ] dodatek MSSQL łączy się do właściwej instancji,
+- [ ] własne zapytania są w poprawnym katalogu,
+- [ ] `CustomQueriesEnabled=true`,
+- [ ] monitoring login ma wymagane uprawnienia,
+- [ ] import szablonu zakończył się bez błędów,
+- [ ] discovery baz utworzyło itemy per baza,
+- [ ] kolektory CPU, I/O, filegroups, TDE i VLF zwracają dane,
+- [ ] skrypt E2E działa z poziomu Zabbix Server/Proxy,
+- [ ] `SQLManiak E2E: response time` zapisuje wartości większe od zera,
+- [ ] linia bazowa E2E zaczęła się budować.

@@ -1,68 +1,76 @@
-# SQLManiak MSSQL Monitoring for Zabbix 7.4
+# SQLManiak — monitoring MSSQL w Zabbix 7.4
 
-Rozszerzony template MSSQL oparty o oficjalny **Zabbix Agent 2 MSSQL plugin**, rozbudowany o collectory SQLManiak, korelacje alertów, capacity, TDE, VLF, pełny E2E oraz baseline/anomaly.
+Rozszerzony szablon monitoringu Microsoft SQL Server oparty na oficjalnym dodatku **Zabbix Agent 2 MSSQL**, rozbudowany o własne kolektory SQLManiak, korelacje alertów, monitoring pojemności, TDE, VLF, pełny pomiar E2E oraz mechanizmy linii bazowej i wykrywania anomalii.
 
 ## Aktualna wersja
 
 `v1.6-baseline-anomaly`
 
-## Co jest w środku
+## Najważniejsze możliwości
 
-- pełny template Zabbix 7.4,
-- CPU/scheduler + relative CPU,
-- CPU per baza,
-- I/O latency,
-- blocking / lock pressure / deadlocks,
-- Memory Grants Pending / Free List Stalls,
-- long/active transactions,
-- DB ROWS space,
-- filegroups,
-- backup SLA FULL/DIFF/LOG,
-- SQL Agent jobs,
-- TDE per DB,
-- VLF per DB i max instancji,
-- ROWS time-to-full,
-- full-path E2E Zabbix Server → Agent 2 → MSSQL plugin → SQL Server → return,
-- E2E rolling + seasonal baseline/anomaly,
-- oficjalne elementy template: AG, mirroring, replication, quorum i podstawowe performance counters.
+- monitoring dostępności instancji SQL Server,
+- pomiar czasu zestawienia połączenia TCP,
+- CPU i presja na schedulerach SQL Server,
+- względne wykorzystanie CPU z uwzględnieniem liczby schedulerów dostępnych dla SQL Server,
+- CPU per baza danych,
+- opóźnienia operacji I/O,
+- blokady, oczekiwania na blokady i deadlocki,
+- `Memory Grants Pending` i `Free List Stalls`,
+- aktywne i długotrwałe transakcje,
+- wykorzystanie przestrzeni danych ROWS,
+- monitoring filegroupów,
+- SLA backupów FULL / DIFF / LOG,
+- monitoring jobów SQL Server Agent,
+- stan TDE per baza danych,
+- liczba VLF per baza oraz maksimum dla instancji,
+- prognozowany czas do zapełnienia aktualnie zaalokowanej przestrzeni ROWS,
+- pełny pomiar E2E: Zabbix Server/Proxy → Agent 2 → dodatek MSSQL → SQL Server → odpowiedź,
+- średnie kroczące i sezonowa linia bazowa E2E,
+- miary anomalii E2E,
+- elementy oficjalnego szablonu Zabbixa: Availability Groups, mirroring, replikacja, quorum i podstawowe liczniki wydajności.
 
 ## Dokumentacja
 
-- [Pełny inwentarz template](docs/01-template-inventory.md)
+Cała dokumentacja użytkowa jest utrzymywana po polsku. Nazwy itemów, klucze Zabbixa, nazwy makr oraz nazwy obiektów SQL pozostają w oryginalnej postaci tam, gdzie są identyfikatorami technicznymi i muszą odpowiadać rzeczywistemu szablonowi.
+
+Punkt startowy dokumentacji:
+
+- [Spis dokumentacji](docs/README.md)
+- [Pełny inwentarz szablonu](docs/01-template-inventory.md)
 - [Mapowanie Excel → implementacja](docs/02-excel-mapping.md)
 - [Instrukcja instalacji](docs/03-installation.md)
 
-## Template v1.6
+## Szablon v1.6
 
-Pełny YAML jest przechowywany w repo w postaci pięciu fragmentów `base64(gzip(...))` oraz dwóch skryptów odbudowujących. Po odbudowie SHA256 musi wynosić:
+Pełny plik YAML jest przechowywany w repozytorium w postaci pięciu fragmentów `base64(gzip(...))` oraz dwóch skryptów odbudowujących. Po odbudowie suma SHA256 musi wynosić:
 
 ```text
 2b47546f54ad8e9aaa78fb1ebec7b7f51ab044d137abedc6a0bf041cf500f40d
 ```
 
-Linux:
+### Linux
 
 ```bash
 cd scripts/zabbix-mssql-monitoring/templates
 sh rebuild-template.sh
 ```
 
-Windows / PowerShell:
+### Windows / PowerShell
 
 ```powershell
 Set-Location scripts/zabbix-mssql-monitoring/templates
 .\rebuild-template.ps1
 ```
 
-W obu przypadkach powstaje:
+W obu przypadkach powstaje plik:
 
 ```text
 SQLManiak_MSSQL_Zabbix_7.4_matrix_v1.6_baseline_anomaly.yaml
 ```
 
-Skrypty same sprawdzają SHA256, więc uszkodzony lub niepełny zestaw fragmentów zostanie odrzucony.
+Skrypty automatycznie weryfikują sumę SHA256, więc uszkodzony albo niepełny zestaw fragmentów zostanie odrzucony.
 
-## Struktura
+## Struktura katalogów
 
 ```text
 templates/
@@ -96,38 +104,47 @@ sql/
   01_monitoring_permissions.sql
 
 docs/
+  README.md
   01-template-inventory.md
   02-excel-mapping.md
   03-installation.md
   inventory/
-    01-items.md
-    02-discovery-prototypes.md
-    03-triggers.md
-    04-macros.md
+  excel-mapping/
 ```
 
 ## Źródło wymagań
 
-Implementacja została zestawiona z arkuszem:
+Implementacja została porównana z arkuszem:
 
 `MSSQL_alerty_Grafana_macierz_v6_complete_CPU_SQL(2).xlsx`
 
-Mapowanie nie udaje zgodności tam, gdzie jej nie ma: dokument oznacza elementy `✅`, `🟡`, `🔁`, `⏳`.
+W mapowaniu używane są oznaczenia:
 
-## Zasada projektowa
+- ✅ — zaimplementowane,
+- 🟡 — częściowo zaimplementowane lub metryka istnieje, ale docelowy trigger nie został jeszcze włączony,
+- 🔁 — pierwotne rozwiązanie z arkusza zostało zastąpione innym mechanizmem,
+- ⏳ — element jeszcze nie został wdrożony.
 
-Nie alertujemy na każdy wysoki licznik w izolacji. Przykłady:
+## Zasady projektowe
 
-- blocking korelujemy z lock waits / timeout / average wait,
-- CPU normalizujemy do schedulerów SQL,
-- E2E dostaje baseline/anomaly zamiast arbitralnego progu,
-- część progów capacity/I/O pozostaje celowo nieaktywna do zebrania baseline.
+Nie tworzymy alertu wyłącznie dlatego, że pojedynczy licznik osiągnął wysoką wartość. Monitoring ma możliwie dobrze odróżniać objaw od rzeczywistego problemu.
+
+Przykłady:
+
+- blokady są interpretowane razem z lock waits, lock timeouts i średnim czasem oczekiwania,
+- CPU jest normalizowane względem liczby schedulerów dostępnych dla SQL Server,
+- E2E korzysta z linii bazowej i miar anomalii zamiast wyłącznie ze sztywnego progu,
+- część progów dla I/O i pojemności pozostaje celowo nieaktywna do czasu zebrania rzeczywistych danych bazowych.
 
 ## Testowane środowisko
 
-- Zabbix 7.4 Compose / Alpine,
+- Zabbix 7.4 uruchomiony przez Docker Compose na obrazie Alpine,
 - Zabbix Agent 2 na Windows,
-- SQL Server named instance `SQL3`,
-- custom queries z katalogu `C:\Program Files\Zabbix Agent 2\Custom Queries\MSSQL`.
+- nazwana instancja SQL Server `SQL3`,
+- własne zapytania w katalogu:
 
-Szczegóły i ścieżki produkcyjne/labowe są w [docs/03-installation.md](docs/03-installation.md).
+```text
+C:\Program Files\Zabbix Agent 2\Custom Queries\MSSQL
+```
+
+Dokładna konfiguracja i wszystkie kroki instalacyjne znajdują się w [instrukcji instalacji](docs/03-installation.md).
