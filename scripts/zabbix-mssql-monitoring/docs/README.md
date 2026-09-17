@@ -53,7 +53,7 @@ W tabelach inwentarza występują cztery podstawowe kolumny:
 
 ## Konwencje językowe
 
-W dokumentacji używamy polskich odpowiedników tam, gdzie poprawiają czytelność, np.:
+W dokumentacji używam polskich odpowiedników tam, gdzie poprawiają czytelność, np.:
 
 - *template* → **szablon**,
 - *custom query* → **własne zapytanie**,
@@ -67,7 +67,7 @@ W dokumentacji używamy polskich odpowiedników tam, gdzie poprawiają czytelno�
 - *capacity* → **pojemność**,
 - *response time* → **czas odpowiedzi**.
 
-Nie tłumaczymy identyfikatorów technicznych zapisanych w kodzie, np. `mssql.e2e.response_ms`, `VIEW SERVER STATE`, `sys.dm_db_log_info()` czy `Memory Grants Pending`.
+Nie tłumaczyłem identyfikatorów technicznych zapisanych w kodzie, np. `mssql.e2e.response_ms`, `VIEW SERVER STATE`, `sys.dm_db_log_info()` czy `Memory Grants Pending`.
 
 Jeżeli pojawia się skrót, którego znaczenie nie jest oczywiste, sprawdź [słownik](04-slownik.md). Zawiera m.in. E2E, MAD, LLD, AG, WSFC, FCI, TDE, VLF, PLE, DMV, SLA, TTL i inne pojęcia używane w szablonie.
 
