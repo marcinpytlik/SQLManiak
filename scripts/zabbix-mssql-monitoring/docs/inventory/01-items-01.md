@@ -2,11 +2,10 @@
 
 Łącznie: **139**. Opis pochodzi z aktualnego YAML; „Jak” wskazuje faktyczny mechanizm zbierania.
 
+> Część 1 z 4.
+
 | Nazwa | Key | Jak | Co mierzy / sens |
 |---|---|---|---|
-
-> Część 1.
-
 | Get Access Methods counters | `mssql.access_methods.raw` | dependent z `mssql.perfcounter.get["{$MSSQL.URI}","{$MSSQL.USER}","{$MSSQL.PASSWORD}"]` | The item gets server information about access methods. |
 | Auto-param attempts per second | `mssql.autoparam_attempts_sec.rate` | dependent z `mssql.sql_statistics.raw` | Number of auto-parameterization attempts per second. The total should be the sum of the failed, safe, and unsafe auto-parameterizations. Auto-parameterization occurs when an instance of SQL Server tries to parameterize a Transact-SQL request by replacing some … |
 | Get availability groups | `mssql.availability.group.get["{$MSSQL.URI}","{$MSSQL.USER}","{$MSSQL.PASSWORD}"]` | Agent 2 → MSSQL plugin | The item gets availability group states - name, primary and secondary health, synchronization health. |
