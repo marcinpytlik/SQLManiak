@@ -9,8 +9,15 @@ Dokumentacja jest utrzymywana po polsku. Nazwy techniczne, takie jak nazwy item�
 1. [Przegląd i pełny inwentarz szablonu](01-template-inventory.md)
 2. [Mapowanie wymagań z Excela na implementację](02-excel-mapping.md)
 3. [Instrukcja instalacji i konfiguracji](03-installation.md)
-4. Szczegółowy [inwentarz itemów, prototypów, triggerów i makr](inventory/)
-5. Szczegółowe [mapowanie pozycji z arkusza Excel](excel-mapping/)
+4. [Słownik pojęć i skrótów](04-slownik.md)
+5. Szczegółowy [inwentarz itemów, prototypów, triggerów i makr](inventory/)
+6. Szczegółowe [mapowanie pozycji z arkusza Excel](excel-mapping/)
+
+## Materiał źródłowy
+
+Arkusz, na podstawie którego powstała macierz wymagań i mapowanie do Zabbixa, znajduje się w repozytorium:
+
+[`../source/MSSQL_alerty_Grafana_macierz_v6_complete_CPU_SQL.xlsx`](../source/MSSQL_alerty_Grafana_macierz_v6_complete_CPU_SQL.xlsx)
 
 ## Zakres dokumentacji
 
@@ -30,7 +37,8 @@ Dokumentacja opisuje:
 - TDE,
 - SLA backupów i jobów SQL Server Agent,
 - linię bazową i wykrywanie anomalii,
-- mapowanie między pierwotną macierzą Excel a aktualnym szablonem Zabbixa.
+- mapowanie między pierwotną macierzą Excel a aktualnym szablonem Zabbixa,
+- słownik najważniejszych skrótów i pojęć użytych w dokumentacji.
 
 ## Jak czytać inwentarz
 
@@ -60,6 +68,8 @@ W dokumentacji używamy polskich odpowiedników tam, gdzie poprawiają czytelno�
 - *response time* → **czas odpowiedzi**.
 
 Nie tłumaczymy identyfikatorów technicznych zapisanych w kodzie, np. `mssql.e2e.response_ms`, `VIEW SERVER STATE`, `sys.dm_db_log_info()` czy `Memory Grants Pending`.
+
+Jeżeli pojawia się skrót, którego znaczenie nie jest oczywiste, sprawdź [słownik](04-slownik.md). Zawiera m.in. E2E, MAD, LLD, AG, WSFC, FCI, TDE, VLF, PLE, DMV, SLA, TTL i inne pojęcia używane w szablonie.
 
 ## Wersja szablonu
 
