@@ -105,7 +105,6 @@ sql/
   01_monitoring_permissions.sql
 
 source/
-  MSSQL_alerty_Grafana_macierz_v6_complete_CPU_SQL.xlsx
   README.md
 
 docs/
@@ -120,9 +119,7 @@ docs/
 
 ## Źródło wymagań
 
-Źródłowy arkusz jest przechowywany razem z projektem:
-
-[`source/MSSQL_alerty_Grafana_macierz_v6_complete_CPU_SQL.xlsx`](source/MSSQL_alerty_Grafana_macierz_v6_complete_CPU_SQL.xlsx)
+Źródłowym materiałem jest arkusz `MSSQL_alerty_Grafana_macierz_v6_complete_CPU_SQL.xlsx`. Jego identyfikację, docelową lokalizację i SHA256 opisuje [`source/README.md`](source/README.md).
 
 Dokumentacja mapowania arkusza na implementację znajduje się w [`docs/02-excel-mapping.md`](docs/02-excel-mapping.md).
 
