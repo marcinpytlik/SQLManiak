@@ -2,11 +2,10 @@
 
 Łącznie: **139**. Opis pochodzi z aktualnego YAML; „Jak” wskazuje faktyczny mechanizm zbierania.
 
+> Część 2 z 4.
+
 | Nazwa | Key | Jak | Co mierzy / sens |
 |---|---|---|---|
-
-> Część 2.
-
 | Total log file size | `mssql.log_files_size` | dependent z `mssql.db_info.raw` | Total size of all the transaction log files. |
 | Total log file used size | `mssql.log_files_used_size` | dependent z `mssql.db_info.raw` | The cumulative size of all the log files in the database. |
 | Maximum workspace memory | `mssql.maximum_workspace_memory` | dependent z `mssql.mem_manager.raw` | Indicates the maximum amount of memory available for executing processes, such as hash, sort, bulk copy, and index creation operations. |
