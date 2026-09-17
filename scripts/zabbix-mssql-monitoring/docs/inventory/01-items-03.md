@@ -2,11 +2,10 @@
 
 Łącznie: **139**. Opis pochodzi z aktualnego YAML; „Jak” wskazuje faktyczny mechanizm zbierania.
 
+> Część 3 z 4.
+
 | Nazwa | Key | Jak | Co mierzy / sens |
 |---|---|---|---|
-
-> Część 3.
-
 | TCP connection time | `net.tcp.service.perf[tcp,{$MSSQL.HOST},{$MSSQL.PORT}]` | Zabbix simple TCP check | TCP connection time to the MSSQL service. Matrix thresholds: 250 ms WARNING, 1000 ms HIGH sustained for 5 minutes. |
 | SQLManiak custom: CPU and scheduler raw | `mssql.custom.query["{$MSSQL.URI}","{$MSSQL.USER}","{$MSSQL.PASSWORD}",sqlmaniak_cpu_health]` | Agent 2 → MSSQL custom query | Raw custom-query collector for SQL CPU topology, scheduler pressure, SOS_SCHEDULER_YIELD and host CPU split. |
 | SQLManiak custom: I/O latency raw | `mssql.custom.query["{$MSSQL.URI}","{$MSSQL.USER}","{$MSSQL.PASSWORD}",sqlmaniak_io_latency]` | Agent 2 → MSSQL custom query | Raw cumulative I/O counters used to calculate read/write stall milliseconds per operation. |
