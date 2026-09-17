@@ -15,9 +15,9 @@ Dokumentacja jest utrzymywana po polsku. Nazwy techniczne, takie jak nazwy item�
 
 ## Materiał źródłowy
 
-Arkusz, na podstawie którego powstała macierz wymagań i mapowanie do Zabbixa, znajduje się w repozytorium:
+Informacje o źródłowym arkuszu wymagań, jego nazwie i sumie SHA256 znajdują się w:
 
-[`../source/MSSQL_alerty_Grafana_macierz_v6_complete_CPU_SQL.xlsx`](../source/MSSQL_alerty_Grafana_macierz_v6_complete_CPU_SQL.xlsx)
+[`../source/README.md`](../source/README.md)
 
 ## Zakres dokumentacji
 
