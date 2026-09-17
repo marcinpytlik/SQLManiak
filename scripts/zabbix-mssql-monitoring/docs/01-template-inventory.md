@@ -2,12 +2,25 @@
 
 Wersja: **v1.6 baseline/anomaly**, Zabbix **7.4**.
 
-Pełny inwentarz został rozdzielony na cztery pliki, żeby był czytelny w GitHubie:
+Pełny inwentarz został rozdzielony na mniejsze pliki, żeby był czytelny w GitHubie:
 
-- [Items instancji](inventory/01-items.md)
-- [Discovery i item prototypes](inventory/02-discovery-prototypes.md)
-- [Triggery i trigger prototypes](inventory/03-triggers.md)
-- [Makra](inventory/04-macros.md)
+### Items instancji
+- [część 1](inventory/01-items-01.md)
+- [część 2](inventory/01-items-02.md)
+- [część 3 — collectory SQLManiak, E2E i baseline](inventory/01-items-03.md)
+- [część 4 — anomaly/seasonal](inventory/01-items-04.md)
+
+### Discovery i item prototypes
+- [część 1 — AG, DB, jobs, local DB, mirroring](inventory/02-prototypes-01.md)
+- [część 2 — non-local DB, quorum, replicas, filegroups](inventory/02-prototypes-02.md)
+
+### Triggery i trigger prototypes
+- [część 1](inventory/03-triggers-01.md)
+- [część 2](inventory/03-triggers-02.md)
+- [część 3](inventory/03-triggers-03.md)
+
+### Makra
+- [pełna lista makr](inventory/04-macros.md)
 
 ## Liczby
 
