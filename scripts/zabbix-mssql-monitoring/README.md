@@ -32,11 +32,48 @@ Rozszerzony template MSSQL oparty o oficjalny **Zabbix Agent 2 MSSQL plugin**, r
 - [Mapowanie Excel → implementacja](docs/02-excel-mapping.md)
 - [Instrukcja instalacji](docs/03-installation.md)
 
+## Template v1.6
+
+Pełny YAML jest przechowywany w repo w postaci pięciu fragmentów `base64(gzip(...))` oraz dwóch skryptów odbudowujących. Po odbudowie SHA256 musi wynosić:
+
+```text
+2b47546f54ad8e9aaa78fb1ebec7b7f51ab044d137abedc6a0bf041cf500f40d
+```
+
+Linux:
+
+```bash
+cd scripts/zabbix-mssql-monitoring/templates
+sh rebuild-template.sh
+```
+
+Windows / PowerShell:
+
+```powershell
+Set-Location scripts/zabbix-mssql-monitoring/templates
+.\rebuild-template.ps1
+```
+
+W obu przypadkach powstaje:
+
+```text
+SQLManiak_MSSQL_Zabbix_7.4_matrix_v1.6_baseline_anomaly.yaml
+```
+
+Skrypty same sprawdzają SHA256, więc uszkodzony lub niepełny zestaw fragmentów zostanie odrzucony.
+
 ## Struktura
 
 ```text
 templates/
-  SQLManiak_MSSQL_Zabbix_7.4_matrix_v1.6_baseline_anomaly.yaml
+  rebuild-template.sh
+  rebuild-template.ps1
+  packed/
+    part-01.b64
+    part-02.b64
+    part-03.b64
+    part-04.b64
+    part-05.b64
 
 custom-queries/
   sqlmaniak_cpu_health.sql
@@ -62,6 +99,11 @@ docs/
   01-template-inventory.md
   02-excel-mapping.md
   03-installation.md
+  inventory/
+    01-items.md
+    02-discovery-prototypes.md
+    03-triggers.md
+    04-macros.md
 ```
 
 ## Źródło wymagań
