@@ -1,5 +1,13 @@
 # Historia zmian
 
+## Unreleased — wersjonowanie szablonu w Git
+
+- dodano `Export-ZabbixTemplate.ps1` do eksportu szablonu przez Zabbix API,
+- dodano `Compare-ZabbixTemplate.ps1` wykorzystujący `configuration.importcompare`,
+- dodano `Import-ZabbixTemplate.ps1` z etapem compare i ręcznym potwierdzeniem importu,
+- domyślnie wyłączono usuwanie obiektów nieobecnych w YAML; pełna synchronizacja wymaga jawnego `-DeleteMissing`,
+- opisano model Git jako źródło prawdy dla szablonu.
+
 ## v1.6 — linia bazowa i anomalie
 
 - średnia krocząca E2E z 1 h i 24 h,

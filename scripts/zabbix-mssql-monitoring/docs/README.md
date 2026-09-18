@@ -10,8 +10,9 @@ Dokumentacja jest utrzymywana po polsku. Nazwy techniczne, takie jak nazwy item�
 2. [Mapowanie wymagań z Excela na implementację](02-excel-mapping.md)
 3. [Instrukcja instalacji i konfiguracji](03-installation.md)
 4. [Słownik pojęć i skrótów](04-slownik.md)
-5. Szczegółowy [inwentarz itemów, prototypów, triggerów i makr](inventory/)
-6. Szczegółowe [mapowanie pozycji z arkusza Excel](excel-mapping/)
+5. [Wersjonowanie szablonu w Git](05-versioning-git.md)
+6. Szczegółowy [inwentarz itemów, prototypów, triggerów i makr](inventory/)
+7. Szczegółowe [mapowanie pozycji z arkusza Excel](excel-mapping/)
 
 ## Materiał źródłowy
 
@@ -38,6 +39,7 @@ Dokumentacja opisuje:
 - SLA backupów i jobów SQL Server Agent,
 - linię bazową i wykrywanie anomalii,
 - mapowanie między pierwotną macierzą Excel a aktualnym szablonem Zabbixa,
+- wersjonowanie szablonu Zabbix w Git oraz bezpieczny eksport, compare i import przez API,
 - słownik najważniejszych skrótów i pojęć użytych w dokumentacji.
 
 ## Jak czytać inwentarz

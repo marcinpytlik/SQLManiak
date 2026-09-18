@@ -27,7 +27,8 @@ Rozszerzony szablon monitoringu Microsoft SQL Server oparty na oficjalnym dodatk
 - pełny pomiar E2E: Zabbix Server/Proxy → Agent 2 → dodatek MSSQL → SQL Server → odpowiedź,
 - średnie kroczące i sezonowa linia bazowa E2E,
 - miary anomalii E2E,
-- elementy oficjalnego szablonu Zabbixa: Availability Groups, mirroring, replikacja, quorum i podstawowe liczniki wydajności.
+- elementy oficjalnego szablonu Zabbixa: Availability Groups, mirroring, replikacja, quorum i podstawowe liczniki wydajności,
+- wersjonowanie szablonu w Git z eksportem, porównaniem i importem przez Zabbix API.
 
 ## Dokumentacja
 
@@ -40,6 +41,7 @@ Punkt startowy dokumentacji:
 - [Mapowanie Excel → implementacja](docs/02-excel-mapping.md)
 - [Instrukcja instalacji](docs/03-installation.md)
 - [Słownik pojęć i skrótów](docs/04-slownik.md)
+- [Wersjonowanie szablonu w Git](docs/05-versioning-git.md)
 
 ## Szablon v1.6
 
@@ -84,6 +86,11 @@ templates/
     part-04.b64
     part-05.b64
 
+tools/
+  Export-ZabbixTemplate.ps1
+  Compare-ZabbixTemplate.ps1
+  Import-ZabbixTemplate.ps1
+
 custom-queries/
   sqlmaniak_cpu_health.sql
   sqlmaniak_db_cpu.sql
@@ -113,9 +120,16 @@ docs/
   02-excel-mapping.md
   03-installation.md
   04-slownik.md
+  05-versioning-git.md
   inventory/
   excel-mapping/
 ```
+
+## Wersjonowanie szablonu
+
+Repozytorium Git jest źródłem prawdy dla pliku YAML szablonu. Zmiany wykonane w Zabbix LAB należy wyeksportować do YAML, przejrzeć jako `git diff`, zatwierdzić przez PR i dopiero po merge importować do środowiska docelowego.
+
+Szczegółowy proces oraz gotowe skrypty PowerShell opisuje [dokument wersjonowania](docs/05-versioning-git.md).
 
 ## Źródło wymagań
 
