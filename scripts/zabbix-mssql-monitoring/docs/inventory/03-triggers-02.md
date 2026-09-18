@@ -1,0 +1,38 @@
+# Inwentarz — triggery i prototypy triggerów
+
+Łącznie w szablonie: **76**.
+
+> Część 2 z 3 — dostępność, E2E, Availability Groups, backupy, log transakcyjny, stan baz i joby SQL Server Agent.
+
+| Źródło | Trigger | Poziom | Warunek | Opis |
+|---|---|---|---|---|
+| item: Worktables from cache ratio | MSSQL: Percentage of work tables available from the work table cache is low | `HIGH` | `max(/SQLManiak MSSQL by Zabbix agent 2/mssql.worktables_from_cache_ratio,5m)<{$MSSQL.WORKTABLES_FROM_CACHE_RATIO.MIN.CRIT}` | Współczynnik work tables dostępnych z cache jest zbyt niski. |
+| item: Service's TCP port state | MSSQL: Service is unavailable | `DISASTER` | `last(/SQLManiak MSSQL by Zabbix agent 2/net.tcp.service[tcp,{$MSSQL.HOST},{$MSSQL.PORT}])=0` | Port TCP SQL Server jest niedostępny. |
+| item: Service's TCP port state | MSSQL: TCP port unavailable | `DISASTER` | `max(/SQLManiak MSSQL by Zabbix agent 2/net.tcp.service[tcp,{$MSSQL.HOST},{$MSSQL.PORT}],{$MSSQL.TCP.FAIL.COUNT})=0` | Główny alert niedostępności po serii kolejnych nieudanych prób TCP. |
+| item: TCP connection time | MSSQL: TCP connection time is high | `HIGH` | `avg(/SQLManiak MSSQL by Zabbix agent 2/net.tcp.service.perf[tcp,{$MSSQL.HOST},{$MSSQL.PORT}],5m)>{$MSSQL.TCP.CRIT}` | Średni czas zestawienia połączenia TCP przekracza próg krytyczny. |
+| item: TCP connection time | MSSQL: TCP connection time is elevated | `WARNING` | `avg(...,5m)>{$MSSQL.TCP.WARN} and avg(...,5m)<={$MSSQL.TCP.CRIT}` | Średni czas zestawienia połączenia TCP znajduje się w zakresie ostrzegawczym. |
+| item: SQLManiak E2E: connectivity status | MSSQL: E2E SQL path unavailable | `HIGH` | `max(/SQLManiak MSSQL by Zabbix agent 2/mssql.e2e.status,#3)=0` | Trzy kolejne pełne testy E2E zakończyły się niepowodzeniem. |
+| prototype: MSSQL AG '{#GROUP_NAME}': Primary replica recovery health | MSSQL: AG '{#GROUP_NAME}': Primary replica recovery health in progress | `WARNING` | `last(/SQLManiak MSSQL by Zabbix agent 2/mssql.primary_recovery_health["{#GROUP_NAME}"])=0` | Recovery repliki primary jest w toku. |
+| prototype: MSSQL AG '{#GROUP_NAME}': Secondary replica recovery health | MSSQL: AG '{#GROUP_NAME}': Secondary replica recovery health in progress | `WARNING` | `last(/SQLManiak MSSQL by Zabbix agent 2/mssql.secondary_recovery_health["{#GROUP_NAME}"])=0` | Recovery repliki secondary jest w toku. |
+| prototype: MSSQL AG '{#GROUP_NAME}': Synchronization health | MSSQL: AG '{#GROUP_NAME}': All replicas unhealthy | `DISASTER` | `last(/SQLManiak MSSQL by Zabbix agent 2/mssql.synchronization_health["{#GROUP_NAME}"])=0` | Wszystkie repliki Availability Group mają nieprawidłowy stan synchronizacji. |
+| prototype: MSSQL AG '{#GROUP_NAME}': Synchronization health | MSSQL: AG '{#GROUP_NAME}': Some replicas unhealthy | `HIGH` | `last(/SQLManiak MSSQL by Zabbix agent 2/mssql.synchronization_health["{#GROUP_NAME}"])=1` | Co najmniej część replik Availability Group ma nieprawidłowy stan. |
+| discovery: Database discovery | MSSQL: DB '{#DBNAME}': LOG backup overdue - warning | `WARNING` | makro kontekstowe włączone + baza ONLINE + model inny niż SIMPLE + wiek backupu > WARN | Ostrzeżenie o przekroczeniu SLA backupu logu transakcyjnego. |
+| discovery: Database discovery | MSSQL: DB '{#DBNAME}': LOG backup overdue - high | `HIGH` | makro kontekstowe włączone + baza ONLINE + model inny niż SIMPLE + wiek backupu > CRIT | Krytyczne przekroczenie SLA backupu logu transakcyjnego. |
+| prototype: MSSQL DB '{#DBNAME}': Last diff backup (time ago) | MSSQL: DB '{#DBNAME}': Diff backup is old | `HIGH` | `{$MSSQL.BACKUP_DIFF.USED:"{#DBNAME}"}=1` + wiek > CRIT | Backup różnicowy jest starszy niż próg krytyczny. |
+| prototype: MSSQL DB '{#DBNAME}': Last diff backup (time ago) | MSSQL: DB '{#DBNAME}': Diff backup is old | `WARNING` | `{$MSSQL.BACKUP_DIFF.USED:"{#DBNAME}"}=1` + wiek > WARN | Backup różnicowy jest starszy niż próg ostrzegawczy. |
+| prototype: MSSQL DB '{#DBNAME}': Last full backup (time ago) | MSSQL: DB '{#DBNAME}': Full backup is old | `HIGH` | `{$MSSQL.BACKUP_FULL.USED:"{#DBNAME}"}=1` + wiek > CRIT | Pełny backup jest starszy niż próg krytyczny. |
+| prototype: MSSQL DB '{#DBNAME}': Last full backup (time ago) | MSSQL: DB '{#DBNAME}': Full backup is old | `WARNING` | `{$MSSQL.BACKUP_FULL.USED:"{#DBNAME}"}=1` + wiek > WARN | Pełny backup jest starszy niż próg ostrzegawczy. |
+| prototype: MSSQL DB '{#DBNAME}': Log flush waits per second | MSSQL: DB '{#DBNAME}': Number of commits waiting for the log flush is high | `WARNING` | `min(...,5m)>{$MSSQL.LOG_FLUSH_WAITS.MAX:"{#DBNAME}"}` | Zbyt wiele commitów oczekuje na flush logu. |
+| prototype: MSSQL DB '{#DBNAME}': Log flush wait time | MSSQL: DB '{#DBNAME}': Total wait time to flush the log is high | `WARNING` | `min(...,5m)>{$MSSQL.LOG_FLUSH_WAIT_TIME.MAX:"{#DBNAME}"}` | Czas oczekiwania na flush logu przekracza próg. |
+| prototype: MSSQL DB '{#DBNAME}': Percent log used | MSSQL: DB '{#DBNAME}': Percent of log usage is high | `WARNING` | `min(...,5m)>{$MSSQL.PERCENT_LOG_USED.MAX:"{#DBNAME}"}` | Procent wykorzystania logu przekracza skonfigurowany próg. |
+| prototype: MSSQL DB '{#DBNAME}': Percent log used | MSSQL: DB '{#DBNAME}': transaction log usage is high - warning | `WARNING` | `avg(...,10m)>{$MSSQL.LOG.USED.WARN:"{#DBNAME}"}` | Średnie wykorzystanie logu utrzymuje się powyżej progu ostrzegawczego. |
+| prototype: MSSQL DB '{#DBNAME}': Percent log used | MSSQL: DB '{#DBNAME}': transaction log usage is critical | `HIGH` | `avg(...,5m)>{$MSSQL.LOG.USED.CRIT:"{#DBNAME}"}` | Średnie wykorzystanie logu utrzymuje się powyżej progu krytycznego. |
+| prototype: MSSQL DB '{#DBNAME}': State | MSSQL: DB '{#DBNAME}': State is {ITEM.VALUE} | `HIGH` | `last(...state...)>1` | Baza znajduje się w stanie innym niż oczekiwany stan roboczy. |
+| prototype: MSSQL DB '{#DBNAME}': State | MSSQL: DB '{#DBNAME}': State is {ITEM.VALUE} [CRITICAL DB] | `DISASTER` | stan != ONLINE i `{$MSSQL.DB.CRITICAL:"{#DBNAME}"}=1` | Baza oznaczona jako krytyczna nie jest ONLINE. |
+| prototype: MSSQL DB '{#DBNAME}': State | MSSQL: DB '{#DBNAME}': State is {ITEM.VALUE} [non-critical] | `HIGH` | stan != ONLINE i `{$MSSQL.DB.CRITICAL:"{#DBNAME}"}=0` | Baza niekrytyczna nie jest ONLINE. |
+| prototype: MSSQL Job '{#JOBNAME}': Last run date-time | MSSQL: Job '{#JOBNAME}': expected run is overdue | `WARNING` | `MAXAGE>0`, job standardowy, włączony, wiek ostatniego uruchomienia > MAXAGE | Job nie uruchomił się w oczekiwanym czasie. |
+| prototype: MSSQL Job '{#JOBNAME}': Last run date-time | MSSQL: Job '{#JOBNAME}': critical expected run is overdue | `HIGH` | `MAXAGE>0`, job krytyczny, włączony, wiek ostatniego uruchomienia > MAXAGE | Krytyczny job nie uruchomił się w oczekiwanym czasie. |
+| prototype: MSSQL Job '{#JOBNAME}': Run status | MSSQL: Job '{#JOBNAME}': Failed to run | `WARNING` | `runstatus=0` | Ostatnie wykonanie joba zakończyło się niepowodzeniem. |
+| prototype: MSSQL Job '{#JOBNAME}': Run status | MSSQL: Job '{#JOBNAME}': last run failed/cancelled/retry | `WARNING` | runstatus = failed/retry/cancelled i job standardowy | Standardowy job zakończył się błędem, anulowaniem albo stanem retry. |
+| prototype: MSSQL Job '{#JOBNAME}': Run status | MSSQL: Job '{#JOBNAME}': critical job failed/cancelled/retry | `HIGH` | runstatus = failed/retry/cancelled i job krytyczny | Krytyczny job zakończył się błędem, anulowaniem albo stanem retry. |
+| prototype: MSSQL Job '{#JOBNAME}': Run duration | MSSQL: Job '{#JOBNAME}': Job duration is high | `WARNING` | `last(...run_duration...)>{$MSSQL.JOB_DURATION.WARN:"{#JOBNAME}"}` | Czas wykonania joba przekracza skonfigurowany próg. |
