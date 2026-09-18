@@ -1,5 +1,0 @@
-SET NOCOUNT ON;
-
-SELECT
-    1 AS ok,
-    CONVERT(varchar(33), SYSUTCDATETIME(), 126) AS sql_utc;
