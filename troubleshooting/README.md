@@ -23,8 +23,9 @@ do pytania:
 - [TempDB](tempdb/)
 - [Replication](replication/)
 - [Backup / Restore](backup-restore/)
+- [SQL Agent](sql-agent/)
 
-Kolejne obszary będą dokładane iteracyjnie, np. HA/DR i SQL Agent.
+Kolejne obszary będą dokładane iteracyjnie, np. HA/DR.
 
 ## Model pracy
 
