@@ -15,6 +15,7 @@ do pytania:
 - [Blocking](blocking/)
 - [Deadlocks](deadlocks/)
 - [CPU](cpu/)
+- [Wait Statistics](wait-statistics/)
 - [Query Performance](query-performance/)
 - [Memory](memory/)
 - [I/O](io/)
