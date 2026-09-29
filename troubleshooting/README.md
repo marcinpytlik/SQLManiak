@@ -22,8 +22,9 @@ do pytania:
 - [I/O](io/)
 - [TempDB](tempdb/)
 - [Replication](replication/)
+- [Backup / Restore](backup-restore/)
 
-Kolejne obszary będą dokładane iteracyjnie, np. backup/restore, HA/DR i SQL Agent.
+Kolejne obszary będą dokładane iteracyjnie, np. HA/DR i SQL Agent.
 
 ## Model pracy
 
