@@ -13,13 +13,14 @@ do pytania:
 ## Obszary
 
 - [Blocking](blocking/)
+- [Deadlocks](deadlocks/)
 - [Query Performance](query-performance/)
 - [Memory](memory/)
 - [I/O](io/)
 - [TempDB](tempdb/)
 - [Replication](replication/)
 
-Kolejne obszary będą dokładane iteracyjnie, np. deadlocki, CPU, Query Store, backup/restore, HA/DR i SQL Agent.
+Kolejne obszary będą dokładane iteracyjnie, np. CPU, Query Store, backup/restore, HA/DR i SQL Agent.
 
 ## Model pracy
 
