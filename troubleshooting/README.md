@@ -24,8 +24,9 @@ do pytania:
 - [Replication](replication/)
 - [Backup / Restore](backup-restore/)
 - [SQL Agent](sql-agent/)
+- [HA / DR](ha-dr/)
 
-Kolejne obszary będą dokładane iteracyjnie, np. HA/DR.
+Kolejne obszary będą dokładane iteracyjnie.
 
 ## Model pracy
 
