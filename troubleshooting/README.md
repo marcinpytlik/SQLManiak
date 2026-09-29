@@ -1,21 +1,43 @@
 # Troubleshooting
 
-Ta część DBA Library jest organizowana przede wszystkim według **problemu lub symptomu**, a nie według konkretnego skryptu.
+Ta część SQLManiak DBA Library jest organizowana według **problemu lub symptomu**, a nie według lokalizacji skryptu.
 
-Przykładowe obszary:
+Celem jest przejście od pytania:
 
-- Blocking
-- Deadlocks
-- CPU
-- Memory
-- I/O
-- TempDB
-- Query Store
-- Waits
-- Replication
-- Backup & Restore
-- HA/DR
+> Gdzie jest skrypt?
 
-Każdy materiał powinien prowadzić od symptomu przez diagnostykę do potwierdzonej przyczyny i walidacji rozwiązania.
+do pytania:
 
-Do nowych materiałów używaj [template](../templates/TROUBLESHOOTING-TEMPLATE.md).
+> Co powinienem sprawdzić przy tym problemie?
+
+## Obszary
+
+- [Blocking](blocking/)
+- [Query Performance](query-performance/)
+- [Memory](memory/)
+- [I/O](io/)
+- [TempDB](tempdb/)
+- [Replication](replication/)
+
+Kolejne obszary będą dokładane iteracyjnie, np. deadlocki, CPU, Query Store, backup/restore, HA/DR i SQL Agent.
+
+## Model pracy
+
+Każdy obszar troubleshooting powinien prowadzić przez ten sam schemat:
+
+1. **Symptoms** – co widzi użytkownik lub monitoring.
+2. **First checks** – co sprawdzić jako pierwsze.
+3. **Evidence** – jakie dane zebrać.
+4. **Hypotheses** – jakie przyczyny rozważyć.
+5. **Diagnosis** – jak potwierdzić root cause.
+6. **Resolution** – jak naprawić problem.
+7. **Validation** – jak potwierdzić poprawę.
+8. **Prevention** – jak ograniczyć ryzyko powtórzenia.
+
+## Ważna zasada
+
+Ten katalog nie duplikuje istniejących skryptów i dokumentacji.
+
+Jeżeli dobry artefakt już istnieje w `scripts/`, `tools/` albo `docs/`, troubleshooting **linkuje do źródła prawdy**.
+
+Do tworzenia nowych materiałów używaj [TROUBLESHOOTING-TEMPLATE.md](../templates/TROUBLESHOOTING-TEMPLATE.md).
