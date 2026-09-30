@@ -54,7 +54,7 @@ for area, rule in RULES.items():
         require_sections(path, rule["sections"])
         if area == "troubleshooting":
             text = read(path)
-            if not re.search(r"^#{1,6}\\s+Symptoms\\s*$", text, re.MULTILINE | re.IGNORECASE):
+            if not re.search(r"^#{1,6}\s+Symptoms\s*$", text, re.MULTILINE | re.IGNORECASE):
                 errors.append(f"{path.relative_to(ROOT)}: missing Symptoms heading")
 
 runbooks = ROOT / "runbooks"
