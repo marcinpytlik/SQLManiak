@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
+import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -25,7 +26,7 @@ RULES = {
     },
     "troubleshooting": {
         "glob": "*/README.md",
-        "sections": ["## Symptoms"],
+        "sections": [],
     },
 }
 
@@ -51,6 +52,10 @@ for area, rule in RULES.items():
     base = ROOT / area
     for path in sorted(base.glob(rule["glob"])):
         require_sections(path, rule["sections"])
+        if area == "troubleshooting":
+            text = read(path)
+            if not re.search(r"^#{1,6}\\s+Symptoms\\s*$", text, re.MULTILINE | re.IGNORECASE):
+                errors.append(f"{path.relative_to(ROOT)}: missing Symptoms heading")
 
 runbooks = ROOT / "runbooks"
 for directory in sorted(p for p in runbooks.iterdir() if p.is_dir()):
