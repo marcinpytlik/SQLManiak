@@ -1,0 +1,19 @@
+# Default owner
+* @marcinpytlik
+
+# Canonical DBA Library layers
+/architecture/ @marcinpytlik
+/standards/ @marcinpytlik
+/monitoring/ @marcinpytlik
+/troubleshooting/ @marcinpytlik
+/runbooks/ @marcinpytlik
+
+# Governance / CI
+/.github/ @marcinpytlik
+/templates/ @marcinpytlik
+/tools/dba-library-quality/ @marcinpytlik
+/docs/DBA-LIBRARY-MAP.md @marcinpytlik
+/docs/DBA-LIBRARY-INVENTORY.md @marcinpytlik
+/docs/CONTENT-LIFECYCLE.md @marcinpytlik
+/docs/DEFINITION-OF-DONE.md @marcinpytlik
+/docs/RELEASE-POLICY.md @marcinpytlik

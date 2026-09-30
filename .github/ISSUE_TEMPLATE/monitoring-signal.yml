@@ -1,0 +1,39 @@
+name: New monitoring signal
+description: Propose a new metric, alert, trend or diagnostic signal.
+title: "[Monitoring] "
+labels: ["monitoring"]
+body:
+  - type: input
+    id: signal
+    attributes:
+      label: Signal / metric
+      placeholder: e.g. log send queue growth rate
+    validations:
+      required: true
+  - type: dropdown
+    id: classification
+    attributes:
+      label: Classification
+      options:
+        - ALERT
+        - TREND
+        - DIAGNOSTIC
+        - Not decided
+    validations:
+      required: true
+  - type: textarea
+    id: purpose
+    attributes:
+      label: Why do we need it?
+    validations:
+      required: true
+  - type: textarea
+    id: correlation
+    attributes:
+      label: Correlation
+      description: What other signals should be evaluated with it?
+  - type: textarea
+    id: threshold
+    attributes:
+      label: Threshold / baseline considerations
+      description: Explain whether a fixed threshold is justified or baseline-first is preferred.

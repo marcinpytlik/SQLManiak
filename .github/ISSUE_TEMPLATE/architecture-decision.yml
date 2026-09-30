@@ -1,0 +1,31 @@
+name: Architecture decision
+description: Propose a new ADR or revisit an existing decision.
+title: "[ADR] "
+labels: ["architecture"]
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+    validations:
+      required: true
+  - type: textarea
+    id: drivers
+    attributes:
+      label: Decision drivers
+    validations:
+      required: true
+  - type: textarea
+    id: options
+    attributes:
+      label: Options considered
+    validations:
+      required: true
+  - type: textarea
+    id: tradeoffs
+    attributes:
+      label: Known trade-offs
+  - type: input
+    id: existing
+    attributes:
+      label: Existing ADR (if this revisits one)

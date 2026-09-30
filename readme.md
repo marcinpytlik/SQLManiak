@@ -1,5 +1,8 @@
 # SQLManiak DBA Library
 
+[![Validate DBA Library](https://github.com/marcinpytlik/SQLManiak/actions/workflows/validate-dba-library.yml/badge.svg)](https://github.com/marcinpytlik/SQLManiak/actions/workflows/validate-dba-library.yml)
+[![Validate Grafana dashboards](https://github.com/marcinpytlik/SQLManiak/actions/workflows/validate-grafana.yml/badge.svg)](https://github.com/marcinpytlik/SQLManiak/actions/workflows/validate-grafana.yml)
+
 Praktyczna, rozwijana iteracyjnie biblioteka wiedzy dla administratorów i architektów **Microsoft SQL Server**.
 
 Repozytorium prowadzone przez **Marcina Pytlika (SQLManiak)** – Microsoft Certified Trainer, DBA i architekta SQL Server.
@@ -259,6 +262,19 @@ Szablony służą do zachowania spójnego sposobu dokumentowania:
 - runbooków,
 - ADR,
 - standardów technicznych.
+
+---
+
+## 🤝 Contributing / Governance
+
+- [Contributing Guide](CONTRIBUTING.md) — jak dodawać i zmieniać artefakty DBA Library.
+- [Definition of Done](docs/DEFINITION-OF-DONE.md) — minimalny poziom jakości dla Standards, Monitoring, Troubleshooting, Runbooks i ADR.
+- [Release & Versioning Policy](docs/RELEASE-POLICY.md) — zasady release, versioning, deprecation i breaking changes.
+- [Pull Request Template](.github/PULL_REQUEST_TEMPLATE.md) — checklista każdego PR.
+- [Issue Templates](.github/ISSUE_TEMPLATE/) — nowe tematy, runbooki, monitoring, ADR, cleanup i błędy dokumentacji.
+- [CODEOWNERS](.github/CODEOWNERS) — ownership kanonicznych warstw.
+
+Zmiany do `master` powinny przejść wymagane checki CI przed merge.
 
 ---
 
