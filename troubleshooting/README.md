@@ -48,3 +48,12 @@ Ten katalog nie duplikuje istniejących skryptów i dokumentacji.
 Jeżeli dobry artefakt już istnieje w `scripts/`, `tools/` albo `docs/`, troubleshooting **linkuje do źródła prawdy**.
 
 Do tworzenia nowych materiałów używaj [TROUBLESHOOTING-TEMPLATE.md](../templates/TROUBLESHOOTING-TEMPLATE.md).
+
+
+---
+
+## Nawigacja między warstwami
+
+- [DBA Library Cross-Link Map](../docs/DBA-LIBRARY-MAP.md)
+- [Content Lifecycle](../docs/CONTENT-LIFECYCLE.md)
+- [Legacy / Reference Cleanup](../docs/LEGACY-CLEANUP.md)
