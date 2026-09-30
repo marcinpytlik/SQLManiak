@@ -1,0 +1,41 @@
+name: Validate DBA Library
+
+on:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - "standards/**"
+      - "monitoring/**"
+      - "troubleshooting/**"
+      - "runbooks/**"
+      - "architecture/**"
+      - "docs/DBA-LIBRARY-*.md"
+      - "docs/CONTENT-LIFECYCLE.md"
+      - "docs/LEGACY-CLEANUP.md"
+      - "tools/dba-library-quality/**"
+      - ".github/workflows/validate-dba-library.yml"
+      - "readme.md"
+
+  workflow_dispatch:
+
+jobs:
+  quality:
+    name: Validate DBA Library
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate canonical artifact structure
+        run: python3 tools/dba-library-quality/validate_structure.py
+
+      - name: Validate internal links
+        run: python3 tools/dba-library-quality/validate_links.py
+
+      - name: Validate generated inventory
+        run: python3 tools/dba-library-quality/generate_inventory.py --check
