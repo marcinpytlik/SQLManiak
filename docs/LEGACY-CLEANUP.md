@@ -1,3 +1,7 @@
+> **Content status:** ACTIVE  
+> **Canonical entry point:** Legacy / Reference Cleanup  
+> **Last reviewed:** 2026-09-30
+
 # Legacy / Reference Cleanup Index
 
 Ten dokument śledzi porządkowanie starszych obszarów repo bez big-bang migration.
