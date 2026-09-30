@@ -1,0 +1,30 @@
+name: New runbook
+description: Propose a repeatable operational DBA procedure.
+title: "[Runbook] "
+labels: ["documentation"]
+body:
+  - type: input
+    id: operation
+    attributes:
+      label: Operation
+      placeholder: e.g. Restore encrypted database to DR
+    validations:
+      required: true
+  - type: textarea
+    id: trigger
+    attributes:
+      label: When is this runbook used?
+    validations:
+      required: true
+  - type: textarea
+    id: prereq
+    attributes:
+      label: Prerequisites / permissions
+  - type: textarea
+    id: rollback
+    attributes:
+      label: Expected rollback / failback
+  - type: textarea
+    id: sources
+    attributes:
+      label: Existing scripts / docs / labs
