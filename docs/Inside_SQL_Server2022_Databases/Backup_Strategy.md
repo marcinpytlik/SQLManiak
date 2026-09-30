@@ -1,3 +1,8 @@
+> **Content status:** REFERENCE  
+> **Canonical entry point:** [DBA Library](../../standards/backup-recovery/)  
+> **Last reviewed:** 2026-09-30  
+> Aktualny standard operacyjny znajduje się w Standards; ten dokument pozostaje źródłem technicznym.
+
 # 🎯 Strategia backupów w SQL Server 2022
 
 ## 1️⃣ Bazy systemowe

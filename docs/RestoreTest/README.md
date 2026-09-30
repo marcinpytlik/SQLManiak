@@ -1,3 +1,8 @@
+> **Content status:** REFERENCE  
+> **Canonical entry point:** [DBA Library](../../runbooks/backup-restore-recovery/)  
+> **Last reviewed:** 2026-09-30  
+> Materiały testów restore pozostają źródłem technicznym dla runbooka recovery.
+
 # RestoreTest – Planowanie i testowanie operacji RESTORE (SQL Server)
 
 **Cel:** Zweryfikować kompletność backupów (FULL/DIFF/LOG), czas odtworzenia (RTO) oraz maksymalną utratę danych (RPO) poprzez regularne testy przywracania na środowisku testowym.

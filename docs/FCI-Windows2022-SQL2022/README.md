@@ -1,3 +1,8 @@
+> **Content status:** LAB  
+> **Canonical entry point:** [DBA Library](../../architecture/reference/fci-reference-architecture.md)  
+> **Last reviewed:** 2026-09-30  
+> To kompletne środowisko laboratoryjne FCI; warstwa architektury i operacji linkuje do niego jako source of truth.
+
 # FCI-Lab-HyperV — SQL Server 2022 FCI (WSFC)
 
 Repo zawiera skrypty i przewodniki do zbudowania labu FCI:

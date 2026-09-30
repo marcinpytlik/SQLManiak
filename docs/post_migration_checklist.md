@@ -1,3 +1,8 @@
+> **Content status:** REFERENCE  
+> **Canonical entry point:** [DBA Library](../runbooks/sql2016-to-2022-migration/)  
+> **Last reviewed:** 2026-09-30  
+> Checklistę zachowujemy jako referencję; canonical procedure to migration runbook.
+
 📄 SQL Server – Post-Migration Checklist (2016 → 2022)
 
 

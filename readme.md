@@ -6,6 +6,12 @@ Repozytorium prowadzone przez **Marcina Pytlika (SQLManiak)** – Microsoft Cert
 
 > Nie jest to tylko zbiór skryptów. Celem repozytorium jest połączenie wiedzy, procedur, narzędzi, checklist, laboratoriów i gotowych materiałów operacyjnych w jedno miejsce, w którym wiadomo **gdzie szukać rozwiązania**.
 
+## 🗺️ Mapa DBA Library
+
+- [DBA Library Cross-Link Map](docs/DBA-LIBRARY-MAP.md) — domenowe przejście Architecture → Standards → Monitoring → Troubleshooting → Runbooks.
+- [Content Lifecycle](docs/CONTENT-LIFECYCLE.md) — ACTIVE / REFERENCE / LAB / LEGACY / ARCHIVED.
+- [Legacy / Reference Cleanup](docs/LEGACY-CLEANUP.md) — status porządkowania starszych obszarów repo.
+
 ---
 
 ## 🧭 Zacznij od problemu
@@ -194,8 +200,8 @@ Materiały do kursów Microsoft oraz kursów autorskich SQLManiak.
 
 ### Kursy autorskie
 
-- [SQL Server 2022 – Instalacja i integracja w różnych środowiskach](courses/SQL2022-Install/)
-- [Administracja bazą danych SQL Server](courses/SQL2022-Admin/)
+- [SQL Server 2022 – Instalacja i integracja w różnych środowiskach](courses/SQL2022-install/)
+- [Administracja bazą danych SQL Server](courses/SQL2022-admin/)
 - [Optymalizacja bazy danych SQL Server 2022](courses/SQL2022-Optimize/)
 - [Monitoring i wizualizacja danych z wykorzystaniem Grafany – Windows i SQL Server](courses/Grafana-Monitoring/)
 
@@ -209,7 +215,7 @@ Dodatkowe materiały referencyjne.
 
 Wybrane dokumenty:
 
-- [Quick Reference Handbook - DMV](docs/dmvs_quick_reference.md)
+- [Quick Reference Handbook - DMV](docs/Inside_SQL_Server2022_Databases/dmvs_quick_reference.md)
 - [Post-Migration Checklist: SQL Server 2016 → 2022](docs/post_migration_checklist.md)
 - [Compatibility Level: SQL Server 2016 → 2022](docs/compatibility_level.md)
 
@@ -264,8 +270,9 @@ SQLManiak DBA Library rozwijamy iteracyjnie.
 3. **Context before code** – skrypt powinien mieć opis zastosowania.
 4. **Validation matters** – procedura nie kończy się na wykonaniu polecenia; musi istnieć sposób potwierdzenia rezultatu.
 5. **Rollback when possible** – zmiany produkcyjne powinny mieć opis drogi powrotnej.
-6. **Archive instead of chaos** – materiały nieaktualne nie powinny mieszać się z aktualną wiedzą.
-7. **Strangler approach** – nie reorganizujemy całego repo jednorazowo. Nowe materiały powstają według nowego modelu, a stare są migrowane przy okazji ich aktualizacji.
+6. **Lifecycle instead of chaos** – treść ma jawny status: ACTIVE, REFERENCE, LAB, LEGACY lub ARCHIVED.
+7. **Canonical entry point** – starszy poprawny materiał może pozostać na miejscu, ale powinien wskazywać aktualną warstwę wejściową.
+8. **Strangler approach** – nie reorganizujemy całego repo jednorazowo. Nowe materiały powstają według nowego modelu, a stare są klasyfikowane/migrowane przy okazji ich aktualizacji.
 
 ---
 

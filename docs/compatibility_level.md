@@ -1,3 +1,8 @@
+> **Content status:** REFERENCE  
+> **Canonical entry point:** [DBA Library](../architecture/adr/ADR-004-query-store-baseline-before-compat-change.md)  
+> **Last reviewed:** 2026-09-30  
+> Materiał referencyjny dla compatibility level; decyzja i operacyjna nawigacja są w Architecture/Query Store.
+
 # SQL Server – Compatibility Level (2016 → 2022)
 
 ### In this article

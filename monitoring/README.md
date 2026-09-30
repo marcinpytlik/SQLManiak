@@ -170,3 +170,12 @@ Główne implementacje monitoringu:
 - [Zabbix MSSQL Monitoring](../scripts/zabbix-mssql-monitoring/)
 - [DBACentralRepository](../scripts/DBACentralRepository_v3/)
 - [DBA Daily Pack](../tools/DBADaillyPack/)
+
+
+---
+
+## Nawigacja między warstwami
+
+- [DBA Library Cross-Link Map](../docs/DBA-LIBRARY-MAP.md)
+- [Content Lifecycle](../docs/CONTENT-LIFECYCLE.md)
+- [Legacy / Reference Cleanup](../docs/LEGACY-CLEANUP.md)

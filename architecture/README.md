@@ -90,3 +90,12 @@ Deprecated
 ```
 
 Jeżeli decyzja zostaje zastąpiona, stary ADR pozostaje w repo z odwołaniem do nowego.
+
+
+---
+
+## Nawigacja między warstwami
+
+- [DBA Library Cross-Link Map](../docs/DBA-LIBRARY-MAP.md)
+- [Content Lifecycle](../docs/CONTENT-LIFECYCLE.md)
+- [Legacy / Reference Cleanup](../docs/LEGACY-CLEANUP.md)

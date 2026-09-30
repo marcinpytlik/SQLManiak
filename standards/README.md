@@ -136,3 +136,12 @@ Jak bezpiecznie wykonać zmianę / recovery
 Standard jest **source of truth dla oczekiwanego stanu**.
 
 Troubleshooting i runbooki powinny linkować do standardu, gdy operacja lub diagnoza zależy od oczekiwanej konfiguracji.
+
+
+---
+
+## Nawigacja między warstwami
+
+- [DBA Library Cross-Link Map](../docs/DBA-LIBRARY-MAP.md)
+- [Content Lifecycle](../docs/CONTENT-LIFECYCLE.md)
+- [Legacy / Reference Cleanup](../docs/LEGACY-CLEANUP.md)

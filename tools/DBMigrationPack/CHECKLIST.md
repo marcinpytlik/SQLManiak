@@ -1,3 +1,8 @@
+> **Content status:** REFERENCE  
+> **Canonical entry point:** [DBA Library](../../runbooks/sql2016-to-2022-migration/)  
+> **Last reviewed:** 2026-09-30  
+> Checklistę/pipeline zachowujemy jako source of truth narzędzia; runbook jest canonical entry point dla operacji.
+
 # Checklist migracji SQL Server (MD) — precheck → backup/restore → postcheck
 
 > Cel: migracja baz z `source` na `destination` bez niespodzianek po restore.  
