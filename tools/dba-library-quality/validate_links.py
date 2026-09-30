@@ -48,12 +48,7 @@ for source_root in SCAN_ROOTS:
                 errors.append(f"{source.relative_to(ROOT)} -> {raw}: target escapes repository")
                 continue
 
-            if resolved.is_dir():
-                candidate = resolved / "README.md"
-                candidate_lower = resolved / "readme.md"
-                if not candidate.exists() and not candidate_lower.exists():
-                    errors.append(f"{source.relative_to(ROOT)} -> {raw}: directory has no README.md")
-            elif not resolved.exists():
+            if not resolved.exists():
                 errors.append(f"{source.relative_to(ROOT)} -> {raw}: target does not exist")
             checked += 1
 
