@@ -57,11 +57,11 @@ Artifacts: **59**
 | Sql2016 To 2022 Migration | Sql2016 To 2022 Migration | RUNBOOK | ACTIVE | `runbooks/sql2016-to-2022-migration/README.md` |
 | Tempdb Emergency | Tempdb Emergency | RUNBOOK | ACTIVE | `runbooks/tempdb-emergency/README.md` |
 | Wait Statistics Incident | Wait Statistics Incident | RUNBOOK | ACTIVE | `runbooks/wait-statistics-incident/README.md` |
-| Adr | ADR 001 Dba Library Operating Model | ADR | ACTIVE | `architecture/adr/ADR-001-dba-library-operating-model.md` |
-| Adr | ADR 002 Local Tempdb In Fci | ADR | ACTIVE | `architecture/adr/ADR-002-local-tempdb-in-fci.md` |
-| Adr | ADR 003 Side By Side Sql2016 To 2022 | ADR | ACTIVE | `architecture/adr/ADR-003-side-by-side-sql2016-to-2022.md` |
-| Adr | ADR 004 Query Store Baseline Before Compat Change | ADR | ACTIVE | `architecture/adr/ADR-004-query-store-baseline-before-compat-change.md` |
-| Adr | ADR 005 Baseline First Monitoring | ADR | ACTIVE | `architecture/adr/ADR-005-baseline-first-monitoring.md` |
+| Adr | Adr 001 Dba Library Operating Model | ADR | ACTIVE | `architecture/adr/ADR-001-dba-library-operating-model.md` |
+| Adr | Adr 002 Local Tempdb In Fci | ADR | ACTIVE | `architecture/adr/ADR-002-local-tempdb-in-fci.md` |
+| Adr | Adr 003 Side By Side Sql2016 To 2022 | ADR | ACTIVE | `architecture/adr/ADR-003-side-by-side-sql2016-to-2022.md` |
+| Adr | Adr 004 Query Store Baseline Before Compat Change | ADR | ACTIVE | `architecture/adr/ADR-004-query-store-baseline-before-compat-change.md` |
+| Adr | Adr 005 Baseline First Monitoring | ADR | ACTIVE | `architecture/adr/ADR-005-baseline-first-monitoring.md` |
 | Reference | Fci Reference Architecture | REFERENCE ARCHITECTURE | ACTIVE | `architecture/reference/fci-reference-architecture.md` |
 | Reference | Migration Reference Architecture | REFERENCE ARCHITECTURE | ACTIVE | `architecture/reference/migration-reference-architecture.md` |
 | Reference | Monitoring Reference Architecture | REFERENCE ARCHITECTURE | ACTIVE | `architecture/reference/monitoring-reference-architecture.md` |
