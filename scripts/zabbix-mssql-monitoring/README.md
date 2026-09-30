@@ -1,3 +1,8 @@
+> **Content status:** ACTIVE  
+> **Canonical entry point:** [DBA Library](../../monitoring/)  
+> **Last reviewed:** 2026-09-30  
+> Implementacja monitoringu jest aktywnym source of truth; katalog Monitoring stanowi warstwę projektową i operacyjną.
+
 # SQLManiak — monitoring MSSQL w Zabbix 7.4
 
 Rozszerzony szablon monitoringu Microsoft SQL Server oparty na oficjalnym dodatku **Zabbix Agent 2 MSSQL**, rozbudowany o własne kolektory SQLManiak, korelacje alertów, monitoring pojemności, TDE, VLF, pełny pomiar E2E oraz mechanizmy linii bazowej i wykrywania anomalii.
