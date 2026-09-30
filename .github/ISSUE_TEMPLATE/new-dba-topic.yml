@@ -1,0 +1,46 @@
+name: New DBA topic
+description: Propose a new canonical DBA Library topic or domain.
+title: "[DBA Topic] "
+labels: ["documentation"]
+body:
+  - type: dropdown
+    id: layer
+    attributes:
+      label: Target layer
+      options:
+        - Architecture / ADR
+        - Standard
+        - Monitoring
+        - Troubleshooting
+        - Runbook
+        - Multiple layers
+    validations:
+      required: true
+  - type: input
+    id: topic
+    attributes:
+      label: Topic
+      placeholder: e.g. Resource Governor
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / need
+      description: What operational or architectural need should this topic address?
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: Existing source of truth
+      description: Point to existing docs, scripts, labs or tools if they already exist.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-check
+      options:
+        - label: I checked the DBA Library Cross-Link Map.
+          required: true
+        - label: I checked whether the topic already exists.
+          required: true
