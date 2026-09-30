@@ -11,6 +11,7 @@ Repozytorium prowadzone przez **Marcina Pytlika (SQLManiak)** – Microsoft Cert
 - [DBA Library Cross-Link Map](docs/DBA-LIBRARY-MAP.md) — domenowe przejście Architecture → Standards → Monitoring → Troubleshooting → Runbooks.
 - [Content Lifecycle](docs/CONTENT-LIFECYCLE.md) — ACTIVE / REFERENCE / LAB / LEGACY / ARCHIVED.
 - [Legacy / Reference Cleanup](docs/LEGACY-CLEANUP.md) — status porządkowania starszych obszarów repo.
+- [DBA Library Inventory](docs/DBA-LIBRARY-INVENTORY.md) — automatycznie generowany katalog kanonicznych artefaktów.
 
 ---
 
@@ -258,6 +259,19 @@ Szablony służą do zachowania spójnego sposobu dokumentowania:
 - runbooków,
 - ADR,
 - standardów technicznych.
+
+---
+
+# ✅ Quality / Governance
+
+Walidatory DBA Library znajdują się w [tools/dba-library-quality](tools/dba-library-quality/).
+
+PR-y do `master` mogą automatycznie sprawdzać:
+
+- strukturę Standards / Monitoring / Runbooks / ADR,
+- wewnętrzne linki Markdown w kanonicznych warstwach,
+- aktualność wygenerowanego inventory,
+- niezależnie: poprawność JSON dashboardów Grafana.
 
 ---
 
