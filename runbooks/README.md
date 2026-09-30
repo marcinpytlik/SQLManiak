@@ -169,3 +169,12 @@ Jeżeli najpierw trzeba ustalić przyczynę problemu, zacznij od:
 - [Troubleshooting](../troubleshooting/)
 
 Runbook powinien linkować do istniejących skryptów, laboratoriów i checklist zamiast kopiować drugi source of truth.
+
+
+---
+
+## Nawigacja między warstwami
+
+- [DBA Library Cross-Link Map](../docs/DBA-LIBRARY-MAP.md)
+- [Content Lifecycle](../docs/CONTENT-LIFECYCLE.md)
+- [Legacy / Reference Cleanup](../docs/LEGACY-CLEANUP.md)
