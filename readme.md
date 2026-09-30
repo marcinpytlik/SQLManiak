@@ -265,6 +265,12 @@ Szablony służą do zachowania spójnego sposobu dokumentowania:
 
 ---
 
+## 📦 Releases
+
+- [2026.09](docs/releases/2026.09.md) — pierwszy stabilizowany milestone nowego modelu SQLManiak DBA Library.
+
+---
+
 ## 🤝 Contributing / Governance
 
 - [Contributing Guide](CONTRIBUTING.md) — jak dodawać i zmieniać artefakty DBA Library.
