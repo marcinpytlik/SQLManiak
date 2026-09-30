@@ -1,3 +1,7 @@
+> **Content status:** ACTIVE  
+> **Canonical entry point:** Architecture / Reference  
+> **Last reviewed:** 2026-09-30
+
 # Reference Architecture: SQL Server 2016 → 2022 Migration
 
 ## Purpose
