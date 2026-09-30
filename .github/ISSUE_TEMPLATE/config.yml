@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: SQLManiak DBA Library map
+    url: https://github.com/marcinpytlik/SQLManiak/blob/master/docs/DBA-LIBRARY-MAP.md
+    about: Check the canonical DBA Library navigation before opening a new topic.
