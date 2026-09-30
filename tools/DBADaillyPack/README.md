@@ -1,3 +1,8 @@
+> **Content status:** ACTIVE  
+> **Canonical entry point:** [DBA Library](../../monitoring/)  
+> **Last reviewed:** 2026-09-30  
+> Pakiet pozostaje aktywnym narzędziem operacyjnym i jest linkowany przez warstwę Monitoring/Troubleshooting.
+
 # DBA Daily Pack (SQL Server 2022) — marcin edition
 
 Data wygenerowania: 2026-02-17
