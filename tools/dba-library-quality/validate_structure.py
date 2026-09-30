@@ -54,8 +54,8 @@ for area, rule in RULES.items():
         require_sections(path, rule["sections"])
         if area == "troubleshooting":
             text = read(path)
-            if not re.search(r"^#{1,6}\s+Symptoms\s*$", text, re.MULTILINE | re.IGNORECASE):
-                errors.append(f"{path.relative_to(ROOT)}: missing Symptoms heading")
+            if not re.search(r"^#\s+Troubleshooting\b", text, re.MULTILINE | re.IGNORECASE):
+                errors.append(f"{path.relative_to(ROOT)}: expected H1 starting with 'Troubleshooting'")
 
 runbooks = ROOT / "runbooks"
 for directory in sorted(p for p in runbooks.iterdir() if p.is_dir()):
