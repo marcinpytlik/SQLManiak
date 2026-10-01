@@ -70,7 +70,6 @@ Docelowo każdy powtarzalny proces powinien mieć:
 ### 🧪 Chcę przećwiczyć temat
 
 - [Labs](labs/)
-- [Courses](courses/)
 - [Relational Renaissance Patterns](RelationalRenaissancePatterns/)
 
 ---
@@ -187,27 +186,9 @@ Ten model traktujemy jako wzorzec dla dalszej rozbudowy SQLManiak DBA Library.
 
 Scenariusze laboratoryjne i środowiska demonstracyjne.
 
----
+Historyczne materiały szkoleniowe Microsoft zostały zachowane jako LAB / REFERENCE w [labs/training/microsoft-legacy/](labs/training/microsoft-legacy/).
 
-## Courses
-
-[courses/](courses/)
-
-Materiały do kursów Microsoft oraz kursów autorskich SQLManiak.
-
-### Kursy Microsoft
-
-- [20761 – Querying Data with Transact-SQL](courses/20761/)
-- [20762 – Developing SQL Databases](courses/20762/)
-- [20764 – Administering a SQL Database Infrastructure](courses/20764/)
-- [20765 – Provisioning SQL Databases](courses/20765/)
-
-### Kursy autorskie
-
-- [SQL Server 2022 – Instalacja i integracja w różnych środowiskach](courses/SQL2022-install/)
-- [Administracja bazą danych SQL Server](courses/SQL2022-admin/)
-- [Optymalizacja bazy danych SQL Server 2022](courses/SQL2022-Optimize/)
-- [Monitoring i wizualizacja danych z wykorzystaniem Grafany – Windows i SQL Server](courses/Grafana-Monitoring/)
+Aktualna oferta szkoleniowa nie jest częścią DBA Library i jest utrzymywana w repozytorium `sqlmaniak-blog`.
 
 ---
 
