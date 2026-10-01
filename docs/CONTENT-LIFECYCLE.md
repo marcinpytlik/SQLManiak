@@ -35,7 +35,7 @@ Typowe lokalizacje:
 
 - `labs/`
 - wybrane `scripts/*-POC/`
-- laboratoria w `courses/`
+- historyczne materiały szkoleniowe w `labs/training/`
 
 ### LEGACY
 

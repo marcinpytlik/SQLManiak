@@ -19,10 +19,9 @@ Ten dokument śledzi porządkowanie starszych obszarów repo bez big-bang migrat
 | `scripts/` | REFERENCE / ACTIVE TOOLING | klasyfikować przy aktualizacji; nie przenosić hurtowo |
 | `tools/` | REFERENCE / ACTIVE TOOLING | linkować z nowych warstw |
 | `docs/` | REFERENCE / MIXED | stopniowo dodawać canonical entry point |
-| `labs/` | LAB | pozostawić jako reprodukcje i ćwiczenia |
+| `labs/` | LAB | reprodukcje, ćwiczenia i historyczne materiały szkoleniowe |
 | `dashboards/` | ACTIVE ARTIFACTS | linkować z Monitoring |
 | `checklists/` | REFERENCE / ACTIVE | linkować ze Standards/Runbooks |
-| `courses/` | TRAINING / MIXED | nie traktować jako warstwy operacyjnej |
 | `sqlmaniak_blog/` | REFERENCE / CONTENT | poza główną nawigacją operacyjną |
 | `ML/` | EXPERIMENT / LAB | klasyfikować per projekt |
 
@@ -49,6 +48,7 @@ Ten dokument śledzi porządkowanie starszych obszarów repo bez big-bang migrat
 - `labs/06-internals/`
 - `labs/07-security/`
 - `labs/08-dmv/`
+- `labs/training/microsoft-legacy/`
 - `scripts/ssis-secure-export-poc/`
 - `scripts/CDC-POC/`
 
@@ -59,3 +59,11 @@ Na tym etapie **nie oznaczamy automatycznie żadnego całego katalogu jako LEGAC
 Element trafia tutaj dopiero po indywidualnym review i wskazaniu jednoznacznego następcy.
 
 To celowe: starszy materiał może nadal być poprawnym source of truth, laboratorium albo referencją.
+
+
+## Training cleanup — 2026-10-02
+
+- usunięto z DBA Library komercyjne opisy szkoleń SQLManiak,
+- oferta szkoleniowa jest utrzymywana w repozytorium `sqlmaniak-blog`,
+- materiały 20761 / 20762 / 20764 / 20765 przeniesiono do `labs/training/microsoft-legacy/` jako LAB / REFERENCE,
+- katalog `courses/` został usunięty.
