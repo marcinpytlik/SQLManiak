@@ -48,3 +48,11 @@ To są **sygnały do weryfikacji**, nie decyzje o uruchomieniu ALTER INDEX. Fizy
 ## Plan
 
 Następne etapy: walidacja wyników i priorytetów na realnych bazach, metryki użycia i kosztu, kolejka, okna serwisowe, wykonawca PowerShell, obsługa wielu instancji, historia operacji.
+
+## Architektura otwarta — wiele klastrów i instancji
+
+6. `006_ExtensibleTopology.sql` — model `im.Cluster`, `im.ClusterNode`, `im.ConnectionEndpoint`, `im.AuditPolicy` oraz opcjonalne powiązania instancji i baz. Migracja nie usuwa dotychczasowych danych.
+
+**Zasady:** Każda instancja ma własny identyfikator, opcjonalny klaster, typ instalacji i zarządzany endpoint; klastry nie są zakodowane na stałe. Można dodawać nowe WSFC, FCI i instancje standalone bez zmiany struktury. Endpoint dla FCI wskazuje nazwę wirtualną, nie fizyczny węzeł. Nowo dodane instancje i endpointy domyślnie są wyłączone do czasu testu połączenia. Nie zapisujemy haseł w tabelach.
+
+**Status realizacji:** Migracja zapewnia otwarty *model danych*. Obecny `im.RunIndexAudit` nadal działa wyłącznie na lokalnej instancji SQL z bazą repozytorium. Zdalny collector PowerShell, jego protokół przekazania wyników, uwierzytelnianie, blokady równoległych audytów oraz odporność na failover będą implementowane i testowane osobno. `MaxConcurrentHeavyAudits` jest obecnie parametrem konfiguracyjnym, jeszcze nie wymuszanym przez wykonawcę.
