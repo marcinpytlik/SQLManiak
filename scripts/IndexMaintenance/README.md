@@ -56,3 +56,47 @@ Następne etapy: walidacja wyników i priorytetów na realnych bazach, metryki u
 **Zasady:** Każda instancja ma własny identyfikator, opcjonalny klaster, typ instalacji i zarządzany endpoint; klastry nie są zakodowane na stałe. Można dodawać nowe WSFC, FCI i instancje standalone bez zmiany struktury. Endpoint dla FCI wskazuje nazwę wirtualną, nie fizyczny węzeł. Nowo dodane instancje i endpointy domyślnie są wyłączone do czasu testu połączenia. Nie zapisujemy haseł w tabelach.
 
 **Status realizacji:** Migracja zapewnia otwarty *model danych*. Obecny `im.RunIndexAudit` nadal działa wyłącznie na lokalnej instancji SQL z bazą repozytorium. Zdalny collector PowerShell, jego protokół przekazania wyników, uwierzytelnianie, blokady równoległych audytów oraz odporność na failover będą implementowane i testowane osobno. `MaxConcurrentHeavyAudits` jest obecnie parametrem konfiguracyjnym, jeszcze nie wymuszanym przez wykonawcę.
+
+## Zdalny audyt — pilot (007–010)
+
+Skrypty:
+- `007_RemoteIngestion.sql`: staging, rozpoczęcie i zamknięcie audytu, lease per cluster (na dziś jedna ciężka analiza na klaster).
+- `008_ClassifyRemote.sql`: klasyfikacja centralna na podstawie staging.
+- `009_DiscoverAndRegister.sql`: rejestracja nowych celów przez konfigurację.
+- `010_LeaseRecovery.sql`: porządkowanie wygasłych blokad i oznaczanie przerwanych przebiegów jako Failed.
+- `collector/Collect-RemoteIndex.ps1`: odczyt DMV z docelowej bazy; wynik JSON.
+- `collector/Invoke-CentralAudit.ps1`: kontroler przechodzący po włączonych celach, BulkCopy i klasyfikacja.
+- `tests/Integration-Smoke.sql`, `tests/Test-Classifications.sql`: kontrola schematu, przebiegów i reguł.
+
+### Procedura testu na dwóch instancjach
+
+1. Zainstaluj SQL 001–010 w kolejności na centralnym serwerze (w środowisku TEST).
+2. Zapewnij PowerShell 7.5 i bibliotekę `Microsoft.Data.SqlClient` w środowisku uruchomieniowym. Skrypty zakładają, że `Add-Type -AssemblyName Microsoft.Data.SqlClient` działa; zależność nie jest automatycznie instalowana. Wymagane są uprawnienia do odczytu DMV w docelowych bazach, wykonania procedur, odczytu konfiguracji i INSERT do im.RemoteIndexStage w repozytorium.
+3. Rejestracja FCI (przykładowe nazwy):
+
+```sql
+USE SQLManiakIndexMaintenance;
+EXEC im.RegisterTarget
+ @InstanceName=N'SQLVNN01\\SQLINST01',
+ @ServerAddress=N'SQLVNN01\\SQLINST01',
+ @ClusterName=N'WSFC01',@InstanceType='FCI';
+```
+
+4. Zarejestruj kolejne cele analogicznie. Następnie jawnie włącz instancję, endpoint i wybrane bazy w `im.ManagedInstance`, `im.ConnectionEndpoint`, `im.ManagedDatabase` (wszystkie domyślnie wyłączone). Nową bazę dopisz przez INSERT z poprawnym `InstanceId` lub przygotowaną w następnym etapie procedurę onboardingu; nie zakładaj automatycznego skanowania wszystkich baz.
+5. Uruchom z Windows PowerShell 7.5:
+
+```powershell
+pwsh -File ./collector/Invoke-CentralAudit.ps1 -RepositoryServer 'CENTRAL-SQL'
+```
+
+6. Zweryfikuj `tests/Integration-Smoke.sql` i raporty `005_AuditReports.sql`.
+
+### Ograniczenia wersji pilotowej
+
+- Brak automatycznego `ALTER INDEX`, `UPDATE STATISTICS`, zatrzymywania backupów i instalacji obiektów na zdalnych instancjach.
+- Kontroler działa sekwencyjnie, więc kontrola współbieżności jest dodatkowo wymuszana przez centralny lease na klaster. Obecne `MaxConcurrentHeavyAudits` to parametr na przyszłość, nie aktywny limit większy niż 1.
+- Restart po awarii nie wznawia niedokończonego odczytu od miejsca przerwania: po wygaśnięciu lease przebieg staje się Failed i nowy harmonogram może ponowić *cały* audyt. Zmiana właściciela FCI jest obsługiwana przez nazwę wirtualną w nowym połączeniu, lecz bieżąca sesja może się przerwać. Nie ma jeszcze automatycznej ponownej próby połączenia w obrębie tego samego przebiegu.
+- Domyślny lease (240 minut kontrolera) wymaga dostosowania do najdłuższego audytu; w pilocie brak heartbeat/odnawiania dzierżawy. Nie uruchamiaj równoległych kontrolerów produkcyjnie bez odpowiedniego testu.
+- Uwierzytelnianie Windows i TLS; `-TrustServerCertificate` wyłącznie w izolowanym laboratorium. Konfiguracja SQL i agent nie przechowują poświadczeń.
+- SQL Server 2022+ (FCI, standalone); AG wymaga dodatkowego rozpoznania roli i uprawnień. Raport obejmuje tylko clustered/nonclustered rowstore, nie pełną inwentaryzację wszystkich indeksów.
+- Tę wersję trzeba przetestować na rzeczywistych instancjach i obciążeniach. Testy SQL zawierają smoke-check i przykłady reguł, nie są jeszcze pełnymi automatycznymi testami integracyjnymi.
