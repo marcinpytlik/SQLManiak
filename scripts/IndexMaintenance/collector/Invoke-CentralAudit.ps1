@@ -51,6 +51,7 @@ LEFT JOIN im.AuditPolicy p ON p.PolicyId=d.PolicyId
 WHERE i.IsEnabled=1 AND (p.PolicyId IS NULL OR p.IsEnabled=1)
 ORDER BY i.InstanceId,d.DatabaseName;
 '@
+ Invoke-SqlNonQuery $repo 'EXEC im.RecoverExpiredAudits' @{}
  $table=[System.Data.DataTable]::new();$rd=$cmd.ExecuteReader()
  try{$table.Load($rd)}finally{$rd.Dispose();$cmd.Dispose()}
  foreach($item in $table.Rows){
@@ -78,7 +79,7 @@ ORDER BY i.InstanceId,d.DatabaseName;
    $begin.Dispose()
    $outfile=Join-Path $OutputDirectory "audit-$runId.json"
    & (Join-Path $PSScriptRoot 'Collect-RemoteIndex.ps1') -Server $server -Database $database -OutputPath $outfile -MinPagesForReview ([int]$item.MinPagesForReview) -MinPagesForSample ([int]$item.MinPagesForSample) -MaxSampledPartitions ([int]$item.MaxSampledPartitions) -TrustServerCertificate:$TrustServerCertificate
-   if($LASTEXITCODE -ne 0 -and $null -ne $LASTEXITCODE){throw "Collector error $LASTEXITCODE"}
+   if(-not (Test-Path -LiteralPath $outfile)){throw 'Collector did not create output file'}
    $doc=Get-Content -LiteralPath $outfile -Raw | ConvertFrom-Json
    $stage=[System.Data.DataTable]::new()
    foreach($name in @('AuditRunId','ObjectId','IndexId','PartitionNumber','SchemaName','TableName','IndexName','IndexType','PageCount','FragmentationPercent','PageDensityPercent','MeasurementMode')){
