@@ -18,7 +18,8 @@ $dll=Join-Path $root 'bin/Release/net10.0/SQLManiak.SqlClientPoolBenchmark.dll'
 $run=Join-Path $root ('results/profile-'+(Get-Date -Format 'yyyyMMdd-HHmmss')+"-seed$Seed")
 New-Item -ItemType Directory -Force $run | Out-Null
 $random=[Random]::new($Seed)
-$plan=@(foreach($n in $Levels){foreach($pool in @('v1','v2')){[pscustomobject]@{pool=$pool;n=$n;key=$random.NextDouble()}}} | Sort-Object key)
+$plan=@(foreach($n in $Levels){foreach($pool in @('v1','v2')){[pscustomobject]@{pool=$pool;n=$n;key=$random.NextDouble()}}})
+$plan=@($plan | Sort-Object key)
 $measurements=[Collections.Generic.List[object]]::new()
 foreach($c in $plan){
  $tag="$($c.pool)-sync-N$($c.n)"
