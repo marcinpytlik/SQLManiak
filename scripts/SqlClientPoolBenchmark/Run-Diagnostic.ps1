@@ -10,7 +10,7 @@ param(
 )
 $ErrorActionPreference='Stop'
 if(-not $env:SQLCLIENT_BENCH_CS){throw 'Set SQLCLIENT_BENCH_CS first.'}
-if($Levels.Count -eq 0 -or $Levels | Where-Object {$_ -lt 1 -or $_ -gt 1000}){throw 'Levels must be 1..1000'}
+if($Levels.Count -eq 0 -or @($Levels | Where-Object {$_ -lt 1 -or $_ -gt 1000}).Count -gt 0){throw 'Levels must be 1..1000'}
 if($MaxPool -lt ($Levels | Measure-Object -Maximum).Maximum){throw 'MaxPool too small.'}
 $modes = if($Mode -eq 'both'){@('async','sync')}else{@($Mode)}
 $cells = @(
