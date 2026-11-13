@@ -135,3 +135,52 @@ GROUP BY
 
 ORDER BY
     TotalWaitMs DESC;
+
+z4:
+
+-- Test 1: Query Store - tryb, rejestrowanie wait stats i wykorzystanie przestrzeni
+SELECT
+    actual_state_desc,
+    wait_stats_capture_mode_desc,
+    query_capture_mode_desc,
+    current_storage_size_mb,
+    max_storage_size_mb,
+    readonly_reason
+FROM sys.database_query_store_options;
+
+z5:
+
+-- Test 2: historyczne oczekiwania Lock bez filtra czasu i nazwy tabeli
+SELECT TOP (30)
+    p.query_id,
+    ws.plan_id,
+    ws.wait_category_desc,
+    SUM(ws.total_query_wait_time_ms) AS TotalWaitMs,
+    MAX(ws.max_query_wait_time_ms) AS MaxWaitMs,
+    MIN(i.start_time) AS FirstInterval,
+    MAX(i.end_time) AS LastInterval
+FROM sys.query_store_wait_stats AS ws
+JOIN sys.query_store_plan AS p
+    ON ws.plan_id = p.plan_id
+JOIN sys.query_store_runtime_stats_interval AS i
+    ON ws.runtime_stats_interval_id =
+       i.runtime_stats_interval_id
+WHERE ws.wait_category_desc = N'Lock'
+GROUP BY
+    p.query_id,
+    ws.plan_id,
+    ws.wait_category_desc
+ORDER BY TotalWaitMs DESC;
+
+z6:
+
+-- Test 3: teksty zapytań Query Store zawierające nazwę tabeli
+SELECT TOP (50)
+    q.query_id,
+    qt.query_sql_text
+FROM sys.query_store_query AS q
+JOIN sys.query_store_query_text AS qt
+    ON q.query_text_id = qt.query_text_id
+WHERE qt.query_sql_text LIKE
+    N'%globus_RAPORTY_0000_S%'
+ORDER BY q.query_id DESC;
