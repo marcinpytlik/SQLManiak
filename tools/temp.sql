@@ -99,11 +99,7 @@ SELECT TOP (100)
     SUM(ws.total_query_wait_time_ms)
         / 1000.0 AS TotalWaitSec,
 
-    SUM(ws.total_query_wait_time_ms) /
-        NULLIF(SUM(ws.count_executions), 0)
-        AS AvgWaitMs,
-
-    SUM(ws.count_executions) AS WaitExecutions,
+    MAX(ws.max_query_wait_time_ms) AS MaxWaitMs,
 
     MIN(rsi.start_time) AS FirstInterval,
     MAX(rsi.end_time) AS LastInterval
