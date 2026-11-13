@@ -74,3 +74,67 @@ CROSS APPLY sys.dm_exec_cursors(s.session_id) AS c
 OUTER APPLY sys.dm_exec_sql_text(c.sql_handle) AS st
 WHERE s.is_user_process = 1
 ORDER BY c.creation_time;
+z3:
+
+SET NOCOUNT ON;
+
+DECLARE @TableName nvarchar(256) =
+    N'globus_RAPORTY_0000_S';
+
+DECLARE @HoursBack int = 24;
+
+DECLARE @FromTime datetimeoffset =
+    DATEADD(HOUR, -@HoursBack, SYSDATETIMEOFFSET());
+
+SELECT TOP (100)
+    DB_NAME() AS DatabaseName,
+    q.query_id,
+    p.plan_id,
+    qt.query_sql_text,
+
+    ws.wait_category_desc,
+
+    SUM(ws.total_query_wait_time_ms) AS TotalWaitMs,
+
+    SUM(ws.total_query_wait_time_ms)
+        / 1000.0 AS TotalWaitSec,
+
+    SUM(ws.total_query_wait_time_ms) /
+        NULLIF(SUM(ws.count_executions), 0)
+        AS AvgWaitMs,
+
+    SUM(ws.count_executions) AS WaitExecutions,
+
+    MIN(rsi.start_time) AS FirstInterval,
+    MAX(rsi.end_time) AS LastInterval
+
+FROM sys.query_store_wait_stats AS ws
+
+INNER JOIN sys.query_store_plan AS p
+    ON ws.plan_id = p.plan_id
+
+INNER JOIN sys.query_store_query AS q
+    ON p.query_id = q.query_id
+
+INNER JOIN sys.query_store_query_text AS qt
+    ON q.query_text_id = qt.query_text_id
+
+INNER JOIN sys.query_store_runtime_stats_interval AS rsi
+    ON ws.runtime_stats_interval_id = rsi.runtime_stats_interval_id
+
+WHERE
+    ws.wait_category_desc = N'Lock'
+    AND rsi.end_time >= @FromTime
+    AND (
+        qt.query_sql_text LIKE N'%' + @TableName + N'%'
+        OR qt.query_sql_text LIKE N'%FETCH%'
+    )
+
+GROUP BY
+    q.query_id,
+    p.plan_id,
+    qt.query_sql_text,
+    ws.wait_category_desc
+
+ORDER BY
+    TotalWaitMs DESC;
