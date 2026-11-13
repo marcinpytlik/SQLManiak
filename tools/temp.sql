@@ -184,3 +184,36 @@ JOIN sys.query_store_query_text AS qt
 WHERE qt.query_sql_text LIKE
     N'%globus_RAPORTY_0000_S%'
 ORDER BY q.query_id DESC;
+
+z7:
+
+-- Historyczne oczekiwania Lock dla zapytań odwołujących się do GLOBUS_RAPORTY_0000_S
+-- Bez ograniczenia czasowego; Query Store nie identyfikuje sesji blokującej.
+SELECT TOP (50)
+    q.query_id,
+    p.plan_id,
+    qt.query_sql_text,
+    SUM(ws.total_query_wait_time_ms)
+        AS TotalLockWaitMs,
+    MAX(ws.max_query_wait_time_ms)
+        AS MaxLockWaitMs,
+    MIN(i.start_time) AS FirstInterval,
+    MAX(i.end_time) AS LastInterval
+FROM sys.query_store_query AS q
+JOIN sys.query_store_query_text AS qt
+    ON q.query_text_id = qt.query_text_id
+JOIN sys.query_store_plan AS p
+    ON q.query_id = p.query_id
+JOIN sys.query_store_wait_stats AS ws
+    ON p.plan_id = ws.plan_id
+JOIN sys.query_store_runtime_stats_interval AS i
+    ON ws.runtime_stats_interval_id =
+       i.runtime_stats_interval_id
+WHERE ws.wait_category_desc = N'Lock'
+  AND qt.query_sql_text LIKE
+      N'%GLOBUS_RAPORTY_0000_S%'
+GROUP BY
+    q.query_id,
+    p.plan_id,
+    qt.query_sql_text
+ORDER BY TotalLockWaitMs DESC;
