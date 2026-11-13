@@ -76,6 +76,7 @@ WHERE s.is_user_process = 1
 ORDER BY c.creation_time;
 z3:
 
+
 SET NOCOUNT ON;
 
 DECLARE @TableName nvarchar(256) =
@@ -91,19 +92,14 @@ SELECT TOP (100)
     q.query_id,
     p.plan_id,
     qt.query_sql_text,
-
     ws.wait_category_desc,
 
     SUM(ws.total_query_wait_time_ms) AS TotalWaitMs,
 
-    SUM(ws.total_query_wait_time_ms)
-        / 1000.0 AS TotalWaitSec,
+    SUM(ws.total_query_wait_time_ms) / 1000.0
+        AS TotalWaitSec,
 
-    SUM(ws.total_query_wait_time_ms) /
-        NULLIF(SUM(ws.count_executions), 0)
-        AS AvgWaitMs,
-
-    SUM(ws.count_executions) AS WaitExecutions,
+    MAX(ws.max_query_wait_time_ms) AS MaxWaitMs,
 
     MIN(rsi.start_time) AS FirstInterval,
     MAX(rsi.end_time) AS LastInterval
@@ -120,7 +116,8 @@ INNER JOIN sys.query_store_query_text AS qt
     ON q.query_text_id = qt.query_text_id
 
 INNER JOIN sys.query_store_runtime_stats_interval AS rsi
-    ON ws.runtime_stats_interval_id = rsi.runtime_stats_interval_id
+    ON ws.runtime_stats_interval_id =
+       rsi.runtime_stats_interval_id
 
 WHERE
     ws.wait_category_desc = N'Lock'
