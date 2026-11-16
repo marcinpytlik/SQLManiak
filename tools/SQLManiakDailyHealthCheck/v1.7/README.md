@@ -21,7 +21,13 @@ A **daily** collector provides point-in-time evidence and historical trends. It 
 - `01_Repository.sql` — run once on central repository SQL Server.
 - `02_TempDB_Collect.sql` — read-only source query, returns overview, sessions, and files.
 - `03_Run-DHC-v1_7.ps1` — collector and database writer, PowerShell 7.5+ with SqlServer module.
-- **Existing** `SQLManiak_Daily_Health_Check_v1_5_CSV.sql` — **required**, not included in this package because it was not available as a complete source in this conversation. Keep this file next to the PS script, or supply `-SqlFile`.
+- **Existing** `SQLManiak_Daily_Health_Check_v1_5_CSV.sql` — **required**; provide your original v1.5 file next to the PS script or with `-SqlFile`. The collector does not overwrite this file.
+
+### ERRORLOG archive compatibility fix
+
+The v1.7 collector recognizes the known v1.5 ERRORLOG section and substitutes a safer archive loop **in memory**, without changing the original SQL file. It first runs `sp_enumerrorlogs`, skips empty/missing archive files, and scans existing nonempty archives relevant to the last 24 hours (up to the existing `@ErrorLogFilesToScan` cap, default 3, maximum 7), including the archive spanning the 24h boundary. If enumeration fails, it records a warning and tries the current ERRORLOG only. Individual archive errors are recorded as warnings when SQL Server makes them catchable. An unexpected source SQL layout fails explicitly rather than silently skipping the fix.
+
+This fixes the reproduced SQL Server 2022 Linux Docker lab issue where reading a nonexistent ERRORLOG archive caused `Msg 0, Level 11` from `xp_readerrorlog` and aborted the entire DHC run. The script and repository still require an end-to-end retest after pulling the change.
 
 ## Installation
 
