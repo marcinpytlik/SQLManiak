@@ -99,3 +99,10 @@ EXEC dhc.PurgeRuns @OlderThanUTC='2026-09-01', @DryRun=1;
 - Older rows are never deleted automatically; `dhc.PurgeRuns` is intentionally manual and defaults to dry-run.
 - File next-growth check is per-file. Multiple `AUTOGROW_ALL_FILES` operations on a shared volume can collectively exceed free space; that risk should also be reviewed when enabling production alerts.
 - The versioning DMV does not directly attribute all version-store pages to a particular SPID. Treat candidates as diagnostic leads, not proof of responsibility.
+## Monitored server inventory (12+ instances)
+
+Run `04_MonitoredServers.sql` once against the **repository** after `01_Repository.sql`. It creates `dhc.MonitoredServer` idempotently and selects current entries. This is an **inventory only**: v1.7 continues to accept one explicit `-ServerInstance` parameter; it does **not** automatically run or schedule monitoring for enabled rows yet.
+
+Columns: unique `ServerInstance` connection endpoint (for a Windows FCI use its VNN/instance name, not a cluster node), optional `DisplayName`, `Environment` (PROD/TEST/DEV/LAB/DR), optional `MonitorGroup` (cluster/site), `IsEnabled` (defaults to **0**, safe onboarding), `IntervalMinutes` (defaults to 1440), `CollectTempDB`, `Notes`, and `CreatedUTC`. For 12 production servers, insert 12 genuine connection endpoints; there is no artificial 12-row limit. A commented Docker lab example is included.
+
+Do **not** store SQL passwords, connection strings with secrets, or credentials in the inventory. Source and repository authentication remain external. There is intentionally no foreign key from historical `dhc.Run` to inventory, so historical records survive a host rename or inventory removal. Existing `01_Repository.sql` is unchanged (local lab edits are preserved).
