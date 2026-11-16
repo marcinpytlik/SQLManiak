@@ -1,0 +1,4 @@
+# Never commit real SQL Server passwords for the Docker lab.
+.env
+.env.*
+!.env.example
