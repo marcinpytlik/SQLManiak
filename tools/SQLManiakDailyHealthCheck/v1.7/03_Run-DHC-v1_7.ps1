@@ -134,7 +134,7 @@ function Write-Sql([string]$Sql,[hashtable]$P) {
   $v=$P[$k]; if($null -eq $v) { $v=[DBNull]::Value }
   $null=$cmd.Parameters.AddWithValue('@'+$k,$v)
  }
- try { [void]$cmd.ExecuteNonQuery() } finally { $cmd.Dispose() }
+ try { [void]$cmd.ExecuteNonQuery() } catch { throw "Repository SQL write failed. Statement: $Sql. Cause: $($_.Exception.Message)" } finally { $cmd.Dispose() }
 }
 function Write-Batches([System.Data.DataTable]$Table,[int]$Index,[string]$Name) {
  $cols=@($Table.Columns | ForEach-Object { $_.ColumnName })
@@ -155,7 +155,7 @@ function Write-Batches([System.Data.DataTable]$Table,[int]$Index,[string]$Name) 
 }
 function Save-Batch([int]$Index,[int]$BatchNo,[string]$Name,[string]$ColsJson,$Slice) {
  $json=ConvertTo-Json -InputObject @($Slice.ToArray()) -Compress -Depth 6
- Write-Sql 'INSERT dhc.ResultBatch(RunId,ResultIndex,BatchNo,SectionName,RowCount,ColumnNamesJson,RowsJson) VALUES (@RunId,@ResultIndex,@BatchNo,@SectionName,@RowCount,@ColumnNamesJson,@RowsJson)' @{
+ Write-Sql 'INSERT dhc.ResultBatch(RunId,ResultIndex,BatchNo,SectionName,[RowCount],ColumnNamesJson,RowsJson) VALUES (@RunId,@ResultIndex,@BatchNo,@SectionName,@RowCount,@ColumnNamesJson,@RowsJson)' @{
   RunId=$runId;ResultIndex=$Index;BatchNo=$BatchNo;SectionName=$Name;
   RowCount=[int]$Slice.Count;ColumnNamesJson=$ColsJson;RowsJson=$json
  }
