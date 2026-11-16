@@ -1,0 +1,56 @@
+name: sqlmaniak-dhc-lab
+
+services:
+  sql-repository:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlmaniak-dhc-repository
+    hostname: dhc-repository
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: ${DHC_REPOSITORY_SA_PASSWORD:?Set DHC_REPOSITORY_SA_PASSWORD in .env}
+      MSSQL_MEMORY_LIMIT_MB: "2048"
+    ports:
+      - "127.0.0.1:15433:1433"
+    volumes:
+      - dhc_repository_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' -b -o /dev/null || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 75s
+    networks:
+      - dhc_lab
+
+  sql-target:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlmaniak-dhc-target
+    hostname: dhc-target
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: ${DHC_TARGET_SA_PASSWORD:?Set DHC_TARGET_SA_PASSWORD in .env}
+      MSSQL_MEMORY_LIMIT_MB: "2048"
+    ports:
+      - "127.0.0.1:15434:1433"
+    volumes:
+      - dhc_target_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' -b -o /dev/null || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 75s
+    networks:
+      - dhc_lab
+
+volumes:
+  dhc_repository_data:
+  dhc_target_data:
+
+networks:
+  dhc_lab:
+    driver: bridge
