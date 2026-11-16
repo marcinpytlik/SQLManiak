@@ -43,6 +43,71 @@ function Convert-Row([System.Data.DataRow]$Row) {
  }
  return [pscustomobject]$values
 }
+function Update-ErrorLogScan([string]$SqlText) {
+ # Keep the supplied DHC v1.5 file unchanged. Replace only the known ERRORLOG scan
+ # with enumeration of existing non-empty archives, avoiding missing-file errors
+ # that can cause a non-catchable severe error from xp_readerrorlog.
+ $pattern='(?s)(?<=/\* 2\. ERRORLOG files 0\.\.N: scan archived files too, to handle restarts and cycling \*/\r?\n)CREATE TABLE #ErrorLogRaw.*?END;(?=\r?\n\r?\nSELECT DISTINCT LogDate,ProcessInfo,\[Text\])'
+ if(([regex]::Matches($SqlText,$pattern)).Count -ne 1) {
+  throw 'DHC ERRORLOG rewrite: expected exactly one known v1.5 ERRORLOG archive loop. Check the source SQL version.'
+ }
+ $replacement=@'
+CREATE TABLE #ErrorLogRaw (LogDate datetime NULL, ProcessInfo nvarchar(100) NULL, [Text] nvarchar(max) NULL);
+CREATE TABLE #AvailableErrorLogs (ArchiveNumber int, LogDate datetime, SizeBytes bigint);
+DECLARE @ErrorLogEnumerationFailed bit = 0;
+BEGIN TRY
+    INSERT INTO #AvailableErrorLogs (ArchiveNumber,LogDate,SizeBytes)
+    EXEC master.sys.sp_enumerrorlogs;
+END TRY
+BEGIN CATCH
+    SET @ErrorLogEnumerationFailed = 1;
+    INSERT #Alerts VALUES ('WARNING','ERRORLOG','Archive enumeration',ERROR_MESSAGE());
+END CATCH;
+
+-- If enumeration itself fails, try only the current ERRORLOG.
+IF @ErrorLogEnumerationFailed = 1
+    INSERT INTO #AvailableErrorLogs VALUES (0,@Now,1);
+
+DECLARE @LogsToScan TABLE (ArchiveNumber int PRIMARY KEY);
+INSERT INTO @LogsToScan (ArchiveNumber)
+SELECT TOP (@ErrorLogFilesToScan) ArchiveNumber
+FROM #AvailableErrorLogs
+WHERE SizeBytes > 0
+  AND (
+       ArchiveNumber = 0
+       OR LogDate >= @Since
+       -- Include the archive immediately preceding the 24-hour boundary.
+       OR ArchiveNumber = (
+           SELECT TOP (1) ArchiveNumber
+           FROM #AvailableErrorLogs
+           WHERE SizeBytes > 0 AND LogDate < @Since
+           ORDER BY LogDate DESC, ArchiveNumber ASC
+       )
+  )
+ORDER BY ArchiveNumber ASC;
+
+DECLARE @LogNumber int;
+DECLARE ErrorLogCursor CURSOR LOCAL FAST_FORWARD FOR
+    SELECT ArchiveNumber FROM @LogsToScan ORDER BY ArchiveNumber;
+OPEN ErrorLogCursor;
+FETCH NEXT FROM ErrorLogCursor INTO @LogNumber;
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    BEGIN TRY
+        INSERT INTO #ErrorLogRaw (LogDate,ProcessInfo,[Text])
+        EXEC master.dbo.xp_readerrorlog @LogNumber,1,NULL,NULL,@Since,@Now,N'desc';
+    END TRY
+    BEGIN CATCH
+        INSERT #Alerts VALUES ('WARNING','ERRORLOG',CONCAT('Archive ',@LogNumber),ERROR_MESSAGE());
+    END CATCH;
+    FETCH NEXT FROM ErrorLogCursor INTO @LogNumber;
+END;
+CLOSE ErrorLogCursor;
+DEALLOCATE ErrorLogCursor;
+'@
+ return [regex]::Replace($SqlText,$pattern,[System.Text.RegularExpressions.MatchEvaluator]{param($m) $replacement})
+}
+
 function Query-Source([string]$QueryFile) {
  $args=@{ServerInstance=$ServerInstance;Database='master';QueryTimeout=$QueryTimeout;
          OutputAs='DataSet';ErrorAction='Stop'}
@@ -56,6 +121,7 @@ function Query-Source([string]$QueryFile) {
    throw 'Expected exactly one @SaveHistory declaration in DHC v1.5 SQL.'
   }
   $args.Query=[regex]::Replace($args.Query,$pattern,'${1}0${2}')
+  $args.Query=Update-ErrorLogScan $args.Query
  }
  return @(Invoke-Sqlcmd @args)
 }
