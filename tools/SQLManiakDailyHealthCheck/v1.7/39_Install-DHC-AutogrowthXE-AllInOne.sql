@@ -86,6 +86,19 @@ IF NOT EXISTS (
 )
     THROW 51937, 'Existing XE session has unexpected event/predicate; review manually.', 1;
 
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.server_event_sessions s
+    JOIN sys.server_event_session_targets t
+      ON t.event_session_id=s.event_session_id
+     AND t.name=N'event_file'
+    JOIN sys.server_event_session_fields f
+      ON f.event_session_id=s.event_session_id
+     AND f.object_id=t.target_id AND f.name=N'filename'
+    WHERE s.name=N'SQLManiak_Autogrowth'
+)
+    THROW 51938, 'XE event_file target/filename missing; review existing session.', 1;
+
 IF @StartNow=1 AND NOT EXISTS
     (SELECT 1 FROM sys.dm_xe_sessions WHERE name=N'SQLManiak_Autogrowth')
     ALTER EVENT SESSION [SQLManiak_Autogrowth] ON SERVER STATE=START;
