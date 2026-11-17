@@ -126,6 +126,9 @@ GRANT SELECT ON OBJECT::dbo.sysjobschedules TO [dhc_agent_history_reader];
 GRANT SELECT ON OBJECT::dbo.sysjobhistory TO [dhc_agent_history_reader];
 GRANT SELECT ON OBJECT::dbo.sysjobs TO [dhc_agent_history_reader];
 GRANT SELECT ON OBJECT::dbo.sysjobactivity TO [dhc_agent_history_reader];
+-- Required by the DHC v1.5 SQL Agent scheduling and job history checks.
+GRANT SELECT ON OBJECT::dbo.sysschedules TO [dhc_agent_history_reader];
+GRANT EXECUTE ON OBJECT::dbo.agent_datetime TO [dhc_agent_history_reader];
 
 IF NOT EXISTS (
     SELECT 1 FROM sys.database_role_members m
