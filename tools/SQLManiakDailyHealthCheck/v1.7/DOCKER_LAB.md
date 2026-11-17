@@ -109,3 +109,51 @@ docker compose -f compose.yaml down --volumes  # DANGER: permanently deletes the
 - SQL Server on Linux cannot reproduce Windows cluster nodes, WSFC/FCI monitoring, or Windows service status.
 - A DHC daily snapshot cannot reconstruct short-lived Version Store spikes. The separate 10-second TempDB Incident Recorder has not been implemented.
 - The DHC v1.7 scripts have **not** been executed against a live SQL Server in this preparation environment. Validate before production usage.
+
+## 6. Multi-target lab: two targets and one failure
+
+The optional `sql-target-2` service runs SQL Server 2022 on `127.0.0.1,15435`, with its **own volume and password**. The `multi-target` profile prevents an ordinary `docker compose up -d` from creating the extra server. Expect about 2 GiB additional configured SQL memory use (plus process overhead). Preserve your existing `.env` and add a distinct `DHC_TARGET2_SA_PASSWORD` entry based on `.env.example`. Do not replace the existing target/repository passwords.
+
+```powershell
+# From the v1.7 directory; check the existing .env contains the new setting.
+docker compose --profile multi-target -f compose.yaml config --quiet
+docker compose --profile multi-target -f compose.yaml up -d sql-target-2
+docker compose --profile multi-target -f compose.yaml ps
+```
+
+In SSMS connect to **repository** `127.0.0.1,15433` and run `07_Seed-DockerTarget2.sql`. It adds/enables the second LAB endpoint without changing the first one. Do **not** run the repository schema on target 2. Verify target 2 is reachable with its own `sa` password.
+
+The runner supports `-SqlCredentialByServer` (an in-memory hashtable of endpoint -> PSCredential), which overrides `-SqlCredential` for the selected endpoints. Missing/invalid mapping fails that endpoint; credentials are not persisted in SQL inventory or output. Using a single SQL credential is still supported for homogeneous target authentication.
+
+```powershell
+# Existing session: $builder (repository connection string), $targetCredential (15434).
+$target2Password = Read-Host 'Haslo sa Target 2 (15435)' -AsSecureString
+$target2Credential = [PSCredential]::new('sa',$target2Password)
+$targetCredentials = @{
+  '127.0.0.1,15434' = $targetCredential
+  '127.0.0.1,15435' = $target2Credential
+}
+.\06_Run-DHC-MonitoredServers.ps1 `
+  -RepositoryConnectionString $builder.ConnectionString -Environment LAB
+
+# Healthy baseline: both should return COMPLETE.
+.\06_Run-DHC-MonitoredServers.ps1 `
+  -RepositoryConnectionString $builder.ConnectionString `
+  -SqlCredentialByServer $targetCredentials `
+  -Environment LAB -Execute -TrustServerCertificate -QueryTimeout 30
+
+# Failure simulation: stop ONLY the second target, never the repository.
+docker compose --profile multi-target -f compose.yaml stop sql-target-2
+.\06_Run-DHC-MonitoredServers.ps1 `
+  -RepositoryConnectionString $builder.ConnectionString `
+  -SqlCredentialByServer $targetCredentials `
+  -Environment LAB -Execute -TrustServerCertificate -QueryTimeout 10
+
+# Restore second target immediately after the failure test.
+docker compose --profile multi-target -f compose.yaml start sql-target-2
+```
+
+Expected: with both targets running, two independent COMPLETE run IDs; with target 2 stopped, target 1 COMPLETE and target 2 FAILED **in the PowerShell summary**. A connection failure before repository transaction/commit does **not** automatically create a FAILED row in `dhc.Run`. Confirm the latest `dhc.Run` records on the repository separately. The runner processes the targets sequentially, not concurrently. It does not enforce `IntervalMinutes` or install a scheduler.
+
+Cleanup only the new target (preserving named volumes):
+`docker compose --profile multi-target -f compose.yaml stop sql-target-2`. Do not use `down -v` because it deletes repository and target history.
