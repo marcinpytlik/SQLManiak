@@ -589,3 +589,9 @@ Important: `-LogonType Interactive` **requires that user to be signed in**. It i
 ### Test 46B troubleshooting — preview object filtering
 
 If script `32_Register-WindowsScheduledTask-LAB.ps1` previously failed with `Where-Object: ... TestResult ... property not recognized`, update from master and rerun. The DPAPI preflight emits both scheduler preview objects (without `TestResult`) and a final status object; the registration script now checks the property exists before reading it under PowerShell `Set-StrictMode`. The failure occurred before registration, so the task should not yet exist; the script still refuses to overwrite an existing task.
+
+### Test 46B invalid task XML recovery
+
+If `Get-ScheduledTask` reports `The task XML contains a value which is incorrectly formatted or out of range` after registration, the prior task may exist but be unreadable. The original script used `-RepetitionDuration (New-TimeSpan -Days 365)`, a suspected source of this incompatibility. The revised Test 46B uses **one-day** repetition window for LAB registration validation, not a permanent production schedule. The exact XML cause has not yet been proved.
+
+After confirming that the task name is exactly `SQLManiak DHC v1.7 LAB`, explicitly remove only that test task from an elevated PowerShell terminal with `schtasks.exe /Delete /TN '\SQLManiak DHC v1.7 LAB' /F` (Windows may require elevation). If removal fails, inspect via Task Scheduler UI or COM; do not alter Task Scheduler's on-disk task files or registry by hand. Then run `32_Register-WindowsScheduledTask-LAB.ps1` again under `DEWELOPER\blad`; it registers a **disabled** task. Do not enable or execute automatically until verified. The permanent 5-minute cadence will need a separate durable daily trigger design after Test 46B. GitHub dashboard CI cannot validate task XML on Windows.
