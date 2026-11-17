@@ -23,14 +23,17 @@ function Read-Cred([string]$name){
 }
 $repo=Read-Cred ([string]$cfg.RepositoryCredentialFile)
 $b=[Microsoft.Data.SqlClient.SqlConnectionStringBuilder]::new()
-$b.DataSource=[string]$cfg.RepositoryServer
-$b.InitialCatalog='SQLManiakHealthHistory'
-$b.UserID=$repo.UserName
-$b.Password=$repo.GetNetworkCredential().Password
-$b.Encrypt=[Microsoft.Data.SqlClient.SqlConnectionEncryptOption]::Mandatory
-$b.TrustServerCertificate=[bool]$cfg.TrustServerCertificate
-$b.ConnectTimeout=$ConnectionTimeout
-$b.PersistSecurityInfo=$false
+# Use canonical SqlClient connection-string keywords via the indexer.
+# PowerShell's IDictionary adapter can otherwise interpret .DataSource as an
+# unsupported literal "DataSource" keyword instead of "Data Source".
+$b['Data Source']=[string]$cfg.RepositoryServer
+$b['Initial Catalog']='SQLManiakHealthHistory'
+$b['User ID']=$repo.UserName
+$b['Password']=$repo.GetNetworkCredential().Password
+$b['Encrypt']='True'
+$b['Trust Server Certificate']=[bool]$cfg.TrustServerCertificate
+$b['Connect Timeout']=$ConnectionTimeout
+$b['Persist Security Info']=$false
 $credentials=@{}
 foreach($entry in $cfg.Targets.PSObject.Properties) {
  $credentials[[string]$entry.Name]=Read-Cred ([string]$entry.Value)
