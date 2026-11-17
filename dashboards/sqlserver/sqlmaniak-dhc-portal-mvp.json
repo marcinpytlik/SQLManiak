@@ -10,7 +10,7 @@
   ],
   "timezone": "utc",
   "schemaVersion": 39,
-  "version": 3,
+  "version": 4,
   "refresh": "1h",
   "time": {
     "from": "now-7d",
@@ -632,10 +632,28 @@
                 ]
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Instance"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Open instance details",
+                    "url": "/d/sqlmaniak-dhc-instance/sqlmaniak-dhc-instance-details?var-DS_DHC=${DS_DHC}&var-instance=${__value.raw}&${__url_time_range}",
+                    "targetBlank": false
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
-      "description": "Collection reports delivery status. SQL health summarizes the last COMPLETE/PARTIAL measurement, but becomes STALE when collection is overdue. Counts are for the last diagnostic snapshot, not real-time."
+      "description": "Collection reports delivery status. SQL health summarizes the last COMPLETE/PARTIAL measurement, but becomes STALE when collection is overdue. Counts are for the last diagnostic snapshot, not real-time. Select instance name to open detail dashboard."
     },
     {
       "id": 6,

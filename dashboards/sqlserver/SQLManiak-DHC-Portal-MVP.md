@@ -92,3 +92,30 @@ ORDER BY s.ServerInstance;
 ```
 
 Grafana dashboard JSON and the SQL above are source-checked, but live Grafana import and SQL results still need to be confirmed on the running LAB. Reimport the same UID `sqlmaniak-dhc-mvp`, replacing the older dashboard.
+
+## MVP-03: per-instance dashboard (LAB)
+
+Import the second dashboard `dashboards/sqlserver/sqlmaniak-dhc-instance-details.json` using the **same MSSQL data source** as the overview. UID: `sqlmaniak-dhc-instance`. It is separate from `sqlmaniak-dhc-mvp`; do not overwrite Overview with the new JSON.
+
+**Required database permissions:** rerun the updated `36_GrafanaPortalReader.sql` as a Repository administrator. It grants only `SELECT` on `dhc.vTempDBTrend`, `dhc.TempDBSnapshot` and `dhc.TempDBFile` in addition to existing Portal permissions. No access to `dhc.ResultBatch`, `dhc.TempDBSession` or write rights is added.
+
+**MVP-03 panel list:** SQL diagnostic health; collection state/freshness; latest diagnostic alerts; latest TempDB snapshot; TempDB data used vs version store; TempDB log used vs allocated; TempDB file/growth inventory; execution history; alert history.
+
+**Usage:** first import/reimport Overview `sqlmaniak-dhc-portal-mvp.json` (version 4), then import `sqlmaniak-dhc-instance-details.json`. In Overview → Instances, use the **Instance** column data link `Open instance details` to open the second dashboard with the selected endpoint; or open Instance Details directly and select a single instance from its dropdown. Dashboard `Instance` is a *single-value* variable with `All` disabled to prevent accidental multi-instance data mixing. Choose a target manually if Grafana imports the dashboard without a default value. The default time range is last 7 days (UTC). The **latest** snapshot/alerts do not depend on the time picker; history/trend panels do. Data points reflect daily DHC sampling rather than continuous measurements.
+
+**LAB validation (127.0.0.1,15434 and 15435):**
+
+1. Verify the 36 script's effective permissions via a connection as `dhc_grafana_reader`:
+   ```sql
+   USE SQLManiakHealthHistory;
+   SELECT TOP(1) ServerInstance,StartedUTC,VersionStoreMB FROM dhc.vTempDBTrend;
+   SELECT TOP(1) RunId,FileId,NextGrowthWillFit FROM dhc.TempDBFile;
+   ```
+2. Choose `127.0.0.1,15434`; compare the top status to `dhc.vMonitoringStatus`, and latest diagnostic alerts to Overview's filtered alerts. Verify TempDB latest snapshot if present. Compare with `127.0.0.1,15435`; the data must not mix.
+3. For **Last 7 days**, ensure collection history and alert history display the expected timestamps. Change to **Last 24 hours** and verify only history/trend panels change; latest alerts and latest TempDB remain last available.
+4. Click Overview → Instance and verify navigation preserves datasource, instance and time range. This is a UI behavior to confirm on the running LAB, not guaranteed by JSON validation.
+5. Confirm a missing TempDB snapshot results in no rows on TempDB panels rather than a false zero metric.
+
+**Read-only design:** every query targets Repository only. `TempDBFile` shows the last snapshot with TempDB data and file growth assessments, **not** live SQL Server file state. SQL health `OK` based on a partial diagnostic snapshot is not a guarantee of a healthy instance.
+
+**Release status:** GitHub dashboard CI checks JSON syntax/structure; Grafana rendering, datasource links, SQL query execution and inter-panel navigation require LAB verification after import.

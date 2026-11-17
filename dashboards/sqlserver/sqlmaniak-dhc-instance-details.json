@@ -1,0 +1,712 @@
+{
+  "id": null,
+  "uid": "sqlmaniak-dhc-instance",
+  "title": "SQLManiak DHC | Instance Details",
+  "description": "Read-only single instance details for DHC v1.7: collector state, diagnostic alerts, TempDB and history",
+  "tags": [
+    "sqlmaniak",
+    "dhc",
+    "sqlserver",
+    "instance"
+  ],
+  "timezone": "utc",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "1h",
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "DS_DHC",
+        "label": "DHC Repository",
+        "type": "datasource",
+        "query": "mssql",
+        "refresh": 1,
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "options": []
+      },
+      {
+        "name": "instance",
+        "label": "Instance",
+        "type": "query",
+        "datasource": {
+          "type": "mssql",
+          "uid": "${DS_DHC}"
+        },
+        "refresh": 1,
+        "query": "SELECT ServerInstance AS __text,ServerInstance AS __value FROM dhc.MonitoredServer WHERE IsEnabled=1 ORDER BY ServerInstance",
+        "definition": "SELECT ServerInstance AS __text,ServerInstance AS __value FROM dhc.MonitoredServer WHERE IsEnabled=1 ORDER BY ServerInstance",
+        "sort": 1,
+        "includeAll": false,
+        "multi": false,
+        "current": {
+          "selected": false,
+          "text": "",
+          "value": ""
+        },
+        "options": []
+      }
+    ]
+  },
+  "annotations": {
+    "list": []
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "SQL diagnostic health · last snapshot",
+      "type": "stat",
+      "description": "Health from latest COMPLETE/PARTIAL diagnostic snapshot, not real-time.",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_DHC}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_DHC}"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT CASE WHEN latest.RunId IS NULL THEN 'NO_DATA' WHEN s.IsOverdue=1 THEN 'STALE' WHEN a.CriticalCount>0 THEN 'CRITICAL' WHEN a.WarningCount>0 THEN 'WARNING' ELSE 'OK' END AS value FROM dhc.vMonitoringStatus s OUTER APPLY (SELECT TOP(1) r.RunId FROM dhc.Run r WHERE r.ServerInstance=s.ServerInstance AND r.Status IN ('COMPLETE','PARTIAL') ORDER BY r.StartedUTC DESC,r.RunId DESC) latest OUTER APPLY (SELECT COUNT_BIG(CASE WHEN Severity='CRITICAL' THEN 1 END) AS CriticalCount,COUNT_BIG(CASE WHEN Severity='WARNING' THEN 1 END) AS WarningCount FROM dhc.Alert WHERE RunId=latest.RunId) a WHERE s.ServerInstance=${instance:sqlstring};",
+          "editorMode": "code",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "OK": {
+                  "text": "OK",
+                  "color": "green"
+                },
+                "WARNING": {
+                  "text": "WARNING",
+                  "color": "orange"
+                },
+                "CRITICAL": {
+                  "text": "CRITICAL",
+                  "color": "red"
+                },
+                "STALE": {
+                  "text": "STALE",
+                  "color": "purple"
+                },
+                "NO_DATA": {
+                  "text": "NO_DATA",
+                  "color": "gray"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value"
+      }
+    },
+    {
+      "id": 2,
+      "title": "Collection · state and freshness",
+      "type": "table",
+      "description": "Collection status is separate from diagnostics; overdue depends on repository interval.",
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 18,
+        "h": 5
+      },
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_DHC}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_DHC}"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT s.ServerInstance AS [Instance], s.DisplayName AS [Display name], s.Environment,s.MonitorGroup AS [Monitor group],s.MonitoringStatus AS [Collection], CASE WHEN s.IsOverdue=1 THEN 'YES' ELSE 'NO' END AS [Overdue], s.IntervalMinutes AS [Interval min],s.LastAttemptUTC AS [Last attempt UTC],s.LastCompleteUTC AS [Last complete UTC],s.MinutesSinceAttempt AS [Minutes since attempt],s.MinutesSinceComplete AS [Minutes since complete],s.LastRowsStored AS [Rows stored],LEFT(s.LastErrorText,500) AS [Last error] FROM dhc.vMonitoringStatus s WHERE s.ServerInstance=${instance:sqlstring};",
+          "editorMode": "code",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Collection"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "COMPLETE": {
+                        "text": "COMPLETE",
+                        "color": "green"
+                      },
+                      "FAILED": {
+                        "text": "FAILED",
+                        "color": "red"
+                      },
+                      "PARTIAL": {
+                        "text": "PARTIAL",
+                        "color": "orange"
+                      },
+                      "RUNNING": {
+                        "text": "RUNNING",
+                        "color": "blue"
+                      },
+                      "NO_DATA": {
+                        "text": "NO_DATA",
+                        "color": "gray"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Overdue"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "YES": {
+                        "text": "YES",
+                        "color": "red"
+                      },
+                      "NO": {
+                        "text": "NO",
+                        "color": "green"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    },
+    {
+      "id": 3,
+      "title": "Latest diagnostic alerts",
+      "type": "table",
+      "description": "Alerts from latest COMPLETE/PARTIAL diagnostic snapshot. Empty means no alerts or no snapshot.",
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 24,
+        "h": 8
+      },
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_DHC}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_DHC}"
+          },
+          "rawQuery": true,
+          "rawSql": "WITH recent AS (SELECT TOP(1) r.RunId,r.StartedUTC FROM dhc.Run r WHERE r.ServerInstance=${instance:sqlstring} AND r.Status IN ('COMPLETE','PARTIAL') ORDER BY r.StartedUTC DESC,r.RunId DESC) SELECT r.StartedUTC AS [Snapshot UTC],a.Severity,a.Area,a.ObjectName AS [Object],a.Details FROM recent r JOIN dhc.Alert a ON a.RunId=r.RunId ORDER BY CASE a.Severity WHEN 'CRITICAL' THEN 0 WHEN 'WARNING' THEN 1 ELSE 2 END,a.Area,a.AlertId;",
+          "editorMode": "code",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    },
+    {
+      "id": 4,
+      "title": "TempDB · latest snapshot",
+      "type": "table",
+      "description": "Read-only latest available TempDB measurement. Empty if collector did not store a snapshot.",
+      "gridPos": {
+        "x": 0,
+        "y": 15,
+        "w": 24,
+        "h": 6
+      },
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_DHC}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_DHC}"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT TOP(1) t.StartedUTC AS [Snapshot UTC],t.TotalDataMB AS [Data allocated MB],t.UsedDataMB AS [Data used MB],t.FreeDataMB AS [Data free MB],t.DataFreePct AS [Data free %],t.VersionStoreMB AS [Version store MB],t.VersionStoreShareUsedPct AS [Version store share %],t.TotalLogMB AS [Log allocated MB],t.UsedLogMB AS [Log used MB],t.LogFreePct AS [Log free %],t.MinDriveFreePct AS [Min drive free %],CASE WHEN t.AnyFileCannotGrow=1 THEN 'YES' WHEN t.AnyFileCannotGrow=0 THEN 'NO' ELSE 'UNKNOWN' END AS [File cannot grow],t.ActiveVersioningTransactions AS [Versioning transactions],t.OldestVersioningSeconds AS [Oldest versioning seconds] FROM dhc.vTempDBTrend t WHERE t.ServerInstance=${instance:sqlstring} ORDER BY t.StartedUTC DESC,t.RunId DESC;",
+          "editorMode": "code",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "File cannot grow"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "YES": {
+                        "text": "YES",
+                        "color": "red"
+                      },
+                      "NO": {
+                        "text": "NO",
+                        "color": "green"
+                      },
+                      "UNKNOWN": {
+                        "text": "UNKNOWN",
+                        "color": "gray"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    },
+    {
+      "id": 5,
+      "title": "TempDB · data used and version store (MB)",
+      "type": "timeseries",
+      "description": "Daily snapshots, not continuous realtime measurement. Time range controls points.",
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_DHC}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_DHC}"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT t.StartedUTC AS time,t.UsedDataMB AS [Data used MB],t.VersionStoreMB AS [Version store MB] FROM dhc.vTempDBTrend t WHERE t.ServerInstance=${instance:sqlstring} AND $__timeFilter(t.StartedUTC) ORDER BY t.StartedUTC;",
+          "editorMode": "code",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "TempDB · log size and used (MB)",
+      "type": "timeseries",
+      "description": "Daily snapshots, not continuous realtime measurement.",
+      "gridPos": {
+        "x": 12,
+        "y": 22,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_DHC}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_DHC}"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT t.StartedUTC AS time,t.UsedLogMB AS [Log used MB],t.TotalLogMB AS [Log allocated MB] FROM dhc.vTempDBTrend t WHERE t.ServerInstance=${instance:sqlstring} AND $__timeFilter(t.StartedUTC) ORDER BY t.StartedUTC;",
+          "editorMode": "code",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "title": "TempDB · latest file/growth inventory",
+      "type": "table",
+      "description": "Latest TempDBSnapshot join to TempDBFile; file growth assessment is per file.",
+      "gridPos": {
+        "x": 0,
+        "y": 31,
+        "w": 24,
+        "h": 8
+      },
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_DHC}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_DHC}"
+          },
+          "rawQuery": true,
+          "rawSql": "WITH recent AS (SELECT TOP(1) r.RunId,r.StartedUTC FROM dhc.Run r JOIN dhc.TempDBSnapshot t ON t.RunId=r.RunId WHERE r.ServerInstance=${instance:sqlstring} ORDER BY r.StartedUTC DESC,r.RunId DESC) SELECT recent.StartedUTC AS [Snapshot UTC],f.FileId AS [File ID],f.FileType AS [File type],f.FileName AS [File name],f.VolumeMountPoint AS [Volume],f.SizeMB AS [Size MB],f.MaxSizeMB AS [Max MB],f.GrowthMB AS [Growth MB],CASE WHEN f.IsPercentGrowth=1 THEN 'YES' ELSE 'NO' END AS [Percent growth],f.NextGrowthMB AS [Next growth MB],CASE WHEN f.NextGrowthWillFit=1 THEN 'YES' WHEN f.NextGrowthWillFit=0 THEN 'NO' ELSE 'UNKNOWN' END AS [Growth will fit],f.AvailableVolumeMB AS [Volume free MB] FROM recent JOIN dhc.TempDBFile f ON f.RunId=recent.RunId ORDER BY f.FileId;",
+          "editorMode": "code",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Growth will fit"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "YES": {
+                        "text": "YES",
+                        "color": "green"
+                      },
+                      "NO": {
+                        "text": "NO",
+                        "color": "red"
+                      },
+                      "UNKNOWN": {
+                        "text": "UNKNOWN",
+                        "color": "gray"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    },
+    {
+      "id": 8,
+      "title": "Collection execution history",
+      "type": "table",
+      "description": "Up to 100 attempts in the selected time range, including unsuccessful attempts.",
+      "gridPos": {
+        "x": 0,
+        "y": 40,
+        "w": 24,
+        "h": 9
+      },
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_DHC}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_DHC}"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT TOP(100) e.StartedUTC AS [Started UTC],e.FinishedUTC AS [Finished UTC],e.Status AS [Collection],e.RowsStored AS [Rows],DATEDIFF_BIG(MILLISECOND,e.StartedUTC,e.FinishedUTC) AS [Duration ms],LEFT(e.ErrorText,600) AS [Error],CONVERT(varchar(36),e.RunId) AS [Run ID] FROM dhc.ExecutionLog e WHERE e.ServerInstance=${instance:sqlstring} AND $__timeFilter(e.StartedUTC) ORDER BY e.StartedUTC DESC,e.ExecutionId DESC;",
+          "editorMode": "code",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    },
+    {
+      "id": 9,
+      "title": "Diagnostic alert history",
+      "type": "table",
+      "description": "Up to 200 alerts in selected time range.",
+      "gridPos": {
+        "x": 0,
+        "y": 50,
+        "w": 24,
+        "h": 10
+      },
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_DHC}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_DHC}"
+          },
+          "rawQuery": true,
+          "rawSql": "SELECT TOP(200) r.StartedUTC AS [Snapshot UTC],a.Severity,a.Area,a.ObjectName AS [Object],a.Details FROM dhc.Alert a JOIN dhc.Run r ON r.RunId=a.RunId WHERE r.ServerInstance=${instance:sqlstring} AND $__timeFilter(r.StartedUTC) ORDER BY r.StartedUTC DESC,a.AlertId DESC;",
+          "editorMode": "code",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    }
+  ],
+  "links": [
+    {
+      "title": "DHC overview",
+      "type": "dashboards",
+      "asDropdown": false,
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [
+        "sqlmaniak",
+        "dhc"
+      ],
+      "icon": "external link"
+    }
+  ]
+}

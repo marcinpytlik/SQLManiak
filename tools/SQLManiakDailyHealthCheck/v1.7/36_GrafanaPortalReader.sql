@@ -26,6 +26,10 @@ GRANT SELECT ON OBJECT::dhc.Run TO [dhc_portal_reader];
 GRANT SELECT ON OBJECT::dhc.Alert TO [dhc_portal_reader];
 GRANT SELECT ON OBJECT::dhc.vMonitoringStatus TO [dhc_portal_reader];
 GRANT SELECT ON OBJECT::dhc.vMonitoringSummary TO [dhc_portal_reader];
+-- Instance Details: normalized TempDB trends and per-file growth inventory.
+GRANT SELECT ON OBJECT::dhc.vTempDBTrend TO [dhc_portal_reader];
+GRANT SELECT ON OBJECT::dhc.TempDBSnapshot TO [dhc_portal_reader];
+GRANT SELECT ON OBJECT::dhc.TempDBFile TO [dhc_portal_reader];
 GO
 IF NOT EXISTS
 (
@@ -43,7 +47,7 @@ JOIN sys.database_principals u ON u.principal_id=rm.member_principal_id
 WHERE r.name=N'dhc_portal_reader';
 GO
 /* Audit separately: do not grant db_datareader, dhc_collector, db_owner, sysadmin.
-   Connect AS dhc_grafana_reader to verify 9 panel queries in Grafana.
+   Connect AS dhc_grafana_reader to verify Grafana Portal MVP and Instance Details panel queries in Grafana.
    The portal account may read diagnostic alerts, which can include sensitive
    object names and error text. Limit Grafana access accordingly.
 */
