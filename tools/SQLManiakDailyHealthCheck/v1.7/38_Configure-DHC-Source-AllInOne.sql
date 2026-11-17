@@ -66,7 +66,8 @@ USE msdb;
 IF EXISTS (
  SELECT 1 FROM sys.database_principals
  WHERE name=N'dhc_source_collector'
-   AND (type<>'S' OR sid<>SUSER_SID(N'dhc_source_collector'))
+   AND (type<>'S' OR SUSER_SID(N'dhc_source_collector') IS NULL
+        OR sid<>SUSER_SID(N'dhc_source_collector'))
 )
     THROW 51808, 'msdb user name exists but does not map to the expected SQL login.', 1;
 IF EXISTS (
