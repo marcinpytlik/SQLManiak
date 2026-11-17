@@ -607,3 +607,18 @@ PowerShell 7 may translate COM `GetTask()` not-found HRESULT 0x80070002 into a `
 ### Test 46B — principal normalization and read-only retest
 
 The Windows Task Scheduler COM definition may report `Principal.UserId = blad` even when the registering Windows identity is `DEWELOPER\blad`. A string comparison is not a valid identity check. `32_Register-WindowsScheduledTask-LAB.ps1` now compares the task principal SID with the current Windows SID. For an existing task created by an earlier version of script 32, **do not delete/re-register**: run `33_Verify-WindowsScheduledTask-LAB.ps1` to check its disabled status, identity SID, interactive logon, limited run level and IgnoreNew overlap without making any changes. Test 46B is not complete until this Windows verification passes.
+
+## Consolidated deployment helpers (SQL Server 2022+)
+
+- `34_Install-DHC-Repository.ps1`: deploys existing SQL files 01, 04, 08, 09, 12, 14 and 20 in order, then maps a dedicated SQL login to database role `dhc_collector`. Existing data is preserved.
+- `35_Configure-DHC-Source.ps1`: configures a dedicated non-sysadmin SQL login on one monitored SQL Server 2022+ source. Adds server diagnostic grants, SQLAgentReaderRole and narrow msdb Agent history SELECT grants. The broad `ALTER TRACE` permission is explicitly opt-in using `-GrantAlterTrace`.
+
+Both scripts are **preview by default**; use `-Apply` for changes. Use `-NewCollectorCredential` only when a missing SQL login must be created, without storing SQL passwords in source control. They do not reset existing logins, register target inventory, create DPAPI files or enable a scheduler. Partial failures may leave objects and must be reviewed before reruns. Use distinct credentials for Repository and Sources, and trusted TLS certificates in production. SQL Server 2016 and 2019 require separate permission evaluation.
+
+Example (preview):
+```powershell
+$admin=Get-Credential
+$collector=Get-Credential
+.\34_Install-DHC-Repository.ps1 -ServerInstance 'SQLREPO' -AdministratorCredential $admin -CollectorLogin $collector.UserName -NewCollectorCredential $collector
+.\35_Configure-DHC-Source.ps1 -ServerInstance 'SQL01\INST' -AdministratorCredential $admin -CollectorLogin $collector.UserName -NewCollectorCredential $collector
+```
