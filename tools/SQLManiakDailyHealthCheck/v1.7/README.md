@@ -499,3 +499,22 @@ collector. Inspect all warnings and result sets if a section is absent:
 string matching is not a complete guarantee. For target 15435, run a
 separate due-aware test later to verify new credentials on that target as
 well. This stage does not touch production or enable SQL Server Agent.
+
+### Optional LAB role for SQL Trace-based autogrowth (Test 36B)
+
+`27_Source-AutogrowthTraceRole-LAB.sql` configures a dedicated custom
+server role `dhc_autogrowth_reader` granted `ALTER TRACE`, and assigns
+the selected target source login. Run on **each Docker LAB target separately**,
+changing `@Login` to match target 15434 or 15435. Script checks presence
+and is repeatable. Do not run unchanged in production. A test connection
+under the dedicated login must confirm `IsRoleMember=1`,
+`CanAlterTrace=1`, `IsSysadmin=0`, and successful `SELECT` from
+`sys.traces`. Then retry full DHC source collection, checking ALL
+`dhc.Alert` records, especially other currently known missing permissions
+(`xp_readerrorlog`, `msdb.dbo.sysschedules`,
+`msdb.dbo.agent_datetime`).
+
+Security: `ALTER TRACE` is server-wide, not a read-only privilege;
+the role organizes assignment/revocation but does not reduce privilege
+scope. Consider replacing the legacy SQL Trace autogrowth diagnostics
+with a supported Extended Events approach as a later architectural change.
