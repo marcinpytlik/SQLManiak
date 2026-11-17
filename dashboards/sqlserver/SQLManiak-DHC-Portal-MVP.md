@@ -4,7 +4,7 @@
 
 Read-only dashboard for **Overview / Instances / Alerts / History** using the existing `SQLManiakHealthHistory` schema. This is **not** a real-time health monitor: source data is collected at `IntervalMinutes=1440`, while Windows scheduler checks due instances every 60 minutes. Dashboard refresh is 1 hour; it does not trigger collection.
 
-Dashboard JSON: `dashboards/sqlserver/sqlmaniak-dhc-portal-mvp.json` (9 panels). SQL reader grants: `tools/SQLManiakDailyHealthCheck/v1.7/36_GrafanaPortalReader.sql`. Optional isolated LAB container: `tools/SQLManiakDailyHealthCheck/v1.7/grafana-compose.yaml`.
+Dashboard JSON: `dashboards/sqlserver/sqlmaniak-dhc-portal-mvp.json` (11 panels, MVP-02). SQL reader grants: `tools/SQLManiakDailyHealthCheck/v1.7/36_GrafanaPortalReader.sql`. Optional isolated LAB container: `tools/SQLManiakDailyHealthCheck/v1.7/grafana-compose.yaml`.
 
 ## LAB setup
 
@@ -23,7 +23,7 @@ Dashboard JSON: `dashboards/sqlserver/sqlmaniak-dhc-portal-mvp.json` (9 panels).
    Visit `http://127.0.0.1:3300`. Do not use `docker compose down -v` because it deletes the Grafana LAB volume. The Grafana image tag should be reviewed/pinned to an approved version before running.
 5. In Grafana, add **Connections → Data sources → Microsoft SQL Server** with Host `host.docker.internal:15433` (Grafana running in Docker Desktop on the same Windows machine), Database `SQLManiakHealthHistory`, User `dhc_grafana_reader` and its password through the Grafana UI. Configure TLS appropriately and use **Save & Test**. If using Grafana installed natively on Windows, use host `127.0.0.1:15433`; for remote/corporate Grafana, provide an approved routable address and firewall rules rather than `127.0.0.1`.
 6. **Dashboards → New → Import**, select `dashboards/sqlserver/sqlmaniak-dhc-portal-mvp.json`, and pick the MSSQL data source for the `DHC Repository` variable. Set time range to **last 7 days**, then select `Environment=LAB`, `Instance=All`. Grafana may require re-selecting the data source in the variable editor after import.
-7. Check nine panels and test filters and time range. Cross-check with the two read-only SQL queries below. A missing time-range history is not the same as failed collection.
+7. Check eleven panels and test filters and time range. Cross-check with the two read-only SQL queries below. A missing time-range history is not the same as failed collection.
 
 ## Validation SQL
 
@@ -43,3 +43,52 @@ Dashboard's "CRITICAL alerts (latest runs)" and "Alerts · latest collected run"
 The reader role grants SELECT on `dhc.MonitoredServer`, `dhc.ExecutionLog`, `dhc.Run`, `dhc.Alert`, `dhc.vMonitoringStatus` and `dhc.vMonitoringSummary` only. It does **not** grant access to `dhc.ResultBatch` raw JSON or credential tables. Users with Grafana Query Editor access can execute additional permitted read queries, so restrict datasource query-edit permissions and visibility. Alerts and error details may contain sensitive server information.
 
 **Validation status:** JSON syntax and SQL schema references checked against repository sources; live import, Grafana MSSQL connection and visual panels require an interactive test on the user's LAB. Existing GitHub Grafana CI may cover JSON validation but not runtime query results.
+
+## MVP-02: separate collection state from SQL health (LAB)
+
+**Collection · on schedule** is the number of enabled instances whose last attempt is `COMPLETE` and `IsOverdue=0`. **Collection · needs attention** counts FAILED/PARTIAL/RUNNING/NO_DATA and overdue attempts. These describe delivery, not SQL Server service/database health.
+
+**SQL health** uses only the latest `dhc.Run` with status `COMPLETE` or `PARTIAL` for each enabled instance:
+- `CRITICAL`: at least one CRITICAL alert in that diagnostic snapshot
+- `WARNING`: WARNING alert(s) and no CRITICAL
+- `OK`: that snapshot has neither severity
+- `STALE`: the instance is overdue, even if an older snapshot contains alerts
+- `NO_DATA`: no COMPLETE/PARTIAL diagnostic snapshot exists
+
+The status is **point-in-time evidence, not real-time health**. Collection attempt failures do not erase the last diagnostic snapshot; inspect collection status and the timestamp together. `PARTIAL` snapshots may not contain a complete set of checks, so `OK` is not a guarantee of healthy SQL Server.
+
+The Instances table includes separately colored `Collection`, `Overdue` and `SQL health`, plus critical/warning counts from the latest available snapshot. Filter to Environment=LAB and Instance=All after reimport. Expected from the observed LAB screenshot (subject to data changes): enabled=2, collection on schedule=2, collection issues=0, SQL health CRITICAL=2, WARNING=0, STALE/NO DATA=0. SQL Server Agent stopped in both Linux Docker targets is the source of two critical service alerts; it is not evidence that the collector failed.
+
+### Verification SQL
+
+Execute below on the Repository and compare with the Grafana Instances panel after import:
+
+```sql
+USE SQLManiakHealthHistory;
+GO
+SELECT s.ServerInstance,s.MonitoringStatus AS Collection,s.IsOverdue,
+ CASE WHEN r.RunId IS NULL THEN 'NO_DATA'
+      WHEN s.IsOverdue=1 THEN 'STALE'
+      WHEN ISNULL(a.CriticalCount,0)>0 THEN 'CRITICAL'
+      WHEN ISNULL(a.WarningCount,0)>0 THEN 'WARNING'
+      ELSE 'OK' END AS SQLHealth,
+ ISNULL(a.CriticalCount,0) AS CriticalAlerts,
+ ISNULL(a.WarningCount,0) AS WarningAlerts,
+ r.StartedUTC AS DiagnosticSnapshotUTC
+FROM dhc.vMonitoringStatus s
+OUTER APPLY (
+ SELECT TOP(1) RunId,StartedUTC
+ FROM dhc.Run
+ WHERE ServerInstance=s.ServerInstance AND Status IN ('COMPLETE','PARTIAL')
+ ORDER BY StartedUTC DESC,RunId DESC
+) r
+OUTER APPLY (
+ SELECT SUM(CASE WHEN Severity='CRITICAL' THEN 1 ELSE 0 END) CriticalCount,
+        SUM(CASE WHEN Severity='WARNING' THEN 1 ELSE 0 END) WarningCount
+ FROM dhc.Alert WHERE RunId=r.RunId
+) a
+WHERE s.IsEnabled=1 AND s.Environment='LAB'
+ORDER BY s.ServerInstance;
+```
+
+Grafana dashboard JSON and the SQL above are source-checked, but live Grafana import and SQL results still need to be confirmed on the running LAB. Reimport the same UID `sqlmaniak-dhc-mvp`, replacing the older dashboard.
