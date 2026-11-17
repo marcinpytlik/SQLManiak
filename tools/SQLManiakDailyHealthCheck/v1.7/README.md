@@ -202,3 +202,39 @@ Run `11_Test-NoData-Overdue.sql` in SSMS against the **LAB repository** after `0
 | Disabled registration 3h old | DISABLED | 0 |
 
 The test performs no collector runs and does not modify actual Docker endpoints. Expect three PASS verdicts and cleanup PASS; last result set should still show only your real LAB inventory. The test validates overdue detection **for never-attempted instances**, not overdue detection after a previous completed run. That scenario should be tested separately in a disposable repository before automatic scheduling. `IntervalMinutes` remains informational until we implement a due-aware runner/scheduler.
+
+## Due-aware execution with atomic claim
+
+Install `12_TryStartExecution.sql` on the **repository** after `04_MonitoredServers.sql`, `08_ExecutionLog.sql` and `09_MonitoringStatus.sql`. It defines `dhc.TryStartExecution`. The updated `06_Run-DHC-MonitoredServers.ps1` now uses it when `-Execute` is specified.
+
+The procedure locks the **ServerId** for the duration of a short SQL transaction, checks the latest attempt and `IntervalMinutes`, and inserts a `RUNNING` row atomically only for eligible instances. Thus two cooperating runner processes cannot claim the same instance at the same time. A subsequent `RUNNING` blocks another claim, including `-Force`. A crashed attempt can leave `RUNNING`; it must be investigated and explicitly resolved by a DBA before resuming. This is safer than silently assuming it ended. The runner's `SKIPPED` statuses (reason `NOT_DUE` or `RUNNING`) are output-only and do **not** add history rows.
+
+By default, a server is due immediately when no `dhc.ExecutionLog` exists; after an attempt (including FAILED) it becomes due when `StartedUTC + IntervalMinutes <= SYSUTCDATETIME()`. `-Force` overrides only the interval, not `IsEnabled` or `RUNNING`. A `-Execute` run is **due-aware**; for an immediate one-off manual test use `-Force -Execute`. `-Environment LAB` scopes the eligible targets. Preview lists `DueStatus` as of its query; actual execution always rechecks under a lock, so changes between preview and execute are handled safely.
+
+```powershell
+# Preview. Should show NOT_DUE for recently checked instances.
+.\06_Run-DHC-MonitoredServers.ps1 -RepositoryConnectionString $builder.ConnectionString -Environment LAB
+
+# Due-aware execution; immediately after a successful run, instances are SKIPPED.
+.\06_Run-DHC-MonitoredServers.ps1 `
+  -RepositoryConnectionString $builder.ConnectionString `
+  -SqlCredentialByServer $targetCredentials `
+  -Environment LAB -Execute -TrustServerCertificate
+
+# Explicit manual override (keeps RUNNING safety).
+.\06_Run-DHC-MonitoredServers.ps1 `
+  -RepositoryConnectionString $builder.ConnectionString `
+  -SqlCredentialByServer $targetCredentials `
+  -Environment LAB -Execute -Force -TrustServerCertificate
+```
+
+```sql
+-- Check that NOT_DUE attempts do not create duplicate history:
+USE SQLManiakHealthHistory;
+SELECT ServerInstance,COUNT_BIG(*) AS Attempts,MAX(StartedUTC) AS LastAttemptUTC
+FROM dhc.ExecutionLog
+WHERE ServerInstance IN (N'127.0.0.1,15434',N'127.0.0.1,15435')
+GROUP BY ServerInstance;
+```
+
+No SQL Agent job or Windows Task Scheduler task has been installed yet. The next phase will integrate a central scheduler only after this lab test. Grant `EXECUTE ON OBJECT::dhc.TryStartExecution` to the dedicated repository identity when onboarding least-privilege users. The command must be launched under a properly secured identity and must not expose connection strings with passwords in task arguments.
