@@ -115,6 +115,175 @@ DEALLOCATE ErrorLogCursor;
  return [regex]::Replace($SqlText,$pattern,[System.Text.RegularExpressions.MatchEvaluator]{param($m) $replacement})
 }
 
+
+function Update-AutogrowthScan([string]$SqlText) {
+ # Replace ONLY the known original v1.5 section 12C in memory.
+ # Leave the original file unchanged, with the same result shape / alert thresholds.
+ $pattern='(?s)/\* 12C\. ACTUAL AUTOGROWTH EVENTS .*?(?=/\* 12D\. LOG OVERSIZING ANALYSIS)'
+ if(([regex]::Matches($SqlText,$pattern)).Count -ne 1) {
+  throw 'DHC XE autogrowth rewrite: expected exactly one known v1.5 section 12C.'
+ }
+ $replacement=@'
+/* 12C. ACTUAL AUTOGROWTH EVENTS - SQLManiak_Autogrowth Extended Events.
+   Uses SQL Server UTC XE timestamps, read-only file access and #CurrentFiles.
+   AVAILABLE_PARTIAL is deliberate: rolling XEL files cannot prove full 24h coverage.
+   A zero count with partial history is not evidence of zero autogrowth.
+*/
+BEGIN TRY
+    DECLARE @XeAutoNowUTC datetime2(7) = SYSUTCDATETIME();
+    DECLARE @XeAutoSinceUTC datetime2(7) = DATEADD(HOUR,-24,@XeAutoNowUTC);
+    DECLARE @AutoGrowthHistoryStatus varchar(32) = 'UNAVAILABLE';
+    DECLARE @XeAutoFileName nvarchar(4000) = NULL;
+    DECLARE @XeAutoPattern nvarchar(4000) = NULL;
+
+    CREATE TABLE #XeAutoEvents
+    (
+        DatabaseID int NOT NULL,
+        FileID int NOT NULL,
+        EventUTC datetime2(7) NOT NULL,
+        SizeChangeKB bigint NOT NULL,
+        DurationMicroseconds bigint NULL
+    );
+
+    -- A live session and a configured event_file target are required.
+    IF EXISTS
+    (
+        SELECT 1 FROM sys.dm_xe_sessions
+        WHERE name = N'SQLManiak_Autogrowth'
+    )
+    BEGIN
+        BEGIN TRY
+            SELECT TOP (1) @XeAutoFileName = CONVERT(nvarchar(4000),f.value)
+            FROM sys.server_event_sessions s
+            JOIN sys.server_event_session_fields f
+              ON f.event_session_id = s.event_session_id
+            WHERE s.name = N'SQLManiak_Autogrowth'
+              AND f.object_name = N'event_file'
+              AND f.name = N'filename';
+
+            IF @XeAutoFileName IS NULL
+               OR RIGHT(LOWER(@XeAutoFileName),4) <> N'.xel'
+                THROW 51940, 'XE event_file target filename not found.', 1;
+
+            SET @XeAutoPattern =
+                LEFT(@XeAutoFileName,LEN(@XeAutoFileName)-4) + N'*.xel';
+
+            -- Materialize first: lab verified that predicate pushdown on
+            -- timestamp_utc directly in fn_xe_file_target_read_file can
+            -- unexpectedly return an empty set on tested SQL build.
+            CREATE TABLE #XeAutoRaw
+            (
+                EventUTC datetime2(7) NOT NULL,
+                EventXml xml NOT NULL
+            );
+            INSERT #XeAutoRaw(EventUTC,EventXml)
+            SELECT timestamp_utc,CAST(event_data AS xml)
+            FROM sys.fn_xe_file_target_read_file(
+                 @XeAutoPattern,NULL,NULL,NULL)
+            WHERE object_name=N'database_file_size_change';
+
+            INSERT #XeAutoEvents
+                (DatabaseID,FileID,EventUTC,SizeChangeKB,DurationMicroseconds)
+            SELECT
+                r.EventXml.value('(/event/data[@name="database_id"]/value)[1]','int'),
+                r.EventXml.value('(/event/data[@name="file_id"]/value)[1]','int'),
+                r.EventUTC,
+                r.EventXml.value('(/event/data[@name="size_change_kb"]/value)[1]','bigint'),
+                r.EventXml.value('(/event/data[@name="duration"]/value)[1]','bigint')
+            FROM #XeAutoRaw AS r
+            WHERE r.EventXml.value('(/event/data[@name="is_automatic"]/value)[1]','bit')=1
+              AND r.EventXml.value('(/event/data[@name="size_change_kb"]/value)[1]','bigint')>0;
+
+            SET @AutoGrowthHistoryStatus = 'AVAILABLE_PARTIAL';
+        END TRY
+        BEGIN CATCH
+            INSERT #Alerts VALUES('WARNING','AUTOGROWTH',NULL,
+                CONCAT('XE autogrowth read unavailable: ',ERROR_MESSAGE()));
+        END CATCH;
+    END
+    ELSE
+        INSERT #Alerts VALUES('WARNING','AUTOGROWTH',NULL,
+            'SQLManiak_Autogrowth XE session is not running; history unavailable.');
+
+    ;WITH EventAgg AS
+    (
+        SELECT DatabaseID,FileID,
+               COUNT_BIG(*) AS EventsInAvailableTrace,
+               SUM(CASE WHEN EventUTC BETWEEN @XeAutoSinceUTC AND @XeAutoNowUTC
+                    THEN CONVERT(bigint,1) ELSE CONVERT(bigint,0) END) AS Events24h,
+               MAX(EventUTC) AS LastAutoGrowth,
+               SUM(CASE WHEN EventUTC BETWEEN @XeAutoSinceUTC AND @XeAutoNowUTC
+                    THEN CONVERT(decimal(19,2),SizeChangeKB/1024.0)
+                    ELSE CONVERT(decimal(19,2),0) END) AS GrowthMB24h,
+               MAX(CASE WHEN EventUTC BETWEEN @XeAutoSinceUTC AND @XeAutoNowUTC
+                    THEN CONVERT(decimal(19,2),DurationMicroseconds/1000.0)
+                    END) AS MaxDurationMs24h
+        FROM #XeAutoEvents
+        GROUP BY DatabaseID,FileID
+    )
+    SELECT f.database_id,f.file_id,f.DatabaseName,f.LogicalFileName,
+           f.type_desc AS FileType,f.PhysicalName,f.AllocatedMB,f.GrowthSetting,
+           @AutoGrowthHistoryStatus AS HistoryStatus,
+           CASE WHEN @AutoGrowthHistoryStatus<>'AVAILABLE_PARTIAL' THEN NULL
+                ELSE ISNULL(a.Events24h,CONVERT(bigint,0)) END AS Events24h,
+           CASE WHEN @AutoGrowthHistoryStatus<>'AVAILABLE_PARTIAL' THEN NULL
+                ELSE ISNULL(a.GrowthMB24h,CONVERT(decimal(19,2),0)) END AS GrowthMB24h,
+           CASE WHEN @AutoGrowthHistoryStatus<>'AVAILABLE_PARTIAL' THEN NULL
+                ELSE a.LastAutoGrowth END AS LastAutoGrowth,
+           CASE WHEN @AutoGrowthHistoryStatus<>'AVAILABLE_PARTIAL' THEN NULL
+                ELSE a.MaxDurationMs24h END AS MaxDurationMs24h,
+           CASE WHEN @AutoGrowthHistoryStatus<>'AVAILABLE_PARTIAL' THEN NULL
+                ELSE ISNULL(a.EventsInAvailableTrace,CONVERT(bigint,0)) END AS EventsInAvailableTrace
+    INTO #AutoGrowthReport
+    FROM #CurrentFiles AS f
+    LEFT JOIN EventAgg AS a
+      ON a.DatabaseID=f.database_id AND a.FileID=f.file_id
+    WHERE f.type_desc IN ('ROWS','LOG');
+
+    SELECT '12C AUTOGROWTH EVENTS' AS Section,
+           DatabaseName,LogicalFileName,FileType,AllocatedMB,GrowthSetting,
+           HistoryStatus,Events24h,GrowthMB24h,LastAutoGrowth,MaxDurationMs24h,
+           EventsInAvailableTrace,PhysicalName
+    FROM #AutoGrowthReport
+    ORDER BY Events24h DESC,DatabaseName,LogicalFileName;
+
+    INSERT #Alerts(Severity,Area,ObjectName,Details)
+    SELECT CASE WHEN Events24h>=@AutoGrowthFrequentCount*3
+                THEN 'CRITICAL' ELSE 'WARNING' END,
+           'AUTOGROWTH',CONCAT(DatabaseName,'.',LogicalFileName),
+           CONCAT('Frequent autogrowth: ',Events24h,' events in available 24h; ',
+                  GrowthMB24h,' MB total; longest ',
+                  COALESCE(CONVERT(varchar(40),MaxDurationMs24h),'n/a'),' ms')
+    FROM #AutoGrowthReport
+    WHERE Events24h>=@AutoGrowthFrequentCount;
+
+    INSERT #Alerts(Severity,Area,ObjectName,Details)
+    SELECT 'WARNING','AUTOGROWTH',CONCAT(DatabaseName,'.',LogicalFileName),
+           CONCAT('Slow autogrowth: maximum ',MaxDurationMs24h,
+                  ' ms in available 24h; events: ',Events24h)
+    FROM #AutoGrowthReport
+    WHERE MaxDurationMs24h>=@AutoGrowthSlowMs
+      AND (Events24h<@AutoGrowthFrequentCount OR Events24h IS NULL);
+
+    INSERT #Alerts(Severity,Area,ObjectName,Details)
+    SELECT 'WARNING','AUTOGROWTH',CONCAT(DatabaseName,'.',LogicalFileName),
+           CONCAT('High autogrowth volume: ',GrowthMB24h,
+                  ' MB in available 24h; events: ',Events24h)
+    FROM #AutoGrowthReport
+    WHERE GrowthMB24h>=@AutoGrowthGrowthWarningMB
+      AND (Events24h<@AutoGrowthFrequentCount OR Events24h IS NULL)
+      AND (MaxDurationMs24h<@AutoGrowthSlowMs OR MaxDurationMs24h IS NULL);
+END TRY
+BEGIN CATCH
+    INSERT #Alerts VALUES('WARNING','AUTOGROWTH',NULL,
+        CONCAT('XE autogrowth audit failed: ',ERROR_MESSAGE()));
+END CATCH;
+
+'@
+ return [regex]::Replace($SqlText,$pattern,
+    [System.Text.RegularExpressions.MatchEvaluator]{param($m) $replacement})
+}
+
 function Query-Source([string]$QueryFile) {
  $args=@{ServerInstance=$ServerInstance;Database='master';QueryTimeout=$QueryTimeout;ConnectionTimeout=$ConnectionTimeout;
          OutputAs='DataSet';ErrorAction='Stop'}
@@ -129,6 +298,7 @@ function Query-Source([string]$QueryFile) {
   }
   $args.Query=[regex]::Replace($args.Query,$pattern,'${1}0${2}')
   $args.Query=Update-ErrorLogScan $args.Query
+  $args.Query=Update-AutogrowthScan $args.Query
  }
  return @(Invoke-Sqlcmd @args)
 }
