@@ -168,3 +168,25 @@ ORDER BY StartedUTC DESC;
 ```
 
 The runner never stores passwords or SQL connection strings. A repository logging failure is surfaced in the PowerShell output and may leave an incomplete `RUNNING` row if the final update fails; this is a new failure mode worth monitoring. The added table requires repository `INSERT`/`UPDATE`/`SELECT` privileges consistent with the existing `dhc` schema.
+
+## Monitoring status and overdue detection
+
+After `04_MonitoredServers.sql` and `08_ExecutionLog.sql`, execute **`09_MonitoringStatus.sql`** once on SQL Repository. This installs two read-only views:
+
+- `dhc.vMonitoringStatus`: **one row for every registered server**, including disabled servers and servers with no executions. Contains latest attempt/status/error, latest **COMPLETE** run, elapsed minutes since each, `IsOverdue`, and `MonitoringStatus`.
+- `dhc.vMonitoringSummary`: grouped by Environment, with counts of enabled/COMPLETE/FAILED/PARTIAL/NO_DATA/RUNNING and overdue.
+
+`MonitoringStatus` is the **latest attempt's** state: `DISABLED`, `NO_DATA`, `COMPLETE`, `PARTIAL`, `FAILED`, or `RUNNING`. `IsOverdue` is an **independent flag**: 1 when the last attempted check (or a newly registered server's CreatedUTC if no attempt exists) is older than `IntervalMinutes`. It does **not** indicate whether a successful measurement is still fresh, nor does it schedule collection. `LastCompleteUTC`/`MinutesSinceComplete` track only full `COMPLETE` results, never `PARTIAL`. Date computations use UTC. If an older failure is followed by a new successful run, status changes to `COMPLETE`, while prior failure history remains in `dhc.ExecutionLog`.
+
+Run **`10_MonitoringStatus_Checks.sql`** on SQL Repository for four non-destructive checks: full inventory status, cardinality, latest-attempt reconciliation and exception list. It needs only SELECT privileges on the two views and underlying tables for reconciliation.
+
+```sql
+USE SQLManiakHealthHistory;
+SELECT ServerInstance,MonitoringStatus,IsOverdue,
+       LastAttemptUTC,LastCompleteUTC,MinutesSinceComplete,LastErrorText
+FROM dhc.vMonitoringStatus
+ORDER BY ServerInstance;
+SELECT * FROM dhc.vMonitoringSummary;
+```
+
+Lab: after the previous Target 2 failure, expect `15435` to show `FAILED` **until the next successful run**, even if its Docker container has been restarted. Run the central DHC on both healthy containers, then status should show `COMPLETE` for both. `IntervalMinutes=1440` means neither should be overdue immediately after an attempt. To test overdue logic without changing production configuration, do so in a disposable copy of the repository; the shipped checks do not alter records. SQL runtime validation remains required in the user's Docker lab.
