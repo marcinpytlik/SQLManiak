@@ -13,7 +13,7 @@ if(-not $IsWindows){throw 'Windows DPAPI is required.'}
 if($SqlCredentialByServer.Count -eq 0){throw 'Source credential map cannot be empty.'}
 $root=[IO.Path]::GetFullPath($SecretsDirectory)
 $localRoot=[IO.Path]::GetFullPath($env:LOCALAPPDATA).TrimEnd('\')
-if(-not $root.StartsWith($home+'\',[StringComparison]::OrdinalIgnoreCase)) {throw 'Secrets must remain in LOCALAPPDATA.'}
+if(-not $root.StartsWith($localRoot+'\',[StringComparison]::OrdinalIgnoreCase)) {throw 'Secrets must remain in LOCALAPPDATA.'}
 if(Test-Path -LiteralPath $root){throw "Directory already exists: $root (no overwrite)."}
 [void](New-Item -Path $root -ItemType Directory)
 try {
