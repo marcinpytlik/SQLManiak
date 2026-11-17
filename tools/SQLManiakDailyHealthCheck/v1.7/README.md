@@ -310,3 +310,47 @@ Expected: target 15434 COMPLETE PASS, target 15435 SKIPPED PASS,
 `Test 28: PASS`, `RESTORED target 1 IntervalMinutes=1440`.
 If target 2 becomes DUE before starting, test fails safely without
 modifying anything. No SQL Agent job is enabled.
+
+## Stage 3 — repository permissions and scheduler identity preflight
+
+Deploy `20_RepositoryLeastPrivilege.sql` against the **LAB repository**.
+This idempotent SQL creates **only the database role** `dhc_collector`
+and object-specific `SELECT/INSERT/UPDATE/EXECUTE` grants as required by
+current scripts. It does **not** create a login, grant `sysadmin`, add any
+role members, or modify source SQL Server instances. The repository SQL login
+must be created by an administrator and mapped to a database user; only then
+add the user to role `dhc_collector` after review.
+
+Run `21_Test-SchedulerIdentity.ps1` under the actual intended Windows
+CmdExec identity **on the same host** where the DPAPI files were created:
+
+```powershell
+.\21_Test-SchedulerIdentity.ps1 `
+  -ConfigPath "$env:LOCALAPPDATA\SQLManiakDHC-v2\scheduler.json" `
+  -Environment LAB -CheckSqlPreview
+```
+
+Preflight verifies current Windows identity, script access, original LOCAL
+DHC v1.5 source, DPAPI decryptability for repository and target credentials,
+and optional read-only repository preview. Does not run DHC or enable Agent.
+`-CheckSqlPreview` tests the account's actual repository access.
+
+**Identity boundary:** The LAB DPAPI files under
+`C:\Users\blad\AppData\Local` were created under that user's account.
+A different SQL Agent service identity cannot decrypt them. Copying them,
+changing NTFS permissions, or passing that user's profile path is NOT a
+substitute for exporting fresh credentials while running under the chosen
+Agent proxy/service account on the SAME host. Do not enable a job until
+preflight runs successfully under that exact identity.
+
+**Source permissions:** This role covers only central repository operations,
+not source `master` diagnostics. `02_TempDB_Collect.sql` documents
+`VIEW SERVER PERFORMANCE STATE` for SQL Server 2022 DMVs. Full least
+privilege for the original local DHC v1.5 SQL requires auditing its exact
+statements (ERRORLOG reading and other server-level diagnostics). Do not
+blindly assign `sysadmin` to make an incomplete test pass. Create independent
+LAB source logins only after an audit of the original SQL.
+
+For now the existing disabled Agent template remains disabled. A CmdExec
+step uses the Agent service identity unless explicitly configured with a
+proper CmdExec proxy and credential. No proxy is created by these scripts.
