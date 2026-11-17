@@ -36,13 +36,21 @@ Import-Module ScheduledTasks -ErrorAction Stop
 $scheduler=New-Object -ComObject 'Schedule.Service'
 $scheduler.Connect()
 $folder=$scheduler.GetFolder('\')
+$found=$null
 try {
  $found=$folder.GetTask($TaskName)
- throw "Task already exists: $TaskName. Refusing to overwrite."
-} catch [System.Runtime.InteropServices.COMException] {
- if($_.Exception.ErrorCode -ne -2147024894) {
-  throw "Cannot inspect LAB task via Task Scheduler COM. HRESULT=0x$('{0:X8}' -f ([uint32]$_.Exception.ErrorCode)). $($_.Exception.Message)"
+} catch {
+ # PowerShell 7 COM dynamic invocation can surface HRESULT 0x80070002 as
+ # System.IO.FileNotFoundException instead of COMException.
+ # Compare the HRESULT, not the exception's .NET type or message language.
+ $hr=[int64]$_.Exception.HResult
+ if($hr -ne -2147024894) {
+  $hex='{0:X8}' -f ($hr -band 0xFFFFFFFFL)
+  throw "Cannot inspect LAB task via Task Scheduler COM (HRESULT 0x$hex): $($_.Exception.Message)"
  }
+}
+if($null -ne $found){
+ throw "Task already exists: $TaskName. Refusing to overwrite."
 }
 if(-not(Test-Path -LiteralPath $ConfigPath -PathType Leaf)){
  throw "DPAPI scheduler configuration missing: $ConfigPath"
