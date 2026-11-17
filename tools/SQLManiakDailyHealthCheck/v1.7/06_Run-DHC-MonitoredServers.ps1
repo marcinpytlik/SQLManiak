@@ -7,7 +7,8 @@
   single-instance collector sequentially. Preview is the default:
   specify -Execute to actually connect to targets and collect.
   A failure on one target is reported and does not stop other targets.
-  IntervalMinutes is inventory metadata; this script does not schedule jobs.
+  -Execute runs only due instances. -Force overrides interval, but not RUNNING.
+  Call from a scheduler; this script does not install a job.
   Source credentials are supplied at invocation; no passwords in inventory.
 #>
 [CmdletBinding()]
@@ -18,6 +19,7 @@ param(
     [ValidateSet('PROD','TEST','DEV','LAB','DR')][string]$Environment,
     [string]$ServerInstance,
     [switch]$Execute,
+    [switch]$Force,
     [switch]$TrustServerCertificate,
     [int]$QueryTimeout = 300,
     [ValidateRange(1,300)][int]$ConnectionTimeout = 5,
@@ -48,13 +50,25 @@ try {
     try {
         $cmd.CommandTimeout = 30
         $cmd.CommandText = @'
-SELECT ServerId,ServerInstance,DisplayName,Environment,MonitorGroup,
-       IntervalMinutes,CollectTempDB
-FROM dhc.MonitoredServer
-WHERE IsEnabled=1
-  AND (@Environment IS NULL OR Environment=@Environment)
-  AND (@ServerInstance IS NULL OR ServerInstance=@ServerInstance)
-ORDER BY Environment,MonitorGroup,ServerInstance;
+SELECT s.ServerId,s.ServerInstance,s.DisplayName,s.Environment,s.MonitorGroup,
+       s.IntervalMinutes,s.CollectTempDB,
+       CASE
+         WHEN lastRun.Status='RUNNING' THEN 'RUNNING'
+         WHEN lastRun.StartedUTC IS NULL THEN 'DUE'
+         WHEN DATEADD(MINUTE,s.IntervalMinutes,lastRun.StartedUTC)<=SYSUTCDATETIME() THEN 'DUE'
+         ELSE 'NOT_DUE'
+       END AS DueStatus
+FROM dhc.MonitoredServer AS s
+OUTER APPLY (
+    SELECT TOP (1) e.StartedUTC,e.Status
+    FROM dhc.ExecutionLog AS e
+    WHERE e.ServerInstance=s.ServerInstance
+    ORDER BY e.StartedUTC DESC,e.ExecutionId DESC
+) AS lastRun
+WHERE s.IsEnabled=1
+  AND (@Environment IS NULL OR s.Environment=@Environment)
+  AND (@ServerInstance IS NULL OR s.ServerInstance=@ServerInstance)
+ORDER BY s.Environment,s.MonitorGroup,s.ServerInstance;
 '@
         $p = $cmd.Parameters.Add('@Environment',[System.Data.SqlDbType]::VarChar,12)
         $p.Value = if($Environment){$Environment}else{[DBNull]::Value}
@@ -71,6 +85,7 @@ ORDER BY Environment,MonitorGroup,ServerInstance;
                     MonitorGroup = if($reader.IsDBNull(4)){$null}else{$reader.GetString(4)}
                     IntervalMinutes = $reader.GetInt32(5)
                     CollectTempDB = $reader.GetBoolean(6)
+                    DueStatus = $reader.GetString(7)
                 })
             }
         } finally { $reader.Dispose() }
@@ -85,7 +100,7 @@ if($instances.Count -eq 0) {
 if(-not $Execute) {
     Write-Host 'PREVIEW ONLY. Add -Execute to run collection.' -ForegroundColor Yellow
     $instances | Select-Object ServerId,ServerInstance,Environment,MonitorGroup,
-        IntervalMinutes,CollectTempDB
+        IntervalMinutes,CollectTempDB,DueStatus
     return
 }
 
@@ -113,6 +128,35 @@ function Write-ExecutionLog([string]$Sql,[hashtable]$Values) {
     finally { $logConn.Dispose() }
 }
 
+# Atomic claim in repository: locks a single ServerId, rechecks due,
+# and commits a RUNNING attempt before the target is contacted.
+function Request-ExecutionClaim([int]$Id,[guid]$ExecutionId,[bool]$ForceRun) {
+    $claimConn=[Microsoft.Data.SqlClient.SqlConnection]::new($RepositoryConnectionString)
+    try {
+        $claimConn.Open()
+        $claimCmd=$claimConn.CreateCommand()
+        try {
+            $claimCmd.CommandTimeout=30
+            $claimCmd.CommandType=[System.Data.CommandType]::StoredProcedure
+            $claimCmd.CommandText='dhc.TryStartExecution'
+            [void]$claimCmd.Parameters.Add('@ServerId',[System.Data.SqlDbType]::Int)
+            $claimCmd.Parameters['@ServerId'].Value=$Id
+            [void]$claimCmd.Parameters.Add('@ExecutionId',[System.Data.SqlDbType]::UniqueIdentifier)
+            $claimCmd.Parameters['@ExecutionId'].Value=$ExecutionId
+            [void]$claimCmd.Parameters.Add('@Force',[System.Data.SqlDbType]::Bit)
+            $claimCmd.Parameters['@Force'].Value=$ForceRun
+            $reader=$claimCmd.ExecuteReader()
+            try {
+                if(-not $reader.Read()) { throw 'Claim procedure returned no decision.' }
+                return [string]$reader.GetString(0)
+            }
+            finally { $reader.Dispose() }
+        }
+        finally { $claimCmd.Dispose() }
+    }
+    finally { $claimConn.Dispose() }
+}
+
 Write-Host "DHC v1.7: processing $($instances.Count) monitored instance(s) sequentially." -ForegroundColor Cyan
 $results = [System.Collections.Generic.List[object]]::new()
 foreach($item in $instances) {
@@ -120,16 +164,20 @@ foreach($item in $instances) {
     $executionId = [guid]::NewGuid()
     $logStarted = $false
     try {
-        Write-ExecutionLog @'
-INSERT dhc.ExecutionLog
-    (ExecutionId, ServerId, ServerInstance, StartedUTC, Status)
-VALUES
-    (@ExecutionId, @ServerId, @ServerInstance, @StartedUTC, 'RUNNING');
-'@ @{
-            ExecutionId = $executionId
-            ServerId = $item.ServerId
-            ServerInstance = $item.ServerInstance
-            StartedUTC = $started
+        $decision=Request-ExecutionClaim $item.ServerId $executionId ([bool]$Force)
+        if($decision -ne 'CLAIMED') {
+            $results.Add([pscustomobject]@{
+                ExecutionId=$null
+                ServerId=$item.ServerId
+                ServerInstance=$item.ServerInstance
+                Environment=$item.Environment
+                Status='SKIPPED'
+                RunId=$null
+                RowsStored=0
+                DurationMs=0
+                Error=$decision
+            })
+            continue
         }
         $logStarted = $true
 
