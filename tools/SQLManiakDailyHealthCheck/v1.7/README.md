@@ -518,3 +518,23 @@ Security: `ALTER TRACE` is server-wide, not a read-only privilege;
 the role organizes assignment/revocation but does not reduce privilege
 scope. Consider replacing the legacy SQL Trace autogrowth diagnostics
 with a supported Extended Events approach as a later architectural change.
+
+### Test 36C — read-only verification of remaining SQL source object permissions
+
+After Test 36B verified the custom `dhc_autogrowth_reader` role on both
+Docker LAB targets, run the standalone `28_Test-SourceObjectPermissions.ps1`.
+It checks, **under the actual dedicated credentials** for each target,
+real execution of `master.dbo.xp_readerrorlog` (filtered to a string that
+should not appear), read access to `msdb.dbo.sysschedules` (TOP 0) and
+execution of `msdb.dbo.agent_datetime` (scalar function).
+It does not create/change objects, grant permissions or enable SQL Agent.
+
+```powershell
+.\28_Test-SourceObjectPermissions.ps1 `
+  -SourceCredentialByServer $sourceLabCredentials
+```
+
+Expect six PASS results. Failures print the actual SQL exception text;
+only after diagnosing them should an administrator apply object-specific
+GRANT statements on each source. A PASS here does not prove that the entire
+DHC v1.5 succeeds: rerun Test 36 and inspect its alerts and result sections.
