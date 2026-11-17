@@ -14,6 +14,7 @@ param(
  [switch]$TrustServerCertificate,
  [switch]$SkipTempDB,
  [int]$QueryTimeout=300,
+ [ValidateRange(1,300)][int]$ConnectionTimeout=5,
  [ValidateRange(1,1000)][int]$JsonBatchRows=100
 )
 Set-StrictMode -Version Latest
@@ -109,7 +110,7 @@ DEALLOCATE ErrorLogCursor;
 }
 
 function Query-Source([string]$QueryFile) {
- $args=@{ServerInstance=$ServerInstance;Database='master';QueryTimeout=$QueryTimeout;
+ $args=@{ServerInstance=$ServerInstance;Database='master';QueryTimeout=$QueryTimeout;ConnectionTimeout=$ConnectionTimeout;
          OutputAs='DataSet';ErrorAction='Stop'}
  if ($null -ne $SqlCredential) { $args.Credential=$SqlCredential }
  if ($TrustServerCertificate) { $args.TrustServerCertificate=$true }
