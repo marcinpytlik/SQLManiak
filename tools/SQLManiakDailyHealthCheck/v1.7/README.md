@@ -558,3 +558,9 @@ Following Test 36 PASS on 15434 (`ec7e29a0-dffd-4702-9e4d-ac3705c61d9b`), execut
 ```
 
 It requires target 15434 to be NOT_DUE, temporarily adjusts only 15435 `IntervalMinutes` from 1440 to 1 (restored in `finally`), invokes the full-least-privilege DPAPI scheduler, verifies 15435 COMPLETE with exactly one new ExecutionLog and RunId, 15434 SKIPPED/NOT_DUE, and no recognized permission-denied alerts for 15435. Environment alerts are allowed. Requires the most recent 15435 execution to be older than one minute. Do not run concurrently with any scheduler. GitHub dashboard CI does not validate the runtime PowerShell/SQL behavior; verify locally.
+
+### Test 38 — final read-only LAB audit (after Tests 36 and 37)
+
+Execute `31_Test-FinalDHCDataAudit.sql` on the **repository** `127.0.0.1,15433`, database `SQLManiakHealthHistory`. It compares exact verified `RunId`s from Test 36 (`ec7e29a0-dffd-4702-9e4d-ac3705c61d9b` on 15434) and Test 37 (`c8ad74a0-d721-4124-878e-75dee31baa15` on 15435), checks persisted batches and their named sections, ExecutionLog correspondence, alerts, TempDB persistence, configuration baseline (1440 min), and current monitoring status. It makes no changes to SQL objects, data, DPAPI config, credentials, monitored instance state, or job scheduling.
+
+Collect all nine result sets. `PASS` in the core assertions is the structural baseline; warnings about stopped Agent or missing system DB backups are environment findings, not permission denials. Different `SourceResultSets`/row totals on different hosts are **not** by themselves proof of failure: investigate section coverage before declaring completeness. GitHub CI only validates Grafana dashboards, not this T-SQL runtime audit.
