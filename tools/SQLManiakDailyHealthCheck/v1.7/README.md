@@ -254,3 +254,21 @@ Run **only in the Docker LAB repository** with permission to insert/delete synth
 Expected: `Claim A: CLAIMED`, `Claim B: BLOCKED`, `Claim B: RUNNING`, `ClaimedExecutionCount=1`, `Verdict=PASS`, followed by cleanup confirmation. The test creates a uniquely named synthetic monitored server and deletes only its own ExecutionLog/MonitoredServer rows in a `finally` block, with a cleanup warning if repository cleanup is unavailable. It does **not** access real target instances or run DHC, does not change the two Docker lab inventory entries, and does not schedule anything.
 
 This proves cooperative atomic claims under concurrency; it does not test process crash recovery, hung `RUNNING` cleanup or overall SQL Agent scheduling. A crashed runner can still leave a `RUNNING` entry requiring DBA attention.
+
+## Stale RUNNING diagnostic (Test 24)
+
+Deploy `14_RunningWatch.sql` on the central **LAB repository** after `08_ExecutionLog.sql`; it creates read-only `dhc.GetRunningWatch`.
+
+```sql
+USE SQLManiakHealthHistory;
+-- Only suspicious runs older than one hour.
+EXEC dhc.GetRunningWatch @MinAgeMinutes=60;
+-- All RUNNING records, with suspected/not suspected classification.
+EXEC dhc.GetRunningWatch @MinAgeMinutes=60, @IncludeRecent=1;
+```
+
+The configurable threshold is a **heuristic**, not evidence that the collector process is dead. The output includes `ExecutionId`, source, start timestamp, age, threshold, status, and classification. No historical rows are modified and no attempt is automatically unlocked, timed out or restarted. A crash may leave RUNNING indefinitely, which also blocks later `TryStartExecution` claims even with `-Force`. Investigate host process, scheduler history, repository and source activity before resolving any entry. This diagnostic does **not** install an Agent job or modify the runner.
+
+**Test 24**: run `15_Test-RunningWatch.sql` on the LAB repository. It creates two uniquely named synthetic LAB servers and RUNNING rows inside a transaction: one 180 minutes old (suspected), one 1 minute old (not suspected). It verifies both classifications and the default stale-only filter, then always rolls back. Expect both PASS and cleanup PASS; two existing targets 15434/15435 remain unchanged.
+
+Do not run these tests against production; only the diagnostic procedure is appropriate for production after change review.
