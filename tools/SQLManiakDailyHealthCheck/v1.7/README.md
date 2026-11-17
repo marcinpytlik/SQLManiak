@@ -238,3 +238,19 @@ GROUP BY ServerInstance;
 ```
 
 No SQL Agent job or Windows Task Scheduler task has been installed yet. The next phase will integrate a central scheduler only after this lab test. Grant `EXECUTE ON OBJECT::dhc.TryStartExecution` to the dedicated repository identity when onboarding least-privilege users. The command must be launched under a properly secured identity and must not expose connection strings with passwords in task arguments.
+
+## Concurrency Test 23 — two simultaneous claims
+
+`13_Test-ConcurrentClaims.ps1` runs a **deterministic** two-connection concurrency test against SQL Repository. Unlike starting two collectors manually (which may complete too quickly to overlap), it opens an outer SQL transaction for claim A, which retains the `sp_getapplock` lock across the test's hold interval. On connection B it calls the **same** `dhc.TryStartExecution` asynchronously. Before A commits B must remain blocked; after commit B must return `RUNNING`, leaving only A's single `RUNNING` execution entry. Uses `-Force` in both procedure calls, so the test specifically exercises mutual exclusion rather than interval enforcement.
+
+Run **only in the Docker LAB repository** with permission to insert/delete synthetic rows:
+
+```powershell
+.\13_Test-ConcurrentClaims.ps1 `
+  -RepositoryConnectionString $builder.ConnectionString `
+  -HoldMilliseconds 750
+```
+
+Expected: `Claim A: CLAIMED`, `Claim B: BLOCKED`, `Claim B: RUNNING`, `ClaimedExecutionCount=1`, `Verdict=PASS`, followed by cleanup confirmation. The test creates a uniquely named synthetic monitored server and deletes only its own ExecutionLog/MonitoredServer rows in a `finally` block, with a cleanup warning if repository cleanup is unavailable. It does **not** access real target instances or run DHC, does not change the two Docker lab inventory entries, and does not schedule anything.
+
+This proves cooperative atomic claims under concurrency; it does not test process crash recovery, hung `RUNNING` cleanup or overall SQL Agent scheduling. A crashed runner can still leave a `RUNNING` entry requiring DBA attention.
