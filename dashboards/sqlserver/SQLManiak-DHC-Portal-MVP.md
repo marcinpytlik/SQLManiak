@@ -119,3 +119,7 @@ Import the second dashboard `dashboards/sqlserver/sqlmaniak-dhc-instance-details
 **Read-only design:** every query targets Repository only. `TempDBFile` shows the last snapshot with TempDB data and file growth assessments, **not** live SQL Server file state. SQL health `OK` based on a partial diagnostic snapshot is not a guarantee of a healthy instance.
 
 **Release status:** GitHub dashboard CI checks JSON syntax/structure; Grafana rendering, datasource links, SQL query execution and inter-panel navigation require LAB verification after import.
+
+### MVP-03 LAB fix: SQL health Stat panel
+
+Observed on 2026-11-17: source and TempDB panels show live repository rows after granting `dhc_portal_reader` SELECT, while string-valued SQL health Stat renders `No data`. Version 2 of Instance Details returns a numeric status code from SQL: 0=OK, 1=WARNING, 2=CRITICAL, 3=STALE, 4=NO_DATA, then uses Grafana value mappings to show colored text. This is only a dashboard update; no DHC collector/schema changes. For LAB target `127.0.0.1,15435`, the latest diagnostic snapshot had 1 CRITICAL and 3 WARNING alerts, so expected value is `CRITICAL` (2). Re-import with the same UID; inspect the Stat query if it still renders No data.
