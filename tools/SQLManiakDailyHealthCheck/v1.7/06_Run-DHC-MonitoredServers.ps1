@@ -14,6 +14,7 @@
 param(
     [Parameter(Mandatory)][string]$RepositoryConnectionString,
     [PSCredential]$SqlCredential,
+    [hashtable]$SqlCredentialByServer,
     [ValidateSet('PROD','TEST','DEV','LAB','DR')][string]$Environment,
     [string]$ServerInstance,
     [switch]$Execute,
@@ -100,7 +101,18 @@ foreach($item in $instances) {
             JsonBatchRows = $JsonBatchRows
             TrustServerCertificate = [bool]$TrustServerCertificate
         }
-        if($null -ne $SqlCredential) { $invoke.SqlCredential = $SqlCredential }
+        if($null -ne $SqlCredentialByServer) {
+            # Explicit per-server map takes precedence; never fall back silently.
+            if(-not $SqlCredentialByServer.ContainsKey($item.ServerInstance)) {
+                throw "Missing credential mapping for $($item.ServerInstance)."
+            }
+            $selectedCredential = $SqlCredentialByServer[$item.ServerInstance]
+            if($selectedCredential -isnot [PSCredential]) {
+                throw "Invalid credential mapping for $($item.ServerInstance); expected PSCredential."
+            }
+            $invoke.SqlCredential = $selectedCredential
+        }
+        elseif($null -ne $SqlCredential) { $invoke.SqlCredential = $SqlCredential }
         if($item.CollectTempDB) { $invoke.TempDBSqlFile = $TempDBSqlFile }
         else { $invoke.SkipTempDB = $true }
 
