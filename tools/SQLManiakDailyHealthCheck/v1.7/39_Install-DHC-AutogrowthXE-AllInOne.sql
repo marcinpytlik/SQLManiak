@@ -102,9 +102,11 @@ SELECT
 FROM sys.server_event_sessions s
 JOIN sys.server_event_session_events e ON e.event_session_id=s.event_session_id
 LEFT JOIN sys.dm_xe_sessions r ON r.name=s.name
+LEFT JOIN sys.server_event_session_targets t
+  ON t.event_session_id=s.event_session_id AND t.name=N'event_file'
 LEFT JOIN sys.server_event_session_fields f
   ON f.event_session_id=s.event_session_id
- AND f.object_name=N'event_file' AND f.name=N'filename'
+ AND f.object_id=t.target_id AND f.name=N'filename'
 WHERE s.name=N'SQLManiak_Autogrowth';
 
 PRINT 'Verify startup_state, actual XE path, security, 24h retention and FCI failover behavior.';
