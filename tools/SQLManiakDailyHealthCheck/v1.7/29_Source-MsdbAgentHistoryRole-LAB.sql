@@ -18,6 +18,9 @@ IF DATABASE_PRINCIPAL_ID(N'dhc_agent_history_reader') IS NULL
  EXEC(N'CREATE ROLE [dhc_agent_history_reader] AUTHORIZATION [dbo];');
 GRANT SELECT ON OBJECT::dbo.sysjobschedules TO [dhc_agent_history_reader];
 GRANT SELECT ON OBJECT::dbo.sysjobhistory TO [dhc_agent_history_reader];
+-- DHC v1.5 job and schedule diagnostics also join these Agent tables.
+GRANT SELECT ON OBJECT::dbo.sysjobs TO [dhc_agent_history_reader];
+GRANT SELECT ON OBJECT::dbo.sysjobactivity TO [dhc_agent_history_reader];
 
 IF NOT EXISTS (
  SELECT 1 FROM sys.database_role_members AS rm
@@ -44,4 +47,6 @@ GO
  USE msdb;
  SELECT TOP (0) job_id FROM dbo.sysjobschedules;
  SELECT TOP (0) instance_id FROM dbo.sysjobhistory;
+ SELECT TOP (0) job_id FROM dbo.sysjobs;
+ SELECT TOP (0) job_id FROM dbo.sysjobactivity;
 */
