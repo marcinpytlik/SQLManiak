@@ -450,3 +450,52 @@ permissions check rises from **13/13 to 14/14**. The failed collection
 transaction rolled back; the wrapper may still have written a FAILED
 `dhc.ExecutionLog` attempt, which is expected. Retry Test 33 using the
 existing DPAPI config; do not provision another login.
+
+## Tests 34–36 — Docker LAB source least privilege
+
+**Important source of truth:** Original `SQLManiak_Daily_Health_Check_v1_5_CSV.sql`
+is deliberately kept local and not tracked in git. We cannot claim a complete
+static permission inventory until Test 34 runs against the exact local file.
+Older DHC revisions are not substitutes.
+
+**34 (read-only audit):** `./24_Audit-SourceSqlPermissions.ps1` scans the
+local DHC v1.5 file and prints its SHA256 and features to review. This is a
+heuristic inventory; inspect actual SQL conditional paths and caught errors.
+
+**35 (provision isolated Docker targets):** use existing admin credentials
+in `$targetCredentials`, which are indexed by `127.0.0.1,15434` and
+`127.0.0.1,15435`. Each target gets its own strongly generated credential.
+The first lab role set is `VIEW SERVER PERFORMANCE STATE`,
+`VIEW SERVER SECURITY STATE`, `VIEW ANY ERROR LOG` and
+`msdb.SQLAgentReaderRole`. These are proposed diagnostic permissions,
+not proof of sufficiency or minimality. No sysadmin grant. The provisioner
+refuses existing logins, and failed second-target provisioning may leave
+the first target created. Keep the map in memory:
+
+```powershell
+.\24_Audit-SourceSqlPermissions.ps1
+$sourceLabCredentials = .\25_New-SourceLabLogins.ps1 `
+  -AdminCredentialByServer $targetCredentials
+```
+
+**36 (full end-to-end test, only after reviewing Test 34):** reuses the
+dedicated repository login `$labRepoCredential`, new per-target logins
+`$sourceLabCredentials`, and administrator `$builder.ConnectionString`
+only to prepare/verify temporary lab interval. Saves a NEW DPAPI folder;
+does not touch existing v2 or repository least-privileged config.
+
+```powershell
+.\26_Test-FullLeastPrivilege.ps1 `
+  -AdminRepositoryConnectionString $builder.ConnectionString `
+  -RepositoryCredential $labRepoCredential `
+  -SourceCredentialByServer $sourceLabCredentials
+```
+
+Target 15434 should COMPLETE +1, 15435 should SKIP NOT_DUE. Test 36
+additionally checks target server permissions and scans latest `dhc.Alert`
+for common denied-permission messages. SQL `TRY/CATCH` blocks in v1.5
+may convert denied permissions into WARNING instead of terminating the
+collector. Inspect all warnings and result sets if a section is absent:
+string matching is not a complete guarantee. For target 15435, run a
+separate due-aware test later to verify new credentials on that target as
+well. This stage does not touch production or enable SQL Server Agent.
