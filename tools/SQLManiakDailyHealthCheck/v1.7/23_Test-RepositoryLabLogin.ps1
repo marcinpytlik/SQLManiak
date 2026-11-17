@@ -64,7 +64,20 @@ SELECT
    }
   } finally {$reader.Dispose()}
  } finally {$cmd.Dispose()}
- $required=@('IsCollector','CanReadInventory','CanReadExecutionLog',
+ # Exercise actual SELECT permission on the RunId predicate column.
+ # Column-only grants should not require table-wide SELECT.
+ $readRunId=$conn.CreateCommand()
+ try {
+  $readRunId.CommandText='SELECT TOP (0) RunId FROM dhc.Run;'
+  try {
+   $rd=$readRunId.ExecuteReader()
+   try { $cols['CanReadRunId']=1 } finally { $rd.Dispose() }
+  } catch [Microsoft.Data.SqlClient.SqlException] {
+   if($_.Exception.Number -ne 229) { throw }
+   $cols['CanReadRunId']=0
+  }
+ } finally { $readRunId.Dispose() }
+ $required=@('CanReadRunId','IsCollector','CanReadInventory','CanReadExecutionLog',
   'CanWriteExecutionLog','CanUpdateExecutionLog','CanClaim','CanInsertRun',
   'CanUpdateRun','CanInsertBatch','CanInsertAlert','CanInsertSnapshot',
   'CanInsertTempDBFile','CanInsertTempDBSession')
