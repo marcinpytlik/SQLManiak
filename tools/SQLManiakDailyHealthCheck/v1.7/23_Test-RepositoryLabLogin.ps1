@@ -77,9 +77,9 @@ SELECT
  [pscustomobject]@{
   LoginName=$cols.LoginName
   Database=$cols.DbName
-  RequiredGrantsPassed=($required.Count - ($errors | Where-Object {$_ -like 'Missing*'}).Count)
+  RequiredGrantsPassed=($required.Count - @($errors | Where-Object {$_ -like 'Missing*'}).Count)
   RequiredGrantsTotal=$required.Count
-  ProhibitedPrivilegesAbsent=($denied.Count - ($errors | Where-Object {$_ -like 'Forbidden*'}).Count)
+  ProhibitedPrivilegesAbsent=($denied.Count - @($errors | Where-Object {$_ -like 'Forbidden*'}).Count)
   ProhibitedPrivilegesTotal=$denied.Count
   Verdict=if($errors.Count -eq 0){'PASS'}else{'FAIL'}
  }
