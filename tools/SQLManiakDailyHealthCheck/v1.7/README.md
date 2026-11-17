@@ -190,3 +190,15 @@ SELECT * FROM dhc.vMonitoringSummary;
 ```
 
 Lab: after the previous Target 2 failure, expect `15435` to show `FAILED` **until the next successful run**, even if its Docker container has been restarted. Run the central DHC on both healthy containers, then status should show `COMPLETE` for both. `IntervalMinutes=1440` means neither should be overdue immediately after an attempt. To test overdue logic without changing production configuration, do so in a disposable copy of the repository; the shipped checks do not alter records. SQL runtime validation remains required in the user's Docker lab.
+
+## NO_DATA / OVERDUE transaction-only tests
+
+Run `11_Test-NoData-Overdue.sql` in SSMS against the **LAB repository** after `09_MonitoringStatus.sql`. It inserts three synthetic LAB inventory entries inside an explicit transaction, checks the `dhc.vMonitoringStatus` results, and **always ROLLBACKs** even when an assertion throws:
+
+| Scenario | Expected status | IsOverdue |
+|---|---|---|
+| Fresh enabled registration, never checked | NO_DATA | 0 |
+| Enabled registration 3h old, IntervalMinutes=60, never checked | NO_DATA | 1 |
+| Disabled registration 3h old | DISABLED | 0 |
+
+The test performs no collector runs and does not modify actual Docker endpoints. Expect three PASS verdicts and cleanup PASS; last result set should still show only your real LAB inventory. The test validates overdue detection **for never-attempted instances**, not overdue detection after a previous completed run. That scenario should be tested separately in a disposable repository before automatic scheduling. `IntervalMinutes` remains informational until we implement a due-aware runner/scheduler.
