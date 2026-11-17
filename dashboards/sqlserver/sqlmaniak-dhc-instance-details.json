@@ -11,7 +11,7 @@
   ],
   "timezone": "utc",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "refresh": "1h",
   "time": {
     "from": "now-7d",
@@ -62,7 +62,7 @@
       "id": 1,
       "title": "SQL diagnostic health · last snapshot",
       "type": "stat",
-      "description": "Health from latest COMPLETE/PARTIAL diagnostic snapshot, not real-time.",
+      "description": "Integer status mapped in Grafana to OK (0), WARNING (1), CRITICAL (2), STALE (3), NO_DATA (4); from latest COMPLETE/PARTIAL snapshot, not realtime.",
       "gridPos": {
         "x": 0,
         "y": 0,
@@ -81,7 +81,7 @@
             "uid": "${DS_DHC}"
           },
           "rawQuery": true,
-          "rawSql": "SELECT CASE WHEN latest.RunId IS NULL THEN 'NO_DATA' WHEN s.IsOverdue=1 THEN 'STALE' WHEN a.CriticalCount>0 THEN 'CRITICAL' WHEN a.WarningCount>0 THEN 'WARNING' ELSE 'OK' END AS value FROM dhc.vMonitoringStatus s OUTER APPLY (SELECT TOP(1) r.RunId FROM dhc.Run r WHERE r.ServerInstance=s.ServerInstance AND r.Status IN ('COMPLETE','PARTIAL') ORDER BY r.StartedUTC DESC,r.RunId DESC) latest OUTER APPLY (SELECT COUNT_BIG(CASE WHEN Severity='CRITICAL' THEN 1 END) AS CriticalCount,COUNT_BIG(CASE WHEN Severity='WARNING' THEN 1 END) AS WarningCount FROM dhc.Alert WHERE RunId=latest.RunId) a WHERE s.ServerInstance=${instance:sqlstring};",
+          "rawSql": "SELECT CAST(CASE WHEN latest.RunId IS NULL THEN 4 WHEN s.IsOverdue=1 THEN 3 WHEN a.CriticalCount>0 THEN 2 WHEN a.WarningCount>0 THEN 1 ELSE 0 END AS int) AS value FROM dhc.vMonitoringStatus s OUTER APPLY (SELECT TOP(1) r.RunId FROM dhc.Run r WHERE r.ServerInstance=s.ServerInstance AND r.Status IN ('COMPLETE','PARTIAL') ORDER BY r.StartedUTC DESC,r.RunId DESC) latest OUTER APPLY (SELECT COUNT_BIG(CASE WHEN Severity='CRITICAL' THEN 1 END) AS CriticalCount,COUNT_BIG(CASE WHEN Severity='WARNING' THEN 1 END) AS WarningCount FROM dhc.Alert WHERE RunId=latest.RunId) a WHERE s.ServerInstance=${instance:sqlstring};",
           "editorMode": "code",
           "format": "table"
         }
@@ -97,6 +97,22 @@
               {
                 "color": "green",
                 "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 2
+              },
+              {
+                "color": "purple",
+                "value": 3
+              },
+              {
+                "color": "gray",
+                "value": 4
               }
             ]
           },
@@ -104,23 +120,23 @@
             {
               "type": "value",
               "options": {
-                "OK": {
+                "0": {
                   "text": "OK",
                   "color": "green"
                 },
-                "WARNING": {
+                "1": {
                   "text": "WARNING",
                   "color": "orange"
                 },
-                "CRITICAL": {
+                "2": {
                   "text": "CRITICAL",
                   "color": "red"
                 },
-                "STALE": {
+                "3": {
                   "text": "STALE",
                   "color": "purple"
                 },
-                "NO_DATA": {
+                "4": {
                   "text": "NO_DATA",
                   "color": "gray"
                 }
