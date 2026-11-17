@@ -29,8 +29,17 @@ if($identity -ne $ExpectedIdentity){
  throw "Expected DPAPI identity $ExpectedIdentity; found $identity. No task registered."
 }
 Import-Module ScheduledTasks -ErrorAction Stop
-$existing=Get-ScheduledTask -TaskName $TaskName -TaskPath '\' -ErrorAction SilentlyContinue
-if($null -ne $existing){throw "Task already exists: $TaskName. Refusing to overwrite."}
+# ErrorAction Stop prevents an unreadable/invalid task from being treated as absent.
+# A missing task is a known benign CIM error; other errors must halt registration.
+try {
+ $existing=Get-ScheduledTask -TaskName $TaskName -TaskPath '\' -ErrorAction Stop
+ throw "Task already exists: $TaskName. Refusing to overwrite."
+} catch {
+ if($_.Exception.Message -like 'Task already exists:*') {throw}
+ if($_.Exception.Message -notmatch 'cannot find|nie znaleziono|No MSFT_ScheduledTask objects found|No matching MSFT_ScheduledTask objects found') {
+  throw "Cannot safely inspect task '$TaskName'. If it contains invalid XML, explicitly remove only that LAB task via schtasks.exe /Delete /TN '\$TaskName' /F. Original: $($_.Exception.Message)"
+ }
+}
 if(-not(Test-Path -LiteralPath $ConfigPath -PathType Leaf)){
  throw "DPAPI scheduler configuration missing: $ConfigPath"
 }
@@ -61,9 +70,10 @@ if($passed.Count -ne 1){
 }
 $arguments='-NoLogo -NoProfile -NonInteractive -File "{0}" -ConfigPath "{1}" -Environment LAB -Execute' -f $scriptPath,$configFull
 $action=New-ScheduledTaskAction -Execute $pwshPath -Argument $arguments -WorkingDirectory $PSScriptRoot
-# Once + repeating for 365 days is explicit and portable. Refresh later if
-# a permanent LAB schedule is desired; the task starts DISABLED.
-$trigger=New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(5) -RepetitionInterval (New-TimeSpan -Minutes $SchedulerIntervalMinutes) -RepetitionDuration (New-TimeSpan -Days 365)
+# Test-only trigger: 5-minute repetition during a 24-hour window.
+# Avoid the prior 365-day duration suspected of producing invalid task XML.
+# Plan a permanent schedule only after successful registration and manual tests.
+$trigger=New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(5) -RepetitionInterval (New-TimeSpan -Minutes $SchedulerIntervalMinutes) -RepetitionDuration (New-TimeSpan -Days 1)
 $principal=New-ScheduledTaskPrincipal -UserId $identity -LogonType Interactive -RunLevel Limited
 $settings=New-ScheduledTaskSettingsSet -Disable -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Minutes 30) -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
 $definition=New-ScheduledTask -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Description 'LAB ONLY; disabled by default; due-aware DHC using same-Windows-user DPAPI; runs only while signed in.'
