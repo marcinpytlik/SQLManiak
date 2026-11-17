@@ -107,7 +107,7 @@ CREATE TABLE dhc.ResultBatch
  ResultIndex int NOT NULL,
  BatchNo int NOT NULL,
  SectionName nvarchar(128) NOT NULL,
- RowCount int NOT NULL,
+ [RowCount] int NOT NULL,
  ColumnNamesJson nvarchar(max) NOT NULL,
  RowsJson nvarchar(max) NOT NULL,
  CONSTRAINT PK_DHCResultBatch PRIMARY KEY(RunId,ResultIndex,BatchNo),
@@ -795,5 +795,63 @@ SELECT o.name AS RequiredObject,o.type_desc
 FROM sys.objects o
 WHERE SCHEMA_NAME(o.schema_id)=N'dhc'
 ORDER BY o.type_desc,o.name;
-PRINT 'DHC REPOSITORY SQL INSTALLER FINISHED. Validate role memberships, backups, access and source registration separately.';
+-- Final validation: fail CLOSED if any required object or role grant is missing.
+DECLARE @ExpectedObjects TABLE (Name sysname NOT NULL, Type char(2) NOT NULL);
+INSERT @ExpectedObjects(Name,Type) VALUES
+ (N'Run','U'),(N'ResultBatch','U'),(N'Alert','U'),
+ (N'TempDBSnapshot','U'),(N'TempDBFile','U'),(N'TempDBSession','U'),
+ (N'MonitoredServer','U'),(N'ExecutionLog','U'),
+ (N'vTempDBTrend','V'),(N'vDailyAlerts','V'),
+ (N'vMonitoringStatus','V'),(N'vMonitoringSummary','V'),
+ (N'TryStartExecution','P'),(N'PurgeRuns','P');
+IF EXISTS
+(
+ SELECT 1 FROM @ExpectedObjects AS e
+ WHERE NOT EXISTS
+ (SELECT 1 FROM sys.objects AS o
+  WHERE o.schema_id=SCHEMA_ID(N'dhc') AND o.name=e.Name AND o.type=e.Type)
+)
+BEGIN
+ SELECT e.Name AS MissingObject,e.Type
+ FROM @ExpectedObjects AS e
+ WHERE NOT EXISTS
+ (SELECT 1 FROM sys.objects AS o
+  WHERE o.schema_id=SCHEMA_ID(N'dhc') AND o.name=e.Name AND o.type=e.Type);
+ THROW 51920,'INSTALL FAILED: mandatory DHC objects missing.',1;
+END;
+IF NOT EXISTS
+(
+ SELECT 1 FROM sys.database_permissions p
+ JOIN sys.database_principals r ON r.principal_id=p.grantee_principal_id
+ WHERE r.name=N'dhc_collector'
+   AND p.class=1 AND p.major_id=OBJECT_ID(N'dhc.ResultBatch',N'U')
+   AND p.permission_name=N'INSERT' AND p.state IN ('G','W')
+)
+ THROW 51921,'INSTALL FAILED: collector INSERT grant on dhc.ResultBatch missing.',1;
+IF NOT EXISTS
+(
+ SELECT 1 FROM sys.database_permissions p
+ JOIN sys.database_principals r ON r.principal_id=p.grantee_principal_id
+ WHERE r.name=N'dhc_portal_reader'
+   AND p.class=1 AND p.major_id=OBJECT_ID(N'dhc.vMonitoringStatus',N'V')
+   AND p.permission_name=N'SELECT' AND p.state IN ('G','W')
+)
+ THROW 51922,'INSTALL FAILED: portal reader grant on vMonitoringStatus missing.',1;
+IF NOT EXISTS
+(
+ SELECT 1 FROM sys.database_role_members m
+ JOIN sys.database_principals r ON r.principal_id=m.role_principal_id
+ JOIN sys.database_principals u ON u.principal_id=m.member_principal_id
+ WHERE r.name=N'dhc_collector' AND u.name=N'dhc_repository_collector'
+)
+ THROW 51923,'INSTALL FAILED: collector role membership missing.',1;
+IF NOT EXISTS
+(
+ SELECT 1 FROM sys.database_role_members m
+ JOIN sys.database_principals r ON r.principal_id=m.role_principal_id
+ JOIN sys.database_principals u ON u.principal_id=m.member_principal_id
+ WHERE r.name=N'dhc_portal_reader' AND u.name=N'dhc_grafana_reader'
+)
+ THROW 51924,'INSTALL FAILED: portal reader role membership missing.',1;
+PRINT 'DHC REPOSITORY INSTALL VALIDATED: required objects and key grants present. Review backups, access and source registration separately.';
 GO
