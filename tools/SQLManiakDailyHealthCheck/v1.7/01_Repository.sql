@@ -35,7 +35,7 @@ CREATE TABLE dhc.ResultBatch
  ResultIndex int NOT NULL,
  BatchNo int NOT NULL,
  SectionName nvarchar(128) NOT NULL,
- RowCount int NOT NULL,
+ [RowCount] int NOT NULL,
  ColumnNamesJson nvarchar(max) NOT NULL,
  RowsJson nvarchar(max) NOT NULL,
  CONSTRAINT PK_DHCResultBatch PRIMARY KEY(RunId,ResultIndex,BatchNo),
