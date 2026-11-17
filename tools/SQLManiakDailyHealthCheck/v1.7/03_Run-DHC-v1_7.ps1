@@ -55,6 +55,7 @@ function Update-ErrorLogScan([string]$SqlText) {
  $replacement=@'
 CREATE TABLE #ErrorLogRaw (LogDate datetime NULL, ProcessInfo nvarchar(100) NULL, [Text] nvarchar(max) NULL);
 CREATE TABLE #AvailableErrorLogs (ArchiveNumber int, LogDate datetime, SizeBytes bigint);
+CREATE TABLE #ArchiveErrorLogRaw (LogDate datetime NULL, ProcessInfo nvarchar(100) NULL, [Text] nvarchar(max) NULL);
 DECLARE @ErrorLogEnumerationFailed bit = 0;
 BEGIN TRY
     INSERT INTO #AvailableErrorLogs (ArchiveNumber,LogDate,SizeBytes)
@@ -95,8 +96,13 @@ FETCH NEXT FROM ErrorLogCursor INTO @LogNumber;
 WHILE @@FETCH_STATUS = 0
 BEGIN
     BEGIN TRY
+        TRUNCATE TABLE #ArchiveErrorLogRaw;
+        INSERT INTO #ArchiveErrorLogRaw (LogDate,ProcessInfo,[Text])
+        EXEC master.sys.sp_readerrorlog @LogNumber,1;
         INSERT INTO #ErrorLogRaw (LogDate,ProcessInfo,[Text])
-        EXEC master.dbo.xp_readerrorlog @LogNumber,1,NULL,NULL,@Since,@Now,N'desc';
+        SELECT LogDate,ProcessInfo,[Text]
+        FROM #ArchiveErrorLogRaw
+        WHERE LogDate >= @Since AND LogDate <= @Now;
     END TRY
     BEGIN CATCH
         INSERT #Alerts VALUES ('WARNING','ERRORLOG',CONCAT('Archive ',@LogNumber),ERROR_MESSAGE());
