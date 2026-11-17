@@ -603,3 +603,7 @@ After `schtasks.exe /Delete /TN '\SQLManiak DHC v1.7 LAB' /F` succeeds, `Get-Sch
 ### Test 46B — Task Scheduler COM 0x80070002 on PowerShell 7
 
 PowerShell 7 may translate COM `GetTask()` not-found HRESULT 0x80070002 into a `System.IO.FileNotFoundException`, rather than a `COMException`; catching only `COMException` prevented registration even after a successful exact-task deletion. Registration now checks the numeric `Exception.HResult` in a generic catch and treats **only** 0x80070002 as not found. Any other failure stops; a real existing task is never overwritten. No task enablement or collection is performed.
+
+### Test 46B — principal normalization and read-only retest
+
+The Windows Task Scheduler COM definition may report `Principal.UserId = blad` even when the registering Windows identity is `DEWELOPER\blad`. A string comparison is not a valid identity check. `32_Register-WindowsScheduledTask-LAB.ps1` now compares the task principal SID with the current Windows SID. For an existing task created by an earlier version of script 32, **do not delete/re-register**: run `33_Verify-WindowsScheduledTask-LAB.ps1` to check its disabled status, identity SID, interactive logon, limited run level and IgnoreNew overlap without making any changes. Test 46B is not complete until this Windows verification passes.
