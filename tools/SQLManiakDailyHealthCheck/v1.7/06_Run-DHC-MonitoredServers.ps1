@@ -20,6 +20,7 @@ param(
     [switch]$Execute,
     [switch]$TrustServerCertificate,
     [int]$QueryTimeout = 300,
+    [ValidateRange(1,300)][int]$ConnectionTimeout = 5,
     [ValidateRange(1,1000)][int]$JsonBatchRows = 100,
     [string]$SqlFile = (Join-Path $PSScriptRoot 'SQLManiak_Daily_Health_Check_v1_5_CSV.sql'),
     [string]$TempDBSqlFile = (Join-Path $PSScriptRoot '02_TempDB_Collect.sql')
@@ -88,16 +89,56 @@ if(-not $Execute) {
     return
 }
 
+
+# The execution log uses separate autocommit writes: it survives a source
+# connection failure or a rollback in the source collector.
+function Write-ExecutionLog([string]$Sql,[hashtable]$Values) {
+    $logConn = [Microsoft.Data.SqlClient.SqlConnection]::new($RepositoryConnectionString)
+    try {
+        $logConn.Open()
+        $logCmd = $logConn.CreateCommand()
+        try {
+            $logCmd.CommandTimeout = 30
+            $logCmd.CommandText = $Sql
+            foreach($key in $Values.Keys) {
+                $value = $Values[$key]
+                if($null -eq $value) { $value = [DBNull]::Value }
+                $null = $logCmd.Parameters.AddWithValue('@'+$key,$value)
+            }
+            $count = $logCmd.ExecuteNonQuery()
+            if($count -ne 1) { throw "ExecutionLog write affected $count rows; expected one." }
+        }
+        finally { $logCmd.Dispose() }
+    }
+    finally { $logConn.Dispose() }
+}
+
 Write-Host "DHC v1.7: processing $($instances.Count) monitored instance(s) sequentially." -ForegroundColor Cyan
 $results = [System.Collections.Generic.List[object]]::new()
 foreach($item in $instances) {
     $started = [datetime]::UtcNow
+    $executionId = [guid]::NewGuid()
+    $logStarted = $false
     try {
+        Write-ExecutionLog @'
+INSERT dhc.ExecutionLog
+    (ExecutionId, ServerId, ServerInstance, StartedUTC, Status)
+VALUES
+    (@ExecutionId, @ServerId, @ServerInstance, @StartedUTC, 'RUNNING');
+'@ @{
+            ExecutionId = $executionId
+            ServerId = $item.ServerId
+            ServerInstance = $item.ServerInstance
+            StartedUTC = $started
+        }
+        $logStarted = $true
+
         $invoke = @{
             ServerInstance = $item.ServerInstance
             RepositoryConnectionString = $RepositoryConnectionString
             SqlFile = $SqlFile
             QueryTimeout = $QueryTimeout
+            ConnectionTimeout = $ConnectionTimeout
             JsonBatchRows = $JsonBatchRows
             TrustServerCertificate = [bool]$TrustServerCertificate
         }
@@ -118,11 +159,30 @@ foreach($item in $instances) {
 
         $run = & $collector @invoke
         if($null -eq $run) { throw 'Collector returned no run summary.' }
+        $finalStatus = [string]$run.Status
+        if($finalStatus -notin @('COMPLETE','PARTIAL')) {
+            throw "Unexpected collector status: $finalStatus."
+        }
+        Write-ExecutionLog @'
+UPDATE dhc.ExecutionLog
+SET FinishedUTC = SYSUTCDATETIME(),
+    Status = @Status,
+    RunId = @RunId,
+    RowsStored = @RowsStored,
+    ErrorText = NULL
+WHERE ExecutionId = @ExecutionId AND Status = 'RUNNING';
+'@ @{
+            ExecutionId = $executionId
+            Status = $finalStatus
+            RunId = [guid]$run.RunId
+            RowsStored = [long]$run.RowsStored
+        }
         $results.Add([pscustomobject]@{
+            ExecutionId = $executionId
             ServerId = $item.ServerId
             ServerInstance = $item.ServerInstance
             Environment = $item.Environment
-            Status = [string]$run.Status
+            Status = $finalStatus
             RunId = [string]$run.RunId
             RowsStored = [long]$run.RowsStored
             DurationMs = [int]([datetime]::UtcNow-$started).TotalMilliseconds
@@ -132,7 +192,30 @@ foreach($item in $instances) {
     catch {
         $message = $_.Exception.Message
         Write-Warning ("DHC failed for {0}: {1}" -f $item.ServerInstance,$message)
+        if($logStarted) {
+            try {
+                Write-ExecutionLog @'
+UPDATE dhc.ExecutionLog
+SET FinishedUTC = SYSUTCDATETIME(),
+    Status = 'FAILED',
+    RunId = NULL,
+    RowsStored = 0,
+    ErrorText = @ErrorText
+WHERE ExecutionId = @ExecutionId AND Status = 'RUNNING';
+'@ @{
+                    ExecutionId = $executionId
+                    ErrorText = $message.Substring(0,[Math]::Min(4000,$message.Length))
+                }
+            }
+            catch {
+                Write-Warning ("Failed to persist failure to ExecutionLog for {0}: {1}" -f $item.ServerInstance,$_.Exception.Message)
+            }
+        }
+        else {
+            Write-Warning ("ExecutionLog start record was not stored for {0}." -f $item.ServerInstance)
+        }
         $results.Add([pscustomobject]@{
+            ExecutionId = $executionId
             ServerId = $item.ServerId
             ServerInstance = $item.ServerInstance
             Environment = $item.Environment
@@ -144,4 +227,4 @@ foreach($item in $instances) {
         })
     }
 }
-$results | Select-Object ServerId,ServerInstance,Environment,Status,RunId,RowsStored,DurationMs,Error
+$results | Select-Object ExecutionId,ServerId,ServerInstance,Environment,Status,RunId,RowsStored,DurationMs,Error
