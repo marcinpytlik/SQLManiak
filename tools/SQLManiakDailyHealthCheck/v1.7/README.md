@@ -599,3 +599,7 @@ After confirming that the task name is exactly `SQLManiak DHC v1.7 LAB`, explici
 ### Test 46B — native COM detection and verification
 
 After `schtasks.exe /Delete /TN '\SQLManiak DHC v1.7 LAB' /F` succeeds, `Get-ScheduledTask` can still report invalid XML from the ScheduledTasks/CIM provider; it does not establish that the named DHC task still exists. Registration now uses native Windows Task Scheduler COM `Schedule.Service` to test for the **exact** task name, allowing only HRESULT 0x80070002 (not found), and verifies the registered task via COM for disabled state, correct principal/logon type and IgnoreNew policy. It does not silently overwrite a task. Retry the script only after confirming that the previous delete succeeded, as in the recorded Test 46B output. No job is enabled or executed.
+
+### Test 46B — Task Scheduler COM 0x80070002 on PowerShell 7
+
+PowerShell 7 may translate COM `GetTask()` not-found HRESULT 0x80070002 into a `System.IO.FileNotFoundException`, rather than a `COMException`; catching only `COMException` prevented registration even after a successful exact-task deletion. Registration now checks the numeric `Exception.HResult` in a generic catch and treats **only** 0x80070002 as not found. Any other failure stops; a real existing task is never overwritten. No task enablement or collection is performed.
