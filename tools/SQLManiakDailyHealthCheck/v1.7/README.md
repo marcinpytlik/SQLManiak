@@ -538,3 +538,9 @@ Expect six PASS results. Failures print the actual SQL exception text;
 only after diagnosing them should an administrator apply object-specific
 GRANT statements on each source. A PASS here does not prove that the entire
 DHC v1.5 succeeds: rerun Test 36 and inspect its alerts and result sections.
+
+### Test 36D: remaining msdb permissions
+
+The source DHC run 72804cbf-1b2a-4d1a-a652-b732950e82a2 completed 13 result sets / 32 rows, but caught two SELECT permission denials: msdb.dbo.sysjobschedules and msdb.dbo.sysjobhistory. The stopped Agent, missing FULL for master/msdb, and ERRORLOG matches are environment/diagnostic alerts, not access denials.
+
+Run `29_Source-MsdbAgentHistoryRole-LAB.sql` on each Docker LAB target, changing `@Login` from `dhc_source_collector_lab_1` on 15434 to `dhc_source_collector_lab_2` on 15435. Creates an idempotent custom `msdb` role with SELECT on just two tables; does not change Agent state or grant sysadmin. Test real `SELECT TOP (0)` under each dedicated source login; then rerun `26_Test-FullLeastPrivilege.ps1`. It only forces target 15434; target 15435 still needs a separate actual collection test.
