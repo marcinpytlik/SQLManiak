@@ -354,3 +354,73 @@ LAB source logins only after an audit of the original SQL.
 For now the existing disabled Agent template remains disabled. A CmdExec
 step uses the Agent service identity unless explicitly configured with a
 proper CmdExec proxy and credential. No proxy is created by these scripts.
+
+## Test 31–33: dedicated SQL login for the Docker LAB Repository
+
+Only after Test 29 established the `dhc_collector` role. These scripts use the
+Docker LAB Repository `127.0.0.1,15433` exclusively; do **not** run them on
+production instances. The existing `sa` DPAPI config in `SQLManiakDHC-v2`
+remains unchanged. Source targets still use existing LAB credentials for now.
+
+`22_New-RepositoryLabLogin.ps1`: connects with existing LAB admin connection
+string, refuses to overwrite an existing login/user, generates a strong random
+SQL password in memory, creates server login
+`dhc_repository_collector_lab`, database user and **only** role membership
+`dhc_collector`. No passwords in output, git files or command arguments.
+Assign its PSCredential output to a variable, which is not persisted:
+
+```powershell
+$labRepoCredential = .\22_New-RepositoryLabLogin.ps1 `
+    -RepositoryConnectionString $builder.ConnectionString
+```
+
+`23_Test-RepositoryLabLogin.ps1`: opens an actual SQL connection as that
+new login, checks its effective permissions, required object rights and
+absence of `sysadmin`, `db_owner`, `DELETE`, `ALTER`, `CONTROL`:
+
+```powershell
+.\23_Test-RepositoryLabLogin.ps1 -RepositoryCredential $labRepoCredential
+```
+
+Export **new** DPAPI config with repository login instead of `sa`
+(leave `SQLManiakDHC-v2` untouched; target credentials still the same):
+
+```powershell
+.\16_Save-DHC-SchedulerConfig.ps1 `
+    -RepositoryServer '127.0.0.1,15433' `
+    -RepositoryCredential $labRepoCredential `
+    -SqlCredentialByServer $targetCredentials `
+    -SecretsDirectory "$env:LOCALAPPDATA\SQLManiakDHC-leastpriv" `
+    -TrustServerCertificate
+
+.\17_Invoke-DHC-Scheduled.ps1 `
+    -ConfigPath "$env:LOCALAPPDATA\SQLManiakDHC-leastpriv\scheduler.json" `
+    -Environment LAB
+```
+
+The preview must work without `sa`. To exercise real writes, run the
+already-tested `19_Test-Scheduler-Due.ps1` as a separate test (it uses
+the **existing admin** `$builder` only for temporary interval change and
+history verification, while the wrapper under test authenticates with
+the dedicated repository login via new DPAPI config):
+
+```powershell
+.\19_Test-Scheduler-Due.ps1 `
+    -RepositoryConnectionString $builder.ConnectionString `
+    -ConfigPath "$env:LOCALAPPDATA\SQLManiakDHC-leastpriv\scheduler.json" `
+    -ConnectionTimeout 3 -QueryTimeout 30
+```
+
+This changes target 1 interval temporarily, restores it in finally and
+expects COMPLETE +1 for 15434, SKIPPED NOT_DUE +0 for 15435. Ensure
+target 2 remains NOT_DUE and no other scheduler is running.
+
+**Safety / recovery:** the provisioner refuses to replace an existing login.
+If database-user provisioning fails after CREATE LOGIN, an admin must
+inspect the partial login manually; no automatic password reset. If a
+PowerShell session closes before the PSCredential is exported and the login
+password is lost, an administrator must deliberately rotate/reset the
+dedicated LAB account, not recreate it blindly. A SQL CREATE LOGIN DDL
+statement may be visible to privileged SQL monitoring/audit; deploy only
+in this isolated Docker LAB. The generated credential is still tied to the
+Windows account that saves it via DPAPI, not to SQL Agent's future identity.
