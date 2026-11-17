@@ -157,3 +157,45 @@ Expected: with both targets running, two independent COMPLETE run IDs; with targ
 
 Cleanup only the new target (preserving named volumes):
 `docker compose --profile multi-target -f compose.yaml stop sql-target-2`. Do not use `down -v` because it deletes repository and target history.
+
+## Durable execution history and source connection timeout
+
+Execute `08_ExecutionLog.sql` on the **repository** once after `04_MonitoredServers.sql`, before running the updated `06_Run-DHC-MonitoredServers.ps1 -Execute`. This additive script creates `dhc.ExecutionLog` without altering the collector's historical `dhc.Run` rows.
+
+Each selected enabled instance produces its own `ExecutionId`: a `RUNNING` row is committed in the repository **before** the target is contacted, and a final `COMPLETE`/`PARTIAL`/`FAILED` update is committed afterwards. `RunId` links to `dhc.Run` only for successfully committed collector executions; `FAILED` (such as TCP connection refusal) has null `RunId`, a diagnostic `ErrorText`, and zero rows stored. Historical entries snapshot `ServerId` and `ServerInstance` without a foreign key to current inventory, so removing an inventory record does not discard history. A crash/host shutdown can leave `RUNNING` records; investigate aged RUNNING entries instead of assuming they represent active collectors.
+
+`-ConnectionTimeout` (default **5 seconds**, valid 1–300) is now separate from `-QueryTimeout` (SQL command execution), and is forwarded to `Invoke-Sqlcmd` on each target. Driver retries and DNS/TCP behavior can make observed wall-clock time longer than the configured connection timeout. The inventory itself is read from the repository connection string; this change does not alter its timeout.
+
+```powershell
+# Both containers healthy: expect two COMPLETE entries in dhc.ExecutionLog.
+.\06_Run-DHC-MonitoredServers.ps1 `
+    -RepositoryConnectionString $builder.ConnectionString `
+    -SqlCredentialByServer $targetCredentials `
+    -Environment LAB -Execute -TrustServerCertificate `
+    -ConnectionTimeout 3 -QueryTimeout 30
+
+# Stop ONLY target 2, repeat, then restore it.
+docker compose --profile multi-target -f compose.yaml stop sql-target-2
+try {
+    .\06_Run-DHC-MonitoredServers.ps1 `
+        -RepositoryConnectionString $builder.ConnectionString `
+        -SqlCredentialByServer $targetCredentials `
+        -Environment LAB -Execute -TrustServerCertificate `
+        -ConnectionTimeout 3 -QueryTimeout 10
+}
+finally {
+    docker compose --profile multi-target -f compose.yaml start sql-target-2
+}
+```
+
+```sql
+USE SQLManiakHealthHistory;
+SELECT TOP (15) ExecutionId,ServerId,ServerInstance,StartedUTC,FinishedUTC,
+       Status,RunId,RowsStored,ErrorText
+FROM dhc.ExecutionLog
+ORDER BY StartedUTC DESC;
+-- Expect latest failure-test pair: 15434 COMPLETE with RunId,
+-- 15435 FAILED with null RunId and a connection error.
+```
+
+The runner never stores passwords or SQL connection strings. A repository logging failure is surfaced in the PowerShell output and may leave an incomplete `RUNNING` row if the final update fails; this is a new failure mode worth monitoring. The added table requires repository `INSERT`/`UPDATE`/`SELECT` privileges consistent with the existing `dhc` schema.
