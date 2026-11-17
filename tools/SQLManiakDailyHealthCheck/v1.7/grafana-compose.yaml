@@ -1,0 +1,17 @@
+# Optional isolated LAB-only Grafana container. Does not modify DHC SQL containers.
+# Set DHC_GRAFANA_ADMIN_PASSWORD in your private PowerShell environment before starting.
+services:
+  dhc-grafana:
+    image: grafana/grafana:12.2.1
+    container_name: sqlmaniak-dhc-grafana-lab
+    ports:
+      - "127.0.0.1:3300:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: "${DHC_GRAFANA_ADMIN_PASSWORD:?Set DHC_GRAFANA_ADMIN_PASSWORD privately}"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - dhc_grafana_data:/var/lib/grafana
+    restart: unless-stopped
+volumes:
+  dhc_grafana_data:
