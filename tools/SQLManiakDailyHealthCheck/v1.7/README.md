@@ -272,3 +272,17 @@ The configurable threshold is a **heuristic**, not evidence that the collector p
 **Test 24**: run `15_Test-RunningWatch.sql` on the LAB repository. It creates two uniquely named synthetic LAB servers and RUNNING rows inside a transaction: one 180 minutes old (suspected), one 1 minute old (not suspected). It verifies both classifications and the default stale-only filter, then always rolls back. Expect both PASS and cleanup PASS; two existing targets 15434/15435 remain unchanged.
 
 Do not run these tests against production; only the diagnostic procedure is appropriate for production after change review.
+
+## Stage 2 — disabled central SQL Agent job (Windows)
+The Docker Linux repository (port 15433) is NOT the Windows SQL Server Agent execution host. The supplied 18_Create-SqlAgent-Job_DISABLED.sql is for a WINDOWS SQL Agent instance with PowerShell 7 and DHC scripts installed on THAT Windows host. It refuses to run until paths to pwsh.exe, wrapper script, and local private config are set; it creates a job disabled by default with a 5-minute schedule. No job is enabled by this change.
+
+Create Windows DPAPI-protected secrets with 16_Save-DHC-SchedulerConfig.ps1 under the EXACT Windows user/machine that will execute the job. Dedicated SQL Agent service/proxy identity must export its own secrets; an interactive user cannot create DPAPI files for a different account. Protect LOCALAPPDATA folder with restricted NTFS ACL. Only nonsecret names and credential filenames are in scheduler.json; neither passwords nor full connection strings are in Git or job arguments. LAB SQL authentication is retained for staging, but replace sa with least-privilege users and trusted TLS before production.
+
+LAB manual validation (with targetCredentials from previous session):
+```powershell
+$repoCredential=[PSCredential]::new('sa',(Read-Host 'LAB repository sa password' -AsSecureString))
+.\16_Save-DHC-SchedulerConfig.ps1 -RepositoryServer '127.0.0.1,15433' -RepositoryCredential $repoCredential -SqlCredentialByServer $targetCredentials -TrustServerCertificate
+.\17_Invoke-DHC-Scheduled.ps1 -ConfigPath "$env:LOCALAPPDATA\SQLManiakDHC\scheduler.json" -Environment LAB
+.\17_Invoke-DHC-Scheduled.ps1 -ConfigPath "$env:LOCALAPPDATA\SQLManiakDHC\scheduler.json" -Environment LAB -Execute
+```
+Preview should show DueStatus; shortly after COMPLETE the -Execute run should produce SKIPPED/NOT_DUE and no new ExecutionLog rows. Any FAILED target makes the wrapper fail for Agent job history. This wrapper never uses -Force. Windows SQL Agent host must be able to reach repository and all sources; 127.0.0.1 addresses only work if the host runs the Docker containers locally. The actual Agent job remains disabled pending test under its service/proxy identity and security review.
