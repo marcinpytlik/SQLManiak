@@ -622,3 +622,7 @@ $collector=Get-Credential
 .\34_Install-DHC-Repository.ps1 -ServerInstance 'SQLREPO' -AdministratorCredential $admin -CollectorLogin $collector.UserName -NewCollectorCredential $collector
 .\35_Configure-DHC-Source.ps1 -ServerInstance 'SQL01\INST' -AdministratorCredential $admin -CollectorLogin $collector.UserName -NewCollectorCredential $collector
 ```
+
+## Grafana Portal MVP
+
+The read-only Grafana portal (Overview, Instances, Alerts and History) is in `dashboards/sqlserver/sqlmaniak-dhc-portal-mvp.json`. Install optional LAB Grafana with `grafana-compose.yaml`, configure `dhc_grafana_reader` via `36_GrafanaPortalReader.sql`, and see [Portal MVP instructions](../../dashboards/sqlserver/SQLManiak-DHC-Portal-MVP.md). The collector and its 1440-minute due interval are unchanged; 60-minute scheduler setup is a separate task.
