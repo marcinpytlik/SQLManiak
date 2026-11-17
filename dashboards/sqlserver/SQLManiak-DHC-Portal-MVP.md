@@ -123,3 +123,7 @@ Import the second dashboard `dashboards/sqlserver/sqlmaniak-dhc-instance-details
 ### MVP-03 LAB fix: SQL health Stat panel
 
 Observed on 2026-11-17: source and TempDB panels show live repository rows after granting `dhc_portal_reader` SELECT, while string-valued SQL health Stat renders `No data`. Version 2 of Instance Details returns a numeric status code from SQL: 0=OK, 1=WARNING, 2=CRITICAL, 3=STALE, 4=NO_DATA, then uses Grafana value mappings to show colored text. This is only a dashboard update; no DHC collector/schema changes. For LAB target `127.0.0.1,15435`, the latest diagnostic snapshot had 1 CRITICAL and 3 WARNING alerts, so expected value is `CRITICAL` (2). Re-import with the same UID; inspect the Stat query if it still renders No data.
+
+## MVP-04 Monitoring Reliability
+
+The dedicated 11-panel collector health dashboard is `dashboards/sqlserver/sqlmaniak-dhc-monitoring-reliability.json`. It uses existing read-only Repository grants, distinguishes overdue attempts from outdated successful collections, and shows FAILED/PARTIAL history and suspected RUNNING entries. For import and safe LAB reliability checks, see [Monitoring Reliability](SQLManiak-DHC-Monitoring-Reliability.md). Reimport Overview (same UID) to enable its top navigation link to Monitoring Reliability.

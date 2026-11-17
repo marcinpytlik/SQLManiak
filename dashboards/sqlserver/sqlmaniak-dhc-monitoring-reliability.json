@@ -1,0 +1,971 @@
+{
+  "id": null,
+  "uid": "sqlmaniak-dhc-reliability",
+  "title": "SQLManiak DHC | Monitoring Reliability",
+  "tags": [
+    "sqlmaniak",
+    "dhc",
+    "sqlserver",
+    "reliability"
+  ],
+  "timezone": "utc",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "1h",
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "DS_DHC",
+        "label": "DHC Repository",
+        "type": "datasource",
+        "query": "mssql",
+        "refresh": 1,
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "options": []
+      },
+      {
+        "name": "environment",
+        "label": "Environment",
+        "type": "query",
+        "datasource": {
+          "type": "mssql",
+          "uid": "${DS_DHC}"
+        },
+        "refresh": 1,
+        "query": "SELECT DISTINCT Environment AS __text,Environment AS __value FROM dhc.MonitoredServer ORDER BY Environment",
+        "definition": "SELECT DISTINCT Environment AS __text,Environment AS __value FROM dhc.MonitoredServer ORDER BY Environment",
+        "sort": 1,
+        "includeAll": true,
+        "multi": false,
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "options": []
+      },
+      {
+        "name": "instance",
+        "label": "Instance",
+        "type": "query",
+        "datasource": {
+          "type": "mssql",
+          "uid": "${DS_DHC}"
+        },
+        "refresh": 1,
+        "query": "SELECT ServerInstance AS __text,ServerInstance AS __value FROM dhc.MonitoredServer ORDER BY ServerInstance",
+        "definition": "SELECT ServerInstance AS __text,ServerInstance AS __value FROM dhc.MonitoredServer ORDER BY ServerInstance",
+        "sort": 1,
+        "includeAll": true,
+        "multi": false,
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "options": []
+      },
+      {
+        "name": "running_threshold",
+        "label": "Running threshold (min)",
+        "type": "custom",
+        "query": "30,60,120,240",
+        "current": {
+          "selected": true,
+          "text": "60",
+          "value": "60"
+        },
+        "options": [
+          {
+            "selected": false,
+            "text": "30",
+            "value": "30"
+          },
+          {
+            "selected": true,
+            "text": "60",
+            "value": "60"
+          },
+          {
+            "selected": false,
+            "text": "120",
+            "value": "120"
+          },
+          {
+            "selected": false,
+            "text": "240",
+            "value": "240"
+          }
+        ],
+        "multi": false,
+        "includeAll": false
+      }
+    ]
+  },
+  "annotations": {
+    "list": []
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Enabled instances",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_DHC}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_DHC}"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT COUNT_BIG(*) AS value FROM dhc.vMonitoringStatus s WHERE s.IsEnabled=1 AND s.Environment IN (${environment:sqlstring}) AND s.ServerInstance IN (${instance:sqlstring});"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value"
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Latest FAILED",
+      "gridPos": {
+        "x": 4,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_DHC}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_DHC}"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT COUNT_BIG(*) AS value FROM dhc.vMonitoringStatus s WHERE s.IsEnabled=1 AND s.Environment IN (${environment:sqlstring}) AND s.ServerInstance IN (${instance:sqlstring}) AND s.MonitoringStatus='FAILED';"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value"
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Latest PARTIAL",
+      "gridPos": {
+        "x": 8,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_DHC}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_DHC}"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT COUNT_BIG(*) AS value FROM dhc.vMonitoringStatus s WHERE s.IsEnabled=1 AND s.Environment IN (${environment:sqlstring}) AND s.ServerInstance IN (${instance:sqlstring}) AND s.MonitoringStatus='PARTIAL';"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value"
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Overdue attempts",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_DHC}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_DHC}"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT COUNT_BIG(*) AS value FROM dhc.vMonitoringStatus s WHERE s.IsEnabled=1 AND s.Environment IN (${environment:sqlstring}) AND s.ServerInstance IN (${instance:sqlstring}) AND s.IsOverdue=1;"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "purple",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value"
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Never attempted",
+      "gridPos": {
+        "x": 16,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_DHC}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_DHC}"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT COUNT_BIG(*) AS value FROM dhc.vMonitoringStatus s WHERE s.IsEnabled=1 AND s.Environment IN (${environment:sqlstring}) AND s.ServerInstance IN (${instance:sqlstring}) AND s.MonitoringStatus='NO_DATA';"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value"
+      }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Suspected stuck RUNNING",
+      "gridPos": {
+        "x": 20,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_DHC}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_DHC}"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT COUNT_BIG(*) AS value FROM dhc.vMonitoringStatus s WHERE s.IsEnabled=1 AND s.Environment IN (${environment:sqlstring}) AND s.ServerInstance IN (${instance:sqlstring}) AND s.MonitoringStatus='RUNNING' AND s.LastAttemptUTC<=DATEADD(MINUTE,-${running_threshold:raw},SYSUTCDATETIME());"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value"
+      }
+    },
+    {
+      "id": 7,
+      "type": "table",
+      "title": "Current reliability status",
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 24,
+        "h": 11
+      },
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_DHC}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_DHC}"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT s.ServerInstance AS [Instance],s.Environment,s.MonitorGroup AS [Monitor group],\n CASE WHEN s.IsOverdue=1 THEN 'STALE' WHEN s.MonitoringStatus='FAILED' THEN 'FAILED' WHEN s.MonitoringStatus='PARTIAL' THEN 'PARTIAL'\n WHEN s.MonitoringStatus='NO_DATA' THEN 'NO_DATA' WHEN s.MonitoringStatus='RUNNING' AND s.LastAttemptUTC<=DATEADD(MINUTE,-${running_threshold:raw},SYSUTCDATETIME()) THEN 'SUSPECT_RUNNING'\n ELSE s.MonitoringStatus END AS [Reliability status],\n s.MonitoringStatus AS [Collection],CASE WHEN s.IsOverdue=1 THEN 'YES' ELSE 'NO' END AS [Overdue],\n s.IntervalMinutes AS [Expected interval min],s.LastAttemptUTC AS [Last attempt UTC],s.LastCompleteUTC AS [Last complete UTC],\n s.MinutesSinceAttempt AS [Minutes since attempt],s.MinutesSinceComplete AS [Minutes since complete],\n CASE WHEN s.MonitoringStatus='RUNNING' THEN DATEDIFF_BIG(MINUTE,s.LastAttemptUTC,SYSUTCDATETIME()) ELSE NULL END AS [Running age min],\n s.LastRowsStored AS [Rows stored],LEFT(s.LastErrorText,350) AS [Last error] FROM dhc.vMonitoringStatus s WHERE s.IsEnabled=1 AND s.Environment IN (${environment:sqlstring}) AND s.ServerInstance IN (${instance:sqlstring})\n ORDER BY CASE WHEN s.IsOverdue=1 THEN 0 WHEN s.MonitoringStatus='FAILED' THEN 1 WHEN s.MonitoringStatus='PARTIAL' THEN 2 WHEN s.MonitoringStatus='RUNNING' THEN 3 WHEN s.MonitoringStatus='NO_DATA' THEN 4 ELSE 5 END,s.ServerInstance;"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Reliability status"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "COMPLETE": {
+                        "text": "COMPLETE",
+                        "color": "green"
+                      },
+                      "FAILED": {
+                        "text": "FAILED",
+                        "color": "red"
+                      },
+                      "PARTIAL": {
+                        "text": "PARTIAL",
+                        "color": "orange"
+                      },
+                      "STALE": {
+                        "text": "STALE",
+                        "color": "purple"
+                      },
+                      "SUSPECT_RUNNING": {
+                        "text": "SUSPECT_RUNNING",
+                        "color": "red"
+                      },
+                      "RUNNING": {
+                        "text": "RUNNING",
+                        "color": "blue"
+                      },
+                      "NO_DATA": {
+                        "text": "NO_DATA",
+                        "color": "gray"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Collection"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "COMPLETE": {
+                        "text": "COMPLETE",
+                        "color": "green"
+                      },
+                      "FAILED": {
+                        "text": "FAILED",
+                        "color": "red"
+                      },
+                      "PARTIAL": {
+                        "text": "PARTIAL",
+                        "color": "orange"
+                      },
+                      "RUNNING": {
+                        "text": "RUNNING",
+                        "color": "blue"
+                      },
+                      "NO_DATA": {
+                        "text": "NO_DATA",
+                        "color": "gray"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Overdue"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "NO": {
+                        "text": "NO",
+                        "color": "green"
+                      },
+                      "YES": {
+                        "text": "YES",
+                        "color": "red"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Instance"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Open instance details",
+                    "url": "/d/sqlmaniak-dhc-instance/sqlmaniak-dhc-instance-details?var-DS_DHC=${DS_DHC}&var-instance=${__value.raw}&${__url_time_range}",
+                    "targetBlank": false
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    },
+    {
+      "id": 8,
+      "type": "table",
+      "title": "FAILED / PARTIAL execution history",
+      "gridPos": {
+        "x": 0,
+        "y": 17,
+        "w": 24,
+        "h": 9
+      },
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_DHC}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_DHC}"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT TOP(100) e.StartedUTC AS [Started UTC],e.ServerInstance AS [Instance],e.Status AS [Result],\n e.RowsStored AS [Rows],DATEDIFF_BIG(MILLISECOND,e.StartedUTC,e.FinishedUTC) AS [Duration ms],LEFT(e.ErrorText,500) AS [Error]\n FROM dhc.ExecutionLog e JOIN dhc.MonitoredServer s ON s.ServerInstance=e.ServerInstance\n WHERE s.IsEnabled=1 AND s.Environment IN (${environment:sqlstring}) AND s.ServerInstance IN (${instance:sqlstring}) AND $__timeFilter(e.StartedUTC) AND e.Status IN ('FAILED','PARTIAL')\n ORDER BY e.StartedUTC DESC,e.ExecutionId DESC;"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Collections by outcome · hourly",
+      "gridPos": {
+        "x": 0,
+        "y": 27,
+        "w": 24,
+        "h": 8
+      },
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_DHC}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_DHC}"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT CAST(DATEADD(HOUR,DATEDIFF(HOUR,0,e.StartedUTC),0) AS datetime) AS time,\n SUM(CASE WHEN e.Status='COMPLETE' THEN 1 ELSE 0 END) AS [COMPLETE],\n SUM(CASE WHEN e.Status='PARTIAL' THEN 1 ELSE 0 END) AS [PARTIAL],\n SUM(CASE WHEN e.Status='FAILED' THEN 1 ELSE 0 END) AS [FAILED]\n FROM dhc.ExecutionLog e JOIN dhc.MonitoredServer s ON s.ServerInstance=e.ServerInstance\n WHERE s.IsEnabled=1 AND s.Environment IN (${environment:sqlstring}) AND s.ServerInstance IN (${instance:sqlstring}) AND $__timeFilter(e.StartedUTC)\n GROUP BY DATEADD(HOUR,DATEDIFF(HOUR,0,e.StartedUTC),0) ORDER BY time;"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "type": "table",
+      "title": "Open RUNNING attempts · investigate",
+      "gridPos": {
+        "x": 0,
+        "y": 36,
+        "w": 24,
+        "h": 8
+      },
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_DHC}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_DHC}"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT TOP(100) e.ServerInstance AS [Instance],s.Environment,e.StartedUTC AS [Started UTC],\n DATEDIFF_BIG(MINUTE,e.StartedUTC,SYSUTCDATETIME()) AS [Running age min],\n CASE WHEN e.StartedUTC<=DATEADD(MINUTE,-${running_threshold:raw},SYSUTCDATETIME()) THEN 'SUSPECT' ELSE 'RECENT' END AS [Assessment],\n CONVERT(varchar(36),e.ExecutionId) AS [Execution ID]\n FROM dhc.ExecutionLog e JOIN dhc.MonitoredServer s ON s.ServerInstance=e.ServerInstance\n WHERE s.IsEnabled=1 AND s.Environment IN (${environment:sqlstring}) AND s.ServerInstance IN (${instance:sqlstring}) AND e.Status='RUNNING' ORDER BY e.StartedUTC ASC;"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Assessment"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "SUSPECT": {
+                        "text": "SUSPECT",
+                        "color": "red"
+                      },
+                      "RECENT": {
+                        "text": "RECENT",
+                        "color": "blue"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    },
+    {
+      "id": 11,
+      "type": "table",
+      "title": "Last successful collection freshness",
+      "gridPos": {
+        "x": 0,
+        "y": 45,
+        "w": 24,
+        "h": 8
+      },
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_DHC}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_DHC}"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT s.ServerInstance AS [Instance],s.Environment,s.IntervalMinutes AS [Target interval min],s.LastAttemptUTC AS [Last attempt UTC],\n s.LastCompleteUTC AS [Last complete UTC],s.MinutesSinceAttempt AS [Minutes since attempt],s.MinutesSinceComplete AS [Minutes since complete],\n CASE WHEN s.LastCompleteUTC IS NULL THEN 'NO_SUCCESS' WHEN s.MinutesSinceComplete>s.IntervalMinutes THEN 'SUCCESS_AGED' ELSE 'RECENT_SUCCESS' END AS [Last success freshness]\n FROM dhc.vMonitoringStatus s WHERE s.IsEnabled=1 AND s.Environment IN (${environment:sqlstring}) AND s.ServerInstance IN (${instance:sqlstring}) ORDER BY CASE WHEN s.LastCompleteUTC IS NULL THEN 0 WHEN s.MinutesSinceComplete>s.IntervalMinutes THEN 1 ELSE 2 END,s.ServerInstance;"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Last success freshness"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "NO_SUCCESS": {
+                        "text": "NO_SUCCESS",
+                        "color": "red"
+                      },
+                      "SUCCESS_AGED": {
+                        "text": "SUCCESS_AGED",
+                        "color": "orange"
+                      },
+                      "RECENT_SUCCESS": {
+                        "text": "RECENT_SUCCESS",
+                        "color": "green"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      }
+    }
+  ]
+}

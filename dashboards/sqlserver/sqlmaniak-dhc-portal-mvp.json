@@ -10,7 +10,7 @@
   ],
   "timezone": "utc",
   "schemaVersion": 39,
-  "version": 4,
+  "version": 5,
   "refresh": "1h",
   "time": {
     "from": "now-7d",
@@ -873,6 +873,15 @@
       }
     }
   ],
-  "links": [],
+  "links": [
+    {
+      "type": "link",
+      "title": "Monitoring Reliability",
+      "url": "/d/sqlmaniak-dhc-reliability/sqlmaniak-dhc-monitoring-reliability",
+      "targetBlank": false,
+      "includeVars": false,
+      "keepTime": true
+    }
+  ],
   "description": "DHC Portal MVP-02: collection state is separate from health of last available SQL Server diagnostic snapshot. SQL health may become STALE when due."
 }
