@@ -106,3 +106,23 @@ Run `04_MonitoredServers.sql` once against the **repository** after `01_Reposito
 Columns: unique `ServerInstance` connection endpoint (for a Windows FCI use its VNN/instance name, not a cluster node), optional `DisplayName`, `Environment` (PROD/TEST/DEV/LAB/DR), optional `MonitorGroup` (cluster/site), `IsEnabled` (defaults to **0**, safe onboarding), `IntervalMinutes` (defaults to 1440), `CollectTempDB`, `Notes`, and `CreatedUTC`. For 12 production servers, insert 12 genuine connection endpoints; there is no artificial 12-row limit. A commented Docker lab example is included.
 
 Do **not** store SQL passwords, connection strings with secrets, or credentials in the inventory. Source and repository authentication remain external. There is intentionally no foreign key from historical `dhc.Run` to inventory, so historical records survive a host rename or inventory removal. Existing `01_Repository.sql` is unchanged (local lab edits are preserved).
+
+## Manual central multi-server runner
+
+After deploying the inventory with `04_MonitoredServers.sql`, run `05_Seed-DockerTarget.sql` against the repository to register/enable `127.0.0.1,15434` as LAB. The seed is safe to rerun, but is not automatically executed by any other script.
+
+`06_Run-DHC-MonitoredServers.ps1` reads **enabled** rows from `dhc.MonitoredServer`. It is **preview-only by default**; use `-Execute` to invoke `03_Run-DHC-v1_7.ps1` sequentially per selected endpoint. Optionally filter using `-Environment LAB` or `-ServerInstance '127.0.0.1,15434'`. Failed targets are reported without stopping the remainder; a `PARTIAL` collector run is preserved as `PARTIAL`.
+
+```powershell
+# Use existing in-session $builder and $targetCredential from Docker lab setup.
+.\06_Run-DHC-MonitoredServers.ps1 `
+  -RepositoryConnectionString $builder.ConnectionString `
+  -Environment LAB
+
+.\06_Run-DHC-MonitoredServers.ps1 `
+  -RepositoryConnectionString $builder.ConnectionString `
+  -SqlCredential $targetCredential `
+  -Environment LAB -Execute -TrustServerCertificate
+```
+
+No scheduler is installed. `IntervalMinutes` is documented desired cadence only, not currently enforced. For future production monitoring across 12 servers, ensure a credential solution for each target or a shared least-privilege identity that works on all instances; the current runner takes **one optional credential** for all selected targets. Do not pass a Docker `sa` credential to production. Secrets are not stored in `dhc.MonitoredServer`; connection-string secrets must not be logged.
