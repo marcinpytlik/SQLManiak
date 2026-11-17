@@ -585,3 +585,7 @@ Get-ScheduledTask -TaskName 'SQLManiak DHC v1.7 LAB' | Select-Object TaskName,St
 ```
 
 Important: `-LogonType Interactive` **requires that user to be signed in**. It is deliberately safer for the first LAB run because the existing DPAPI secrets were exported under that user; it does **not** meet unattended-while-signed-out requirements. Never switch the task to SYSTEM/S4U/Agent service and assume DPAPI works. No SQL collection happens when registering this disabled task. Do not enable automatically until a controlled manual task execution and audit have been approved. If you need operation while signed out, separately design/test a dedicated scheduler identity and new protected credential storage; do not reuse user DPAPI exports by copying.
+
+### Test 46B troubleshooting — preview object filtering
+
+If script `32_Register-WindowsScheduledTask-LAB.ps1` previously failed with `Where-Object: ... TestResult ... property not recognized`, update from master and rerun. The DPAPI preflight emits both scheduler preview objects (without `TestResult`) and a final status object; the registration script now checks the property exists before reading it under PowerShell `Set-StrictMode`. The failure occurred before registration, so the task should not yet exist; the script still refuses to overwrite an existing task.

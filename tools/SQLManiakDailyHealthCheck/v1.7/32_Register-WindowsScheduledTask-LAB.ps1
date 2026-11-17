@@ -50,7 +50,13 @@ foreach($path in @($scriptPath,$configFull,$pwshPath)){
 # without enabling or invoking a collection.
 $preflight=Join-Path $PSScriptRoot '21_Test-SchedulerIdentity.ps1'
 $preflightResult=& $preflight -ConfigPath $configFull -Environment LAB -CheckSqlPreview
-if(@($preflightResult | Where-Object TestResult -eq 'PASS').Count -ne 1){
+# The preview emits normal scheduler rows that have no TestResult property.
+# In StrictMode, Where-Object TestResult -eq 'PASS' throws on those rows.
+$passed=@($preflightResult | Where-Object {
+ $_.PSObject.Properties.Match('TestResult').Count -gt 0 -and
+ $_.TestResult -eq 'PASS'
+})
+if($passed.Count -ne 1){
  throw 'Identity and DPAPI preflight did not return PASS.'
 }
 $arguments='-NoLogo -NoProfile -NonInteractive -File "{0}" -ConfigPath "{1}" -Environment LAB -Execute' -f $scriptPath,$configFull
