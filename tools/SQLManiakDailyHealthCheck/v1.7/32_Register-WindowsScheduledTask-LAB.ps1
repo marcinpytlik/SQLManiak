@@ -29,15 +29,19 @@ if($identity -ne $ExpectedIdentity){
  throw "Expected DPAPI identity $ExpectedIdentity; found $identity. No task registered."
 }
 Import-Module ScheduledTasks -ErrorAction Stop
-# ErrorAction Stop prevents an unreadable/invalid task from being treated as absent.
-# A missing task is a known benign CIM error; other errors must halt registration.
+# Query exact task name using native Task Scheduler COM service.
+# The ScheduledTasks CIM provider can report an XML error even after
+# schtasks.exe /Delete successfully removed the task.
+# 0x80070002 means no task with that exact name. Any other HRESULT is fatal.
+$scheduler=New-Object -ComObject 'Schedule.Service'
+$scheduler.Connect()
+$folder=$scheduler.GetFolder('\')
 try {
- $existing=Get-ScheduledTask -TaskName $TaskName -TaskPath '\' -ErrorAction Stop
+ $found=$folder.GetTask($TaskName)
  throw "Task already exists: $TaskName. Refusing to overwrite."
-} catch {
- if($_.Exception.Message -like 'Task already exists:*') {throw}
- if($_.Exception.Message -notmatch 'cannot find|nie znaleziono|No MSFT_ScheduledTask objects found|No matching MSFT_ScheduledTask objects found') {
-  throw "Cannot safely inspect task '$TaskName'. If it contains invalid XML, explicitly remove only that LAB task via schtasks.exe /Delete /TN '\$TaskName' /F. Original: $($_.Exception.Message)"
+} catch [System.Runtime.InteropServices.COMException] {
+ if($_.Exception.ErrorCode -ne -2147024894) {
+  throw "Cannot inspect LAB task via Task Scheduler COM. HRESULT=0x$('{0:X8}' -f ([uint32]$_.Exception.ErrorCode)). $($_.Exception.Message)"
  }
 }
 if(-not(Test-Path -LiteralPath $ConfigPath -PathType Leaf)){
@@ -78,20 +82,30 @@ $principal=New-ScheduledTaskPrincipal -UserId $identity -LogonType Interactive -
 $settings=New-ScheduledTaskSettingsSet -Disable -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Minutes 30) -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
 $definition=New-ScheduledTask -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Description 'LAB ONLY; disabled by default; due-aware DHC using same-Windows-user DPAPI; runs only while signed in.'
 Register-ScheduledTask -TaskName $TaskName -TaskPath '\' -InputObject $definition -ErrorAction Stop | Out-Null
-$task=Get-ScheduledTask -TaskName $TaskName -TaskPath '\' -ErrorAction Stop
-if($task.State -ne 'Disabled' -or $task.Principal.UserId -ne $identity){
- try {Disable-ScheduledTask -TaskName $TaskName -TaskPath '\' -ErrorAction Stop | Out-Null} catch {}
- throw "Task state/principal verification failed. Inspect task: $TaskName"
+# Verify with COM instead of Get-ScheduledTask (CIM provider XML parser
+# may fail even when a particular task can be queried by COM).
+try {
+ $task=$folder.GetTask($TaskName)
+ $definitionRegistered=$task.Definition
+ $isDisabled=(-not $task.Enabled) -and (-not $definitionRegistered.Settings.Enabled)
+ $principalOk=([string]$definitionRegistered.Principal.UserId -eq $identity)
+ $interactiveOk=([int]$definitionRegistered.Principal.LogonType -eq 3) # TASK_LOGON_INTERACTIVE_TOKEN
+ $overlapOk=([int]$definitionRegistered.Settings.MultipleInstances -eq 2) # TASK_INSTANCES_IGNORE_NEW
+ if(-not ($isDisabled -and $principalOk -and $interactiveOk -and $overlapOk)){
+  throw "Registered LAB task failed read-only COM verification; inspect before enabling."
+ }
+} catch {
+ throw "Task was submitted for registration, but Task Scheduler COM verification failed. Do NOT enable. $($_.Exception.Message)"
 }
 [pscustomobject]@{
  TaskName=$TaskName
  TaskPath='\'
- State=$task.State
- Principal=$task.Principal.UserId
- LogonType=$task.Principal.LogonType
- Program=$task.Actions[0].Execute
+ State='Disabled'
+ Principal=[string]$definitionRegistered.Principal.UserId
+ LogonType='InteractiveToken'
+ Program=[string]$definitionRegistered.Actions.Item(1).Path
  RepeatEveryMinutes=$SchedulerIntervalMinutes
- OverlapPolicy=$task.Settings.MultipleInstances
+ OverlapPolicy='IgnoreNew'
  DpapiPreflight='PASS'
  TaskStarted=$false
  RequiresSignedInUser=$true
