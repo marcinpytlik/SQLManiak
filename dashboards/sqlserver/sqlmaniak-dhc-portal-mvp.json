@@ -10,7 +10,7 @@
   ],
   "timezone": "utc",
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "refresh": "1h",
   "time": {
     "from": "now-7d",
@@ -86,7 +86,7 @@
       "gridPos": {
         "x": 0,
         "y": 0,
-        "w": 6,
+        "w": 4,
         "h": 4
       },
       "datasource": {
@@ -143,12 +143,12 @@
     },
     {
       "id": 2,
-      "title": "Current COMPLETE",
+      "title": "Collection · on schedule",
       "type": "stat",
       "gridPos": {
-        "x": 6,
+        "x": 4,
         "y": 0,
-        "w": 6,
+        "w": 4,
         "h": 4
       },
       "datasource": {
@@ -188,10 +188,6 @@
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "orange",
-                "value": 999999
               }
             ]
           },
@@ -201,16 +197,17 @@
           "unit": "none"
         },
         "overrides": []
-      }
+      },
+      "description": "Last collection completed and not overdue. Says nothing about health of monitored SQL instance."
     },
     {
       "id": 3,
-      "title": "Needs attention",
+      "title": "Collection · needs attention",
       "type": "stat",
       "gridPos": {
-        "x": 12,
+        "x": 8,
         "y": 0,
-        "w": 6,
+        "w": 4,
         "h": 4
       },
       "datasource": {
@@ -252,7 +249,7 @@
                 "value": null
               },
               {
-                "color": "red",
+                "color": "orange",
                 "value": 1
               }
             ]
@@ -263,16 +260,17 @@
           "unit": "none"
         },
         "overrides": []
-      }
+      },
+      "description": "Collector FAILED/PARTIAL/RUNNING/NO_DATA/overdue. Independent of SQL health alerts."
     },
     {
       "id": 4,
-      "title": "CRITICAL alerts (latest runs)",
+      "title": "SQL health · CRITICAL instances",
       "type": "stat",
       "gridPos": {
-        "x": 18,
+        "x": 12,
         "y": 0,
-        "w": 6,
+        "w": 4,
         "h": 4
       },
       "datasource": {
@@ -288,7 +286,7 @@
           },
           "format": "table",
           "rawQuery": true,
-          "rawSql": "WITH latest AS (SELECT s.ServerInstance, (SELECT TOP(1) r.RunId FROM dhc.Run r WHERE r.ServerInstance=s.ServerInstance AND r.Status IN ('COMPLETE','PARTIAL') ORDER BY r.StartedUTC DESC,r.RunId DESC) AS RunId FROM dhc.MonitoredServer s WHERE s.IsEnabled=1 AND s.Environment IN (${environment:sqlstring}) AND s.ServerInstance IN (${instance:sqlstring})) SELECT COUNT_BIG(*) AS value FROM dhc.Alert a JOIN latest l ON l.RunId=a.RunId WHERE a.Severity='CRITICAL';",
+          "rawSql": "SELECT COUNT_BIG(*) AS value FROM (SELECT CASE WHEN latest.RunId IS NULL THEN 'NO_DATA' WHEN s.IsOverdue=1 THEN 'STALE' WHEN ISNULL(alerts.CriticalCount,0)>0 THEN 'CRITICAL' WHEN ISNULL(alerts.WarningCount,0)>0 THEN 'WARNING' ELSE 'OK' END AS Health FROM dhc.vMonitoringStatus s\nOUTER APPLY (SELECT TOP(1) r.RunId, r.StartedUTC FROM dhc.Run r WHERE r.ServerInstance=s.ServerInstance AND r.Status IN ('COMPLETE','PARTIAL') ORDER BY r.StartedUTC DESC,r.RunId DESC) AS latest\nOUTER APPLY (SELECT SUM(CASE WHEN a.Severity='CRITICAL' THEN 1 ELSE 0 END) AS CriticalCount, SUM(CASE WHEN a.Severity='WARNING' THEN 1 ELSE 0 END) AS WarningCount FROM dhc.Alert a WHERE a.RunId=latest.RunId) AS alerts\nWHERE s.IsEnabled=1 AND s.Environment IN (${environment:sqlstring}) AND s.ServerInstance IN (${instance:sqlstring})) h WHERE h.Health='CRITICAL';",
           "editorMode": "code"
         }
       ],
@@ -325,7 +323,134 @@
           "unit": "none"
         },
         "overrides": []
-      }
+      },
+      "description": "Count of instances with CRITICAL alerts in latest COMPLETE/PARTIAL diagnostic snapshot, excluding overdue snapshots. Not the number of alerts."
+    },
+    {
+      "id": 10,
+      "title": "SQL health · WARNING instances",
+      "type": "stat",
+      "gridPos": {
+        "x": 16,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_DHC}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_DHC}"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT_BIG(*) AS value FROM (SELECT CASE WHEN latest.RunId IS NULL THEN 'NO_DATA' WHEN s.IsOverdue=1 THEN 'STALE' WHEN ISNULL(alerts.CriticalCount,0)>0 THEN 'CRITICAL' WHEN ISNULL(alerts.WarningCount,0)>0 THEN 'WARNING' ELSE 'OK' END AS Health FROM dhc.vMonitoringStatus s\nOUTER APPLY (SELECT TOP(1) r.RunId, r.StartedUTC FROM dhc.Run r WHERE r.ServerInstance=s.ServerInstance AND r.Status IN ('COMPLETE','PARTIAL') ORDER BY r.StartedUTC DESC,r.RunId DESC) AS latest\nOUTER APPLY (SELECT SUM(CASE WHEN a.Severity='CRITICAL' THEN 1 ELSE 0 END) AS CriticalCount, SUM(CASE WHEN a.Severity='WARNING' THEN 1 ELSE 0 END) AS WarningCount FROM dhc.Alert a WHERE a.RunId=latest.RunId) AS alerts\nWHERE s.IsEnabled=1 AND s.Environment IN (${environment:sqlstring}) AND s.ServerInstance IN (${instance:sqlstring})) h WHERE h.Health='WARNING';",
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "description": "Instances with WARNING alerts but no CRITICAL alerts in the latest fresh diagnostic snapshot."
+    },
+    {
+      "id": 11,
+      "title": "SQL health · STALE / NO DATA",
+      "type": "stat",
+      "gridPos": {
+        "x": 20,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_DHC}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_DHC}"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT_BIG(*) AS value FROM (SELECT CASE WHEN latest.RunId IS NULL THEN 'NO_DATA' WHEN s.IsOverdue=1 THEN 'STALE' WHEN ISNULL(alerts.CriticalCount,0)>0 THEN 'CRITICAL' WHEN ISNULL(alerts.WarningCount,0)>0 THEN 'WARNING' ELSE 'OK' END AS Health FROM dhc.vMonitoringStatus s\nOUTER APPLY (SELECT TOP(1) r.RunId, r.StartedUTC FROM dhc.Run r WHERE r.ServerInstance=s.ServerInstance AND r.Status IN ('COMPLETE','PARTIAL') ORDER BY r.StartedUTC DESC,r.RunId DESC) AS latest\nOUTER APPLY (SELECT SUM(CASE WHEN a.Severity='CRITICAL' THEN 1 ELSE 0 END) AS CriticalCount, SUM(CASE WHEN a.Severity='WARNING' THEN 1 ELSE 0 END) AS WarningCount FROM dhc.Alert a WHERE a.RunId=latest.RunId) AS alerts\nWHERE s.IsEnabled=1 AND s.Environment IN (${environment:sqlstring}) AND s.ServerInstance IN (${instance:sqlstring})) h WHERE h.Health IN ('STALE','NO_DATA');",
+          "editorMode": "code"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "purple",
+                "value": 1
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "description": "Instances with no completed/partial diagnostic snapshot or whose last collection attempt is overdue."
     },
     {
       "id": 5,
@@ -350,7 +475,7 @@
           },
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT s.ServerInstance AS [Instance],s.Environment,s.MonitorGroup AS [Monitor group],s.MonitoringStatus AS [Status],s.IsOverdue AS [Overdue],s.IntervalMinutes AS [Interval min],s.LastAttemptUTC AS [Last attempt UTC],s.LastCompleteUTC AS [Last complete UTC],s.MinutesSinceAttempt AS [Minutes since attempt],s.LastRowsStored AS [Rows stored],LEFT(s.LastErrorText,280) AS [Last error] FROM dhc.vMonitoringStatus s WHERE s.IsEnabled=1 AND s.Environment IN (${environment:sqlstring}) AND s.ServerInstance IN (${instance:sqlstring}) ORDER BY CASE WHEN s.MonitoringStatus='FAILED' THEN 0 WHEN s.IsOverdue=1 THEN 1 WHEN s.MonitoringStatus='PARTIAL' THEN 2 WHEN s.MonitoringStatus='RUNNING' THEN 3 WHEN s.MonitoringStatus='NO_DATA' THEN 4 ELSE 5 END,s.ServerInstance;",
+          "rawSql": "SELECT s.ServerInstance AS [Instance],s.Environment,s.MonitorGroup AS [Monitor group],\ns.MonitoringStatus AS [Collection],CASE WHEN s.IsOverdue=1 THEN 'YES' ELSE 'NO' END AS [Overdue],\nCASE WHEN latest.RunId IS NULL THEN 'NO_DATA' WHEN s.IsOverdue=1 THEN 'STALE' WHEN ISNULL(alerts.CriticalCount,0)>0 THEN 'CRITICAL' WHEN ISNULL(alerts.WarningCount,0)>0 THEN 'WARNING' ELSE 'OK' END AS [SQL health],\nISNULL(alerts.CriticalCount,0) AS [Critical alerts],ISNULL(alerts.WarningCount,0) AS [Warning alerts],\ns.IntervalMinutes AS [Interval min],s.LastAttemptUTC AS [Last attempt UTC],\ns.LastCompleteUTC AS [Last complete UTC],s.MinutesSinceAttempt AS [Minutes since attempt],\ns.LastRowsStored AS [Rows stored],LEFT(s.LastErrorText,280) AS [Last error]\nFROM dhc.vMonitoringStatus s\nOUTER APPLY (SELECT TOP(1) r.RunId, r.StartedUTC FROM dhc.Run r WHERE r.ServerInstance=s.ServerInstance AND r.Status IN ('COMPLETE','PARTIAL') ORDER BY r.StartedUTC DESC,r.RunId DESC) AS latest\nOUTER APPLY (SELECT SUM(CASE WHEN a.Severity='CRITICAL' THEN 1 ELSE 0 END) AS CriticalCount, SUM(CASE WHEN a.Severity='WARNING' THEN 1 ELSE 0 END) AS WarningCount FROM dhc.Alert a WHERE a.RunId=latest.RunId) AS alerts\nWHERE s.IsEnabled=1 AND s.Environment IN (${environment:sqlstring}) AND s.ServerInstance IN (${instance:sqlstring})\nORDER BY CASE WHEN s.MonitoringStatus='FAILED' THEN 0 WHEN s.IsOverdue=1 THEN 1 WHEN s.MonitoringStatus='PARTIAL' THEN 2 WHEN s.MonitoringStatus='RUNNING' THEN 3 WHEN s.MonitoringStatus='NO_DATA' THEN 4 ELSE 5 END,\nCASE WHEN ISNULL(alerts.CriticalCount,0)>0 THEN 0 WHEN ISNULL(alerts.WarningCount,0)>0 THEN 1 ELSE 2 END,s.ServerInstance;",
           "editorMode": "code"
         }
       ],
@@ -377,8 +502,140 @@
             "mode": "thresholds"
           }
         },
-        "overrides": []
-      }
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Collection"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic",
+                  "applyToRow": false
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "COMPLETE": {
+                        "text": "COMPLETE",
+                        "color": "green"
+                      },
+                      "PARTIAL": {
+                        "text": "PARTIAL",
+                        "color": "orange"
+                      },
+                      "FAILED": {
+                        "text": "FAILED",
+                        "color": "red"
+                      },
+                      "RUNNING": {
+                        "text": "RUNNING",
+                        "color": "blue"
+                      },
+                      "NO_DATA": {
+                        "text": "NO_DATA",
+                        "color": "gray"
+                      },
+                      "DISABLED": {
+                        "text": "DISABLED",
+                        "color": "gray"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "SQL health"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic",
+                  "applyToRow": false
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "OK": {
+                        "text": "OK",
+                        "color": "green"
+                      },
+                      "WARNING": {
+                        "text": "WARNING",
+                        "color": "orange"
+                      },
+                      "CRITICAL": {
+                        "text": "CRITICAL",
+                        "color": "red"
+                      },
+                      "STALE": {
+                        "text": "STALE",
+                        "color": "purple"
+                      },
+                      "NO_DATA": {
+                        "text": "NO_DATA",
+                        "color": "gray"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Overdue"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic",
+                  "applyToRow": false
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "NO": {
+                        "text": "NO",
+                        "color": "green"
+                      },
+                      "YES": {
+                        "text": "YES",
+                        "color": "red"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "description": "Collection reports delivery status. SQL health summarizes the last COMPLETE/PARTIAL measurement, but becomes STALE when collection is overdue. Counts are for the last diagnostic snapshot, not real-time."
     },
     {
       "id": 6,
@@ -598,5 +855,6 @@
       }
     }
   ],
-  "links": []
+  "links": [],
+  "description": "DHC Portal MVP-02: collection state is separate from health of last available SQL Server diagnostic snapshot. SQL health may become STALE when due."
 }
