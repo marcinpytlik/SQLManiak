@@ -809,14 +809,18 @@ IF EXISTS
  SELECT 1 FROM @ExpectedObjects AS e
  WHERE NOT EXISTS
  (SELECT 1 FROM sys.objects AS o
-  WHERE o.schema_id=SCHEMA_ID(N'dhc') AND o.name=e.Name AND o.type=e.Type)
+  WHERE o.schema_id=SCHEMA_ID(N'dhc')
+   AND o.name COLLATE DATABASE_DEFAULT = e.Name COLLATE DATABASE_DEFAULT
+   AND o.type COLLATE DATABASE_DEFAULT = e.Type COLLATE DATABASE_DEFAULT)
 )
 BEGIN
  SELECT e.Name AS MissingObject,e.Type
  FROM @ExpectedObjects AS e
  WHERE NOT EXISTS
  (SELECT 1 FROM sys.objects AS o
-  WHERE o.schema_id=SCHEMA_ID(N'dhc') AND o.name=e.Name AND o.type=e.Type);
+  WHERE o.schema_id=SCHEMA_ID(N'dhc')
+   AND o.name COLLATE DATABASE_DEFAULT = e.Name COLLATE DATABASE_DEFAULT
+   AND o.type COLLATE DATABASE_DEFAULT = e.Type COLLATE DATABASE_DEFAULT);
  THROW 51920,'INSTALL FAILED: mandatory DHC objects missing.',1;
 END;
 IF NOT EXISTS
