@@ -10,7 +10,7 @@
   ],
   "timezone": "utc",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "refresh": "1h",
   "time": {
     "from": "now-7d",
@@ -44,7 +44,6 @@
         "definition": "SELECT DISTINCT Environment AS __text, Environment AS __value FROM dhc.MonitoredServer ORDER BY Environment",
         "sort": 1,
         "includeAll": true,
-        "allValue": "__all",
         "multi": false,
         "current": {
           "selected": true,
@@ -66,7 +65,6 @@
         "definition": "SELECT ServerInstance AS __text, ServerInstance AS __value FROM dhc.MonitoredServer ORDER BY ServerInstance",
         "sort": 1,
         "includeAll": true,
-        "allValue": "__all",
         "multi": false,
         "current": {
           "selected": true,
@@ -104,7 +102,7 @@
           },
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COUNT_BIG(*) AS value FROM dhc.MonitoredServer s WHERE s.IsEnabled=1 AND ('__all' IN (${environment:sqlstring}) OR s.Environment IN (${environment:sqlstring})) AND ('__all' IN (${instance:sqlstring}) OR s.ServerInstance IN (${instance:sqlstring}));",
+          "rawSql": "SELECT COUNT_BIG(*) AS value FROM dhc.MonitoredServer s WHERE s.IsEnabled=1 AND s.Environment IN (${environment:sqlstring}) AND s.ServerInstance IN (${instance:sqlstring});",
           "editorMode": "code"
         }
       ],
@@ -166,7 +164,7 @@
           },
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COUNT_BIG(*) AS value FROM dhc.vMonitoringStatus s WHERE s.IsEnabled=1 AND s.MonitoringStatus='COMPLETE' AND s.IsOverdue=0 AND ('__all' IN (${environment:sqlstring}) OR s.Environment IN (${environment:sqlstring})) AND ('__all' IN (${instance:sqlstring}) OR s.ServerInstance IN (${instance:sqlstring}));",
+          "rawSql": "SELECT COUNT_BIG(*) AS value FROM dhc.vMonitoringStatus s WHERE s.IsEnabled=1 AND s.MonitoringStatus='COMPLETE' AND s.IsOverdue=0 AND s.Environment IN (${environment:sqlstring}) AND s.ServerInstance IN (${instance:sqlstring});",
           "editorMode": "code"
         }
       ],
@@ -228,7 +226,7 @@
           },
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COUNT_BIG(*) AS value FROM dhc.vMonitoringStatus s WHERE s.IsEnabled=1 AND (s.MonitoringStatus IN ('FAILED','PARTIAL','RUNNING','NO_DATA') OR s.IsOverdue=1) AND ('__all' IN (${environment:sqlstring}) OR s.Environment IN (${environment:sqlstring})) AND ('__all' IN (${instance:sqlstring}) OR s.ServerInstance IN (${instance:sqlstring}));",
+          "rawSql": "SELECT COUNT_BIG(*) AS value FROM dhc.vMonitoringStatus s WHERE s.IsEnabled=1 AND (s.MonitoringStatus IN ('FAILED','PARTIAL','RUNNING','NO_DATA') OR s.IsOverdue=1) AND s.Environment IN (${environment:sqlstring}) AND s.ServerInstance IN (${instance:sqlstring});",
           "editorMode": "code"
         }
       ],
@@ -290,7 +288,7 @@
           },
           "format": "table",
           "rawQuery": true,
-          "rawSql": "WITH latest AS (SELECT s.ServerInstance, (SELECT TOP(1) r.RunId FROM dhc.Run r WHERE r.ServerInstance=s.ServerInstance AND r.Status IN ('COMPLETE','PARTIAL') ORDER BY r.StartedUTC DESC,r.RunId DESC) AS RunId FROM dhc.MonitoredServer s WHERE s.IsEnabled=1 AND ('__all' IN (${environment:sqlstring}) OR s.Environment IN (${environment:sqlstring})) AND ('__all' IN (${instance:sqlstring}) OR s.ServerInstance IN (${instance:sqlstring}))) SELECT COUNT_BIG(*) AS value FROM dhc.Alert a JOIN latest l ON l.RunId=a.RunId WHERE a.Severity='CRITICAL';",
+          "rawSql": "WITH latest AS (SELECT s.ServerInstance, (SELECT TOP(1) r.RunId FROM dhc.Run r WHERE r.ServerInstance=s.ServerInstance AND r.Status IN ('COMPLETE','PARTIAL') ORDER BY r.StartedUTC DESC,r.RunId DESC) AS RunId FROM dhc.MonitoredServer s WHERE s.IsEnabled=1 AND s.Environment IN (${environment:sqlstring}) AND s.ServerInstance IN (${instance:sqlstring})) SELECT COUNT_BIG(*) AS value FROM dhc.Alert a JOIN latest l ON l.RunId=a.RunId WHERE a.Severity='CRITICAL';",
           "editorMode": "code"
         }
       ],
@@ -352,7 +350,7 @@
           },
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT s.ServerInstance AS [Instance],s.Environment,s.MonitorGroup AS [Monitor group],s.MonitoringStatus AS [Status],s.IsOverdue AS [Overdue],s.IntervalMinutes AS [Interval min],s.LastAttemptUTC AS [Last attempt UTC],s.LastCompleteUTC AS [Last complete UTC],s.MinutesSinceAttempt AS [Minutes since attempt],s.LastRowsStored AS [Rows stored],LEFT(s.LastErrorText,280) AS [Last error] FROM dhc.vMonitoringStatus s WHERE s.IsEnabled=1 AND ('__all' IN (${environment:sqlstring}) OR s.Environment IN (${environment:sqlstring})) AND ('__all' IN (${instance:sqlstring}) OR s.ServerInstance IN (${instance:sqlstring})) ORDER BY CASE WHEN s.MonitoringStatus='FAILED' THEN 0 WHEN s.IsOverdue=1 THEN 1 WHEN s.MonitoringStatus='PARTIAL' THEN 2 WHEN s.MonitoringStatus='RUNNING' THEN 3 WHEN s.MonitoringStatus='NO_DATA' THEN 4 ELSE 5 END,s.ServerInstance;",
+          "rawSql": "SELECT s.ServerInstance AS [Instance],s.Environment,s.MonitorGroup AS [Monitor group],s.MonitoringStatus AS [Status],s.IsOverdue AS [Overdue],s.IntervalMinutes AS [Interval min],s.LastAttemptUTC AS [Last attempt UTC],s.LastCompleteUTC AS [Last complete UTC],s.MinutesSinceAttempt AS [Minutes since attempt],s.LastRowsStored AS [Rows stored],LEFT(s.LastErrorText,280) AS [Last error] FROM dhc.vMonitoringStatus s WHERE s.IsEnabled=1 AND s.Environment IN (${environment:sqlstring}) AND s.ServerInstance IN (${instance:sqlstring}) ORDER BY CASE WHEN s.MonitoringStatus='FAILED' THEN 0 WHEN s.IsOverdue=1 THEN 1 WHEN s.MonitoringStatus='PARTIAL' THEN 2 WHEN s.MonitoringStatus='RUNNING' THEN 3 WHEN s.MonitoringStatus='NO_DATA' THEN 4 ELSE 5 END,s.ServerInstance;",
           "editorMode": "code"
         }
       ],
@@ -405,7 +403,7 @@
           },
           "format": "table",
           "rawQuery": true,
-          "rawSql": "WITH latest AS (SELECT s.ServerInstance,s.Environment,(SELECT TOP(1) r.RunId FROM dhc.Run r WHERE r.ServerInstance=s.ServerInstance AND r.Status IN ('COMPLETE','PARTIAL') ORDER BY r.StartedUTC DESC,r.RunId DESC) AS RunId FROM dhc.MonitoredServer s WHERE s.IsEnabled=1 AND ('__all' IN (${environment:sqlstring}) OR s.Environment IN (${environment:sqlstring})) AND ('__all' IN (${instance:sqlstring}) OR s.ServerInstance IN (${instance:sqlstring}))) SELECT l.ServerInstance AS [Instance],a.Severity,a.Area,a.ObjectName AS [Object],LEFT(a.Details,350) AS [Details] FROM latest l JOIN dhc.Alert a ON a.RunId=l.RunId ORDER BY CASE a.Severity WHEN 'CRITICAL' THEN 0 WHEN 'WARNING' THEN 1 ELSE 2 END,l.ServerInstance,a.Area;",
+          "rawSql": "WITH latest AS (SELECT s.ServerInstance,s.Environment,(SELECT TOP(1) r.RunId FROM dhc.Run r WHERE r.ServerInstance=s.ServerInstance AND r.Status IN ('COMPLETE','PARTIAL') ORDER BY r.StartedUTC DESC,r.RunId DESC) AS RunId FROM dhc.MonitoredServer s WHERE s.IsEnabled=1 AND s.Environment IN (${environment:sqlstring}) AND s.ServerInstance IN (${instance:sqlstring})) SELECT l.ServerInstance AS [Instance],a.Severity,a.Area,a.ObjectName AS [Object],LEFT(a.Details,350) AS [Details] FROM latest l JOIN dhc.Alert a ON a.RunId=l.RunId ORDER BY CASE a.Severity WHEN 'CRITICAL' THEN 0 WHEN 'WARNING' THEN 1 ELSE 2 END,l.ServerInstance,a.Area;",
           "editorMode": "code"
         }
       ],
@@ -458,7 +456,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT CAST(DATEADD(HOUR,DATEDIFF(HOUR,0,e.StartedUTC),0) AS datetime) AS time, SUM(CASE WHEN e.Status='COMPLETE' THEN 1 ELSE 0 END) AS [Complete],SUM(CASE WHEN e.Status='FAILED' THEN 1 ELSE 0 END) AS [Failed],SUM(CASE WHEN e.Status='PARTIAL' THEN 1 ELSE 0 END) AS [Partial] FROM dhc.ExecutionLog e LEFT JOIN dhc.MonitoredServer s ON s.ServerInstance=e.ServerInstance WHERE $__timeFilter(e.StartedUTC) AND ('__all' IN (${environment:sqlstring}) OR s.Environment IN (${environment:sqlstring})) AND ('__all' IN (${instance:sqlstring}) OR e.ServerInstance IN (${instance:sqlstring})) GROUP BY DATEADD(HOUR,DATEDIFF(HOUR,0,e.StartedUTC),0) ORDER BY time;",
+          "rawSql": "SELECT CAST(DATEADD(HOUR,DATEDIFF(HOUR,0,e.StartedUTC),0) AS datetime) AS time, SUM(CASE WHEN e.Status='COMPLETE' THEN 1 ELSE 0 END) AS [Complete],SUM(CASE WHEN e.Status='FAILED' THEN 1 ELSE 0 END) AS [Failed],SUM(CASE WHEN e.Status='PARTIAL' THEN 1 ELSE 0 END) AS [Partial] FROM dhc.ExecutionLog e LEFT JOIN dhc.MonitoredServer s ON s.ServerInstance=e.ServerInstance WHERE $__timeFilter(e.StartedUTC) AND s.Environment IN (${environment:sqlstring}) AND e.ServerInstance IN (${instance:sqlstring}) GROUP BY DATEADD(HOUR,DATEDIFF(HOUR,0,e.StartedUTC),0) ORDER BY time;",
           "editorMode": "code"
         }
       ],
@@ -516,7 +514,7 @@
           },
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT TOP(300) e.StartedUTC AS [Started UTC],e.ServerInstance AS [Instance],s.Environment,e.Status AS [Result],e.RowsStored AS [Rows],DATEDIFF_BIG(MILLISECOND,e.StartedUTC,e.FinishedUTC) AS [Duration ms],CONVERT(varchar(36),e.RunId) AS [Run ID],LEFT(e.ErrorText,350) AS [Error] FROM dhc.ExecutionLog e LEFT JOIN dhc.MonitoredServer s ON s.ServerInstance=e.ServerInstance WHERE $__timeFilter(e.StartedUTC) AND ('__all' IN (${environment:sqlstring}) OR s.Environment IN (${environment:sqlstring})) AND ('__all' IN (${instance:sqlstring}) OR e.ServerInstance IN (${instance:sqlstring})) ORDER BY e.StartedUTC DESC,e.ExecutionId DESC;",
+          "rawSql": "SELECT TOP(300) e.StartedUTC AS [Started UTC],e.ServerInstance AS [Instance],s.Environment,e.Status AS [Result],e.RowsStored AS [Rows],DATEDIFF_BIG(MILLISECOND,e.StartedUTC,e.FinishedUTC) AS [Duration ms],CONVERT(varchar(36),e.RunId) AS [Run ID],LEFT(e.ErrorText,350) AS [Error] FROM dhc.ExecutionLog e LEFT JOIN dhc.MonitoredServer s ON s.ServerInstance=e.ServerInstance WHERE $__timeFilter(e.StartedUTC) AND s.Environment IN (${environment:sqlstring}) AND e.ServerInstance IN (${instance:sqlstring}) ORDER BY e.StartedUTC DESC,e.ExecutionId DESC;",
           "editorMode": "code"
         }
       ],
@@ -569,7 +567,7 @@
           },
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT TOP(300) r.StartedUTC AS [Time UTC],r.ServerInstance AS [Instance],s.Environment,a.Severity,a.Area,a.ObjectName AS [Object],LEFT(a.Details,350) AS [Details] FROM dhc.Alert a JOIN dhc.Run r ON r.RunId=a.RunId LEFT JOIN dhc.MonitoredServer s ON s.ServerInstance=r.ServerInstance WHERE $__timeFilter(r.StartedUTC) AND ('__all' IN (${environment:sqlstring}) OR s.Environment IN (${environment:sqlstring})) AND ('__all' IN (${instance:sqlstring}) OR r.ServerInstance IN (${instance:sqlstring})) ORDER BY r.StartedUTC DESC,a.AlertId DESC;",
+          "rawSql": "SELECT TOP(300) r.StartedUTC AS [Time UTC],r.ServerInstance AS [Instance],s.Environment,a.Severity,a.Area,a.ObjectName AS [Object],LEFT(a.Details,350) AS [Details] FROM dhc.Alert a JOIN dhc.Run r ON r.RunId=a.RunId LEFT JOIN dhc.MonitoredServer s ON s.ServerInstance=r.ServerInstance WHERE $__timeFilter(r.StartedUTC) AND s.Environment IN (${environment:sqlstring}) AND r.ServerInstance IN (${instance:sqlstring}) ORDER BY r.StartedUTC DESC,a.AlertId DESC;",
           "editorMode": "code"
         }
       ],
