@@ -34,6 +34,9 @@ GRANT INSERT, UPDATE ON OBJECT::dhc.ExecutionLog TO dhc_collector;
 
 -- One collection transaction: write Run and its detail/alert tables.
 GRANT INSERT, UPDATE ON OBJECT::dhc.Run TO dhc_collector;
+-- UPDATE ... WHERE RunId=@RunId requires SELECT permission on predicate column.
+-- Column-only grant avoids exposing other fields of dhc.Run.
+GRANT SELECT ON OBJECT::dhc.Run (RunId) TO dhc_collector;
 GRANT INSERT ON OBJECT::dhc.ResultBatch TO dhc_collector;
 GRANT INSERT ON OBJECT::dhc.Alert TO dhc_collector;
 GRANT INSERT ON OBJECT::dhc.TempDBSnapshot TO dhc_collector;
