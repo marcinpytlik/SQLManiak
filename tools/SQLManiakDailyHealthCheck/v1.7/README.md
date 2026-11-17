@@ -424,3 +424,29 @@ dedicated LAB account, not recreate it blindly. A SQL CREATE LOGIN DDL
 statement may be visible to privileged SQL monitoring/audit; deploy only
 in this isolated Docker LAB. The generated credential is still tied to the
 Windows account that saves it via DPAPI, not to SQL Agent's future identity.
+
+## Test 33 failure finding: RunId column SELECT (Test 34 regression)
+
+The first actual least-privilege execution found a missing repository grant:
+`UPDATE dhc.Run ... WHERE RunId=@RunId` failed with SQL Server SELECT
+permission denied on `dhc.Run`. The SQL engine must read the predicate
+column to locate the row being updated; `UPDATE` permission alone is not
+sufficient here. `20_RepositoryLeastPrivilege.sql` now grants
+`SELECT ON OBJECT::dhc.Run (RunId)` to `dhc_collector` (column only).
+This idempotent GRANT can be applied to existing DBs by rerunning SQL file,
+or directly in SSMS:
+
+```sql
+USE SQLManiakHealthHistory;
+GO
+GRANT SELECT ON OBJECT::dhc.Run (RunId) TO dhc_collector;
+GO
+```
+
+`23_Test-RepositoryLabLogin.ps1` now executes a real
+`SELECT TOP (0) RunId FROM dhc.Run` as the least-privilege login,
+preventing a future false-positive permission audit. Expected required
+permissions check rises from **13/13 to 14/14**. The failed collection
+transaction rolled back; the wrapper may still have written a FAILED
+`dhc.ExecutionLog` attempt, which is expected. Retry Test 33 using the
+existing DPAPI config; do not provision another login.
