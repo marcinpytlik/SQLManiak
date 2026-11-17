@@ -286,3 +286,27 @@ $repoCredential=[PSCredential]::new('sa',(Read-Host 'LAB repository sa password'
 .\17_Invoke-DHC-Scheduled.ps1 -ConfigPath "$env:LOCALAPPDATA\SQLManiakDHC\scheduler.json" -Environment LAB -Execute
 ```
 Preview should show DueStatus; shortly after COMPLETE the -Execute run should produce SKIPPED/NOT_DUE and no new ExecutionLog rows. Any FAILED target makes the wrapper fail for Agent job history. This wrapper never uses -Force. Windows SQL Agent host must be able to reach repository and all sources; 127.0.0.1 addresses only work if the host runs the Docker containers locally. The actual Agent job remains disabled pending test under its service/proxy identity and security review.
+
+## Test 28 — scheduled wrapper DUE and NOT_DUE in one LAB run
+
+Run **only** against Docker LAB repository `127.0.0.1,15433` after Tests 25–27.
+`19_Test-Scheduler-Due.ps1` prechecks both Docker LAB targets and makes sure
+target 2 is currently NOT_DUE. It then temporarily changes target 1
+`IntervalMinutes` from 1440 to 1, runs `17_Invoke-DHC-Scheduled.ps1 -Execute`
+with existing encrypted DPAPI config, expects target 1 COMPLETE / +1
+ExecutionLog row and target 2 SKIPPED NOT_DUE / +0 rows. It restores the
+original 1440-minute interval in `finally` even on collection failure.
+A machine crash or forced process termination can bypass `finally`: in that
+case check/reset the interval manually before other operations.
+
+```powershell
+.\19_Test-Scheduler-Due.ps1 `
+  -RepositoryConnectionString $builder.ConnectionString `
+  -ConfigPath "$env:LOCALAPPDATA\SQLManiakDHC-v2\scheduler.json" `
+  -ConnectionTimeout 3 -QueryTimeout 30
+```
+
+Expected: target 15434 COMPLETE PASS, target 15435 SKIPPED PASS,
+`Test 28: PASS`, `RESTORED target 1 IntervalMinutes=1440`.
+If target 2 becomes DUE before starting, test fails safely without
+modifying anything. No SQL Agent job is enabled.
