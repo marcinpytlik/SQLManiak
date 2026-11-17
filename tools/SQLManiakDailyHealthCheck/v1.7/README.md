@@ -548,3 +548,13 @@ Run `29_Source-MsdbAgentHistoryRole-LAB.sql` on each Docker LAB target, changing
 ### Test 36E: two additional msdb read-only table grants
 
 The subsequent complete source run `ffc5dc75-4414-45f1-bfa4-90ac8585cd90` reported `SELECT permission was denied` on `msdb.dbo.sysjobs` (JOB SCHEDULE) and `msdb.dbo.sysjobactivity` (JOBS). `29_Source-MsdbAgentHistoryRole-LAB.sql` now also grants SELECT to the existing `dhc_agent_history_reader` role on these two tables (4 total). Re-execute that script as admin against each LAB target with its matching `@Login`. Test actual access to all four Agent tables under each dedicated source credential before retrying `26_Test-FullLeastPrivilege.ps1`; verify alert details of the new RunId. This remains a LAB-only role without any write privileges.
+
+### Test 37 — full collection on the second Docker LAB source
+
+Following Test 36 PASS on 15434 (`ec7e29a0-dffd-4702-9e4d-ac3705c61d9b`), execute the new LAB-only `30_Test-SecondSourceFullLeastPrivilege.ps1` from the same Windows/DPAPI identity:
+
+```powershell
+.\30_Test-SecondSourceFullLeastPrivilege.ps1 -AdminRepositoryConnectionString $builder.ConnectionString
+```
+
+It requires target 15434 to be NOT_DUE, temporarily adjusts only 15435 `IntervalMinutes` from 1440 to 1 (restored in `finally`), invokes the full-least-privilege DPAPI scheduler, verifies 15435 COMPLETE with exactly one new ExecutionLog and RunId, 15434 SKIPPED/NOT_DUE, and no recognized permission-denied alerts for 15435. Environment alerts are allowed. Requires the most recent 15435 execution to be older than one minute. Do not run concurrently with any scheduler. GitHub dashboard CI does not validate the runtime PowerShell/SQL behavior; verify locally.
