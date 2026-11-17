@@ -52,7 +52,7 @@ BEGIN
     BEGIN
         SET @sql=N'CREATE LOGIN '+QUOTENAME(@login)+
           N' WITH PASSWORD = N'''+REPLACE(@secret,N'''',N'''''')+
-          N''', CHECK_POLICY = ON, CHECK_EXPIRATION = OFF, DEFAULT_DATABASE = [SQLManiakHealthHistory];';
+          N''', CHECK_POLICY = ON, CHECK_EXPIRATION = OFF, DEFAULT_DATABASE = [master];';
         EXEC sys.sp_executesql @sql;
         PRINT CONCAT('Created SQL login: ',@login);
     END
