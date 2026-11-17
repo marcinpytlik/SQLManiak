@@ -155,11 +155,12 @@ BEGIN TRY
         BEGIN TRY
             SELECT TOP (1) @XeAutoFileName = CONVERT(nvarchar(4000),f.value)
             FROM sys.server_event_sessions s
+            JOIN sys.server_event_session_targets t
+              ON t.event_session_id=s.event_session_id AND t.name=N'event_file'
             JOIN sys.server_event_session_fields f
-              ON f.event_session_id = s.event_session_id
-            WHERE s.name = N'SQLManiak_Autogrowth'
-              AND f.object_name = N'event_file'
-              AND f.name = N'filename';
+              ON f.event_session_id=s.event_session_id
+             AND f.object_id=t.target_id AND f.name=N'filename'
+            WHERE s.name = N'SQLManiak_Autogrowth';
 
             IF @XeAutoFileName IS NULL
                OR RIGHT(LOWER(@XeAutoFileName),4) <> N'.xel'
