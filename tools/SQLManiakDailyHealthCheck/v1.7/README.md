@@ -574,3 +574,14 @@ Apply from this directory (after `git pull origin master`): `docker compose --pr
 ### Follow-up: Compose dollar-sign escaping for target2 healthcheck
 
 After PR #111, Compose emitted `The "MSSQL_SA_PASSWORD" variable is not set`, because the healthcheck contained single `$MSSQL_SA_PASSWORD`, evaluated by Compose on the host. Corrected to `$$MSSQL_SA_PASSWORD` in source Compose so the resulting container command uses the shell environment variable at runtime. This is **not** a SQL password change. From the DHC v1.7 directory run `docker compose --profile multi-target config --quiet` (no sensitive config printed) then `docker compose --profile multi-target up -d --no-deps --force-recreate sql-target-2`. Do not use `down -v`. Verify healthy after container startup and cessation of new 18456 state 8 login failures.
+
+### Test 46B — Windows Task Scheduler (no SQL Server installed on Windows)
+
+Use `32_Register-WindowsScheduledTask-LAB.ps1` from the DHC v1.7 directory under Windows account `DEWELOPER\blad`, on machine `DEWELOPER`. It reuses `SQLManiakDHC-fullleastpriv` DPAPI, runs `21_Test-SchedulerIdentity.ps1 -CheckSqlPreview`, then registers a **disabled** Windows Task Scheduler job named `SQLManiak DHC v1.7 LAB`, recurring every 5 minutes for 365 days once explicitly enabled. DHC due-awareness still determines whether 15434/15435 need their 1440-minute collections. Single-instance policy `IgnoreNew`, PowerShell 7, limited run level, no stored Windows task password. It refuses existing tasks instead of overwriting them.
+
+```powershell
+.\32_Register-WindowsScheduledTask-LAB.ps1
+Get-ScheduledTask -TaskName 'SQLManiak DHC v1.7 LAB' | Select-Object TaskName,State
+```
+
+Important: `-LogonType Interactive` **requires that user to be signed in**. It is deliberately safer for the first LAB run because the existing DPAPI secrets were exported under that user; it does **not** meet unattended-while-signed-out requirements. Never switch the task to SYSTEM/S4U/Agent service and assume DPAPI works. No SQL collection happens when registering this disabled task. Do not enable automatically until a controlled manual task execution and audit have been approved. If you need operation while signed out, separately design/test a dedicated scheduler identity and new protected credential storage; do not reuse user DPAPI exports by copying.
