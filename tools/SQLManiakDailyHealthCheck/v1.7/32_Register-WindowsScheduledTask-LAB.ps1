@@ -96,7 +96,10 @@ try {
  $task=$folder.GetTask($TaskName)
  $definitionRegistered=$task.Definition
  $isDisabled=(-not $task.Enabled) -and (-not $definitionRegistered.Settings.Enabled)
- $principalOk=([string]$definitionRegistered.Principal.UserId -eq $identity)
+ # Task Scheduler may normalize DEWELOPER\\blad to 'blad'. Compare identity SIDs.
+ $actualSid=([System.Security.Principal.NTAccount]::new([string]$definitionRegistered.Principal.UserId)).Translate([System.Security.Principal.SecurityIdentifier]).Value
+ $expectedSid=[System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+ $principalOk=($actualSid -eq $expectedSid)
  $interactiveOk=([int]$definitionRegistered.Principal.LogonType -eq 3) # TASK_LOGON_INTERACTIVE_TOKEN
  $overlapOk=([int]$definitionRegistered.Settings.MultipleInstances -eq 2) # TASK_INSTANCES_IGNORE_NEW
  if(-not ($isDisabled -and $principalOk -and $interactiveOk -and $overlapOk)){
