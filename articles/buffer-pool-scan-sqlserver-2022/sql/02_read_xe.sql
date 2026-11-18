@@ -1,20 +1,20 @@
 /*
  E0: read events from event_file.
- Run after a controlled operation. For a final collection, stop the XE session
- first using 03_stop_xe.sql to flush pending buffers.
- UTC event timestamps; one row per data field for lossless exploratory analysis.
+ For final collection stop session first (03_stop_xe.sql) to flush pending buffers.
+ Timestamps in UTC. One row per data field in first result set.
 */
 USE master;
 GO
+
 ;WITH Events AS
 (
-    SELECT
-        file_name,
-        file_offset,
-        TRY_CONVERT(xml, event_data) AS event_xml
-    FROM sys.fn_xe_file_target_read_file(
-         N'/var/opt/mssql/log/bps_research_e0*.xel',
-         NULL, NULL, NULL)
+    SELECT file_name, file_offset,
+           TRY_CONVERT(xml, event_data) AS event_xml
+    FROM sys.fn_xe_file_target_read_file
+    (
+        N'/var/opt/mssql/log/bps_research_e0*.xel',
+        NULL, NULL, NULL
+    )
 )
 SELECT
     e.file_name,
@@ -28,20 +28,30 @@ CROSS APPLY e.event_xml.nodes('/event/data') AS d(n)
 ORDER BY EventTimeUTC, e.file_name, e.file_offset, FieldName;
 GO
 
-/* Counts by event type. No event != no scanning: some events have thresholds. */
+/* Group by extracted SQL columns, not XML methods (SQL error 4148). */
 ;WITH RawEvents AS
 (
     SELECT TRY_CONVERT(xml, event_data) AS event_xml
-    FROM sys.fn_xe_file_target_read_file(
-         N'/var/opt/mssql/log/bps_research_e0*.xel',
-         NULL, NULL, NULL)
+    FROM sys.fn_xe_file_target_read_file
+    (
+        N'/var/opt/mssql/log/bps_research_e0*.xel',
+        NULL, NULL, NULL
+    )
+),
+ParsedEvents AS
+(
+    SELECT
+        event_xml.value('(/event/@name)[1]', 'sysname') AS EventName,
+        event_xml.value('(/event/@timestamp)[1]', 'datetime2(7)') AS EventTimeUTC
+    FROM RawEvents
+    WHERE event_xml IS NOT NULL
 )
 SELECT
-    event_xml.value('(/event/@name)[1]', 'sysname') AS EventName,
+    EventName,
     COUNT_BIG(*) AS EventCount,
-    MIN(event_xml.value('(/event/@timestamp)[1]', 'datetime2(7)')) AS FirstEventUTC,
-    MAX(event_xml.value('(/event/@timestamp)[1]', 'datetime2(7)')) AS LastEventUTC
-FROM RawEvents
-GROUP BY event_xml.value('(/event/@name)[1]', 'sysname')
+    MIN(EventTimeUTC) AS FirstEventUTC,
+    MAX(EventTimeUTC) AS LastEventUTC
+FROM ParsedEvents
+GROUP BY EventName
 ORDER BY EventName;
 GO
