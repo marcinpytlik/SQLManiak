@@ -13,9 +13,11 @@
  INSTALLS:
  - SQL login [dhc_source_collector] (created only when absent)
  - VIEW SERVER PERFORMANCE STATE, VIEW SERVER SECURITY STATE, VIEW ANY ERROR LOG
+ - VIEW ANY DEFINITION (required for sys.master_files metadata visibility)
  - msdb user mapped to login and membership in SQLAgentReaderRole
  - msdb.dhc_agent_history_reader with SELECT on four agent tables
- - optionally server role dhc_autogrowth_reader with ALTER TRACE (off by default)
+ - legacy optional server role dhc_autogrowth_reader with ALTER TRACE (off by default;
+   do NOT enable for XE-based collectors). XE session is installed separately by 39.
 
  DOES NOT:
  - create SQLManiakHealthHistory, configure the Repository, change any user DB,
@@ -23,6 +25,7 @@
  - reset existing login passwords, revoke previous permissions or change
    application/operating system logins.
  - grant sysadmin, db_owner or db_datareader.
+ - revoke legacy grants from pre-existing principals (audit separately).
 
  On FCI, @@SERVERNAME is the SQL instance name; run once per SQL instance,
  not once per cluster node. Review account/password policy and ALTER TRACE with
@@ -97,6 +100,9 @@ SET @Password=NULL;
 GRANT VIEW SERVER PERFORMANCE STATE TO [dhc_source_collector];
 GRANT VIEW SERVER SECURITY STATE TO [dhc_source_collector];
 GRANT VIEW ANY ERROR LOG TO [dhc_source_collector];
+-- SQL Server 2022: required to list database files from master.sys.master_files.
+-- Metadata visibility is instance-wide; approved for the DHC deployment.
+GRANT VIEW ANY DEFINITION TO [dhc_source_collector];
 
 IF @GrantAlterTrace=1
 BEGIN
@@ -165,5 +171,5 @@ JOIN sys.database_principals r ON m.role_principal_id=r.principal_id
 JOIN sys.database_principals u ON m.member_principal_id=u.principal_id
 WHERE u.name=N'dhc_source_collector'
 ORDER BY r.name;
-PRINT 'DHC source permissions complete. Run a real DHC collection as the least-privileged identity to validate runtime access.';
+PRINT 'DHC source permissions (including VIEW ANY DEFINITION) complete. Run a real DHC collection as the least-privileged identity to validate runtime access.';
 GO

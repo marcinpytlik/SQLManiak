@@ -1,5 +1,17 @@
 # SQLManiak Daily Health Check v1.7 — SQL repository
 
+## SQL Server 2022+ — production XE autogrowth deployment
+
+See **[41_PRODUCTION_XE_DEPLOYMENT.md](41_PRODUCTION_XE_DEPLOYMENT.md)** for the reviewed deployment order, safety gates, FCI file path/retention, and rollback.
+
+- `37_Install-DHC-Repository-AllInOne.sql`: central Repository installer (unchanged).
+- `38_Configure-DHC-Source-AllInOne.sql`: SQL-only source grants, now includes approved `VIEW ANY DEFINITION` to expose `sys.master_files`.
+- `39_Install-DHC-AutogrowthXE-AllInOne.sql`: guarded SQL-only `SQLManiak_Autogrowth` event_file session installer, 32 MB x 8 rollover files by default. Production new sessions: startup ON.
+- `40_Validate-DHC-Source-XE-Deployment.sql`: impersonated read-only permission, metadata and XEL verification.
+- `03_Run-DHC-v1_7.ps1`: rewrites original external v1.5 `12C AUTOGROWTH EVENTS` in memory to use XE, retains existing result columns/alert thresholds, marks rolling XE history `AVAILABLE_PARTIAL`.
+
+The source v1.5 SQL is still **not** checked into Git. The in-memory rewrite fails on an unexpected section layout. SQL 2016/2019 need separate support. Keep `@GrantAlterTrace=0` in installer 38: XE does not require ALTER TRACE. **These changes require a pilot run on SQL Server 2022 and approval before production cutover.**
+
 ## Architecture
 
 This version **does not create CSV files**. It reads the existing v1.5 DHC result sets from each monitored instance and writes everything to the central `SQLManiakHealthHistory` database. `@SaveHistory` in the source v1.5 script is forced to 0 to avoid double writes.
