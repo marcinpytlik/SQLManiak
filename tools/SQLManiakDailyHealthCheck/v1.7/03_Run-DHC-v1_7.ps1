@@ -303,6 +303,24 @@ function Query-Source([string]$QueryFile) {
  }
  return @(Invoke-Sqlcmd @args)
 }
+function Remove-LegacyLocalHistoryNotice([System.Data.DataTable]$Table) {
+ # DHC v1.5 emits an INFO notice telling operators to install local history.
+ # v1.7 stores history in the central Repository instead.
+ # Suppress ONLY this known legacy INFO line in the transported summary;
+ # preserve all other INFO/WARNING/CRITICAL rows and original source SQL.
+ if(-not ($Table.Columns.Contains('Severity') -and
+          $Table.Columns.Contains('Area') -and
+          $Table.Columns.Contains('Details'))) { return }
+ for($rowIndex=$Table.Rows.Count-1; $rowIndex -ge 0; $rowIndex--) {
+  $row=$Table.Rows[$rowIndex]
+  if([string]$row['Severity'] -eq 'INFO' -and
+     [string]$row['Area'] -eq 'HISTORY' -and
+     [string]$row['Details'] -match 'SQLManiak_HealthHistory_Setup\.sql') {
+   $Table.Rows.RemoveAt($rowIndex)
+  }
+ }
+}
+
 function Write-Sql([string]$Sql,[hashtable]$P) {
  $cmd=$script:connection.CreateCommand()
  $cmd.Transaction=$script:transaction
@@ -357,6 +375,7 @@ try {
  RunId=$runId;ServerInstance=$ServerInstance;StartedUTC=$started;Status='RUNNING'}
 
  $mainTables=Get-Tables (Query-Source $SqlFile)
+ foreach($table in $mainTables) { Remove-LegacyLocalHistoryNotice $table }
  $i=0
  foreach($t in $mainTables) {
   $i++
