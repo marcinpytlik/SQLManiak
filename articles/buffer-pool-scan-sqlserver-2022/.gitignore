@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+results/*
+!results/.gitkeep
+*.xel
+*.xem
+*.bak
+*.trn
+*.mdf
+*.ndf
+*.ldf
