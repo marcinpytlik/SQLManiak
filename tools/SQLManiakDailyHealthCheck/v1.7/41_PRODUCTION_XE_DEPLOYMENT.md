@@ -1,6 +1,6 @@
 # SQLManiak DHC v1.7 — SQL Server 2022+ production XE deployment
 
-**Status: release candidate, NOT production-certified until environment-specific SQL tests pass.**
+**Status: production pilot candidate (SQL Server 2022+). Docker SQL Server 2022 LAB S10.3–S10.8 passed; this revision suppresses a legacy informational HISTORY notice and requires one follow-up regression run before merging. FCI and production-specific checks are still required.**
 All-in-one SQL installers are T-SQL for SSMS. Scheduled collector runtime remains PowerShell 7.5+.
 Do not install over the existing running collector until approved cutover.
 
@@ -15,6 +15,10 @@ Do not install over the existing running collector until approved cutover.
 | `03_Run-DHC-v1_7.ps1` | Collector host | Main DHC + TempDB + in-memory rewrite of original v1.5 section 12C to XE. |
 
 **Compatibility**: SQL Server **2022+ only**. SQL Server 2016/2019 are deliberately excluded from installers 38–40; validate separately. `SQLManiak_Daily_Health_Check_v1_5_CSV.sql` is an **external local file** and is deliberately not committed here. The XE runtime rewrite expects the precise v1.5 section markers; it fails explicitly if they change.
+
+## Confirmed integration test (18 Nov 2026)
+
+Docker LAB source `127.0.0.1,15435` -> isolated Repository `127.0.0.1,15436`: `dhc.Run` COMPLETE, 17 DHC result sets, 56 DHC rows, 13 visible files and 13 rows in section 12C, including 4 correctly persisted XE growth events (DATA: 2 events/16MB/max 5ms; LOG: 2 events/16MB/max 66ms). No SYS.TRACES or XE permission warning. Alert details: 1 service CRITICAL and 7 configuration/backup WARNINGS. Original summary contained 1 legacy INFO HISTORY line; collector now suppresses only that informational line in central output and must be regression tested. Production Repository `15433` was not changed.
 
 ## Changes to access
 
@@ -49,6 +53,9 @@ Production fresh installs use `STARTUP_STATE = ON`; the existing LAB session had
 ## Known limits / gates
 
 - Existing source v1.5 file is not part of repository; source layout compatibility must be verified in pilot.
+- The central collector filters the obsolete v1.5 local-history INFO SUMMARY row, without changing source SQL. Test that `13 SUMMARY` retains all CRITICAL/WARNING rows and that `dhc.Alert` matches; the original `14 COUNTS` remains a source-side count.
+- Do not reuse the Docker LAB XEL path on Windows FCI. Keep `@GrantAlterTrace=0` and verify `VIEW ANY DEFINITION` was security-approved.
+- The most recent code change for INFO suppression still requires a collector rerun on the isolated test Repository before the PR is considered fully regression-tested.
 - XE file loss/rollover and service restarts can leave incomplete coverage.
 - `COMPLETE` is transport/run success, not proof that every diagnostic section succeeded; query `dhc.Alert` and check result-set row counts before marking deployment successful.
 - Current CI validates Grafana dashboard JSON, **not actual SQL Server installation or XE execution**. A real SQL Server 2022 Docker pilot, plus Windows/FCI pilot where appropriate, is mandatory.
