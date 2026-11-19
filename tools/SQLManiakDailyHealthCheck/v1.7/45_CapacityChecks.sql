@@ -23,6 +23,8 @@ ORDER BY r.StartedUTC DESC,l.UsedLogPct DESC;
 SELECT * FROM dhc.vCapacityFilegroupCurrent
 ORDER BY EffectiveHeadroomGB,ServerInstance,DatabaseName,FilegroupName;
 
+SELECT * FROM dhc.vCapacityLogCurrent ORDER BY UsedLogPct DESC;
+
 SELECT * FROM dhc.vCapacityForecast
 ORDER BY DaysToFull,ServerInstance,DatabaseName,FilegroupName;
 
