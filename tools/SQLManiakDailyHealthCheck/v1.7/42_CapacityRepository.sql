@@ -51,9 +51,10 @@ GO
 CREATE OR ALTER VIEW dhc.vCapacityFilegroupCurrent
 AS
 WITH latest AS (
- SELECT ServerInstance,MAX(StartedUTC) AS StartedUTC
- FROM dhc.Run WHERE Status IN ('COMPLETE','PARTIAL')
- GROUP BY ServerInstance
+ SELECT r.ServerInstance,MAX(r.StartedUTC) AS StartedUTC
+ FROM dhc.Run r JOIN dhc.CapacityFileSample fs ON fs.RunId=r.RunId
+ WHERE r.Status IN ('COMPLETE','PARTIAL')
+ GROUP BY r.ServerInstance
 ),
 base AS (
  SELECT r.ServerInstance,r.StartedUTC,f.*,
