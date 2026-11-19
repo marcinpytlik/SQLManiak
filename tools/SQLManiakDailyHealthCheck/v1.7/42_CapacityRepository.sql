@@ -133,3 +133,29 @@ SELECT f.*,r.CurrentGrowthGB,r.FutureVolumeExtensionGB,r.UnknownCapacity,r.Exten
  ELSE 'ADD FILE RECOMMENDED - VERIFY STORAGE' END AS RecommendedAction
 FROM fg f JOIN room r ON r.ServerInstance=f.ServerInstance AND r.DatabaseName=f.DatabaseName AND r.FilegroupName=f.FilegroupName;
 GO
+
+/* Extend existing retention procedure so historical capacity FKs are removed
+   before dhc.Run. No automatic deletion; DryRun remains default. */
+CREATE OR ALTER PROCEDURE dhc.PurgeRuns
+ @OlderThanUTC datetime2(3), @DryRun bit=1
+AS
+BEGIN
+ SET NOCOUNT ON;
+ IF @DryRun=1
+ BEGIN
+  SELECT COUNT_BIG(*) AS RunsToDelete
+  FROM dhc.Run WHERE StartedUTC<@OlderThanUTC;
+  RETURN;
+ END;
+ BEGIN TRAN;
+ DELETE c FROM dhc.CapacityLogSample c JOIN dhc.Run r ON c.RunId=r.RunId WHERE r.StartedUTC<@OlderThanUTC;
+ DELETE c FROM dhc.CapacityFileSample c JOIN dhc.Run r ON c.RunId=r.RunId WHERE r.StartedUTC<@OlderThanUTC;
+ DELETE t FROM dhc.TempDBSession t JOIN dhc.Run r ON t.RunId=r.RunId WHERE r.StartedUTC<@OlderThanUTC;
+ DELETE t FROM dhc.TempDBFile t JOIN dhc.Run r ON t.RunId=r.RunId WHERE r.StartedUTC<@OlderThanUTC;
+ DELETE t FROM dhc.TempDBSnapshot t JOIN dhc.Run r ON t.RunId=r.RunId WHERE r.StartedUTC<@OlderThanUTC;
+ DELETE t FROM dhc.Alert t JOIN dhc.Run r ON t.RunId=r.RunId WHERE r.StartedUTC<@OlderThanUTC;
+ DELETE t FROM dhc.ResultBatch t JOIN dhc.Run r ON t.RunId=r.RunId WHERE r.StartedUTC<@OlderThanUTC;
+ DELETE FROM dhc.Run WHERE StartedUTC<@OlderThanUTC;
+ COMMIT;
+END;
+GO
