@@ -6,7 +6,7 @@
 SET NOCOUNT ON;
 CREATE TABLE #CapFiles(
  DatabaseName sysname NOT NULL, DatabaseId int NOT NULL, FileId int NOT NULL,
- LogicalFileName sysname NOT NULL, FilegroupName sysname NULL,
+ FileType varchar(12) NOT NULL, LogicalFileName sysname NOT NULL, FilegroupName sysname NULL,
  PhysicalName nvarchar(260) NOT NULL, VolumeMountPoint nvarchar(512) NULL,
  AllocatedGB decimal(19,3) NOT NULL, UsedGB decimal(19,3) NULL,
  InternalFreeGB decimal(19,3) NULL, VolumeTotalGB decimal(19,3) NULL,
@@ -30,14 +30,14 @@ WHILE @@FETCH_STATUS=0
 BEGIN
  BEGIN TRY
   SET @CapSQL=N'USE '+QUOTENAME(@CapDB)+N';
- INSERT #CapFiles(DatabaseName,DatabaseId,FileId,LogicalFileName,
+ INSERT #CapFiles(DatabaseName,DatabaseId,FileId,FileType,LogicalFileName,
   FilegroupName,PhysicalName,VolumeMountPoint,AllocatedGB,UsedGB,InternalFreeGB,
   VolumeTotalGB,VolumeFreeGB,MaxSizeGB,MaxSizeKind,GrowthMB,IsPercentGrowth,IsGrowthEnabled)
- SELECT DB_NAME(),DB_ID(),f.file_id,f.name,fg.name,f.physical_name,
+ SELECT DB_NAME(),DB_ID(),f.file_id,f.type_desc,f.name,fg.name,f.physical_name,
         v.volume_mount_point,
         CAST(f.size/131072.0 AS decimal(19,3)),
-        CAST(FILEPROPERTY(f.name,''SpaceUsed'')/131072.0 AS decimal(19,3)),
-        CASE WHEN FILEPROPERTY(f.name,''SpaceUsed'') IS NULL THEN NULL ELSE
+        CASE WHEN f.type=0 THEN CAST(FILEPROPERTY(f.name,''SpaceUsed'')/131072.0 AS decimal(19,3)) END,
+        CASE WHEN f.type<>0 OR FILEPROPERTY(f.name,''SpaceUsed'') IS NULL THEN NULL ELSE
              CAST((f.size-FILEPROPERTY(f.name,''SpaceUsed''))/131072.0 AS decimal(19,3)) END,
         CAST(v.total_bytes/1073741824.0 AS decimal(19,3)),
         CAST(v.available_bytes/1073741824.0 AS decimal(19,3)),
@@ -51,7 +51,7 @@ BEGIN
  FROM sys.database_files f
  LEFT JOIN sys.filegroups fg ON f.data_space_id=fg.data_space_id
  OUTER APPLY sys.dm_os_volume_stats(DB_ID(),f.file_id) v
- WHERE f.type=0;';
+ WHERE f.type IN (0,1);';
   EXEC sys.sp_executesql @CapSQL;
  END TRY BEGIN CATCH
   INSERT #CapErrors VALUES(@CapDB,CONCAT('DATA FILES: ',ERROR_MESSAGE()));
@@ -74,7 +74,7 @@ END;
 CLOSE cap_cursor; DEALLOCATE cap_cursor;
 
 SELECT N'CAPACITY_FILES' AS Section,DatabaseName,DatabaseId,FileId,
- LogicalFileName,FilegroupName,PhysicalName,VolumeMountPoint,AllocatedGB,
+ FileType,LogicalFileName,FilegroupName,PhysicalName,VolumeMountPoint,AllocatedGB,
  UsedGB,InternalFreeGB,VolumeTotalGB,VolumeFreeGB,MaxSizeGB,
  MaxSizeKind,GrowthMB,IsPercentGrowth,IsGrowthEnabled
 FROM #CapFiles ORDER BY DatabaseName,FileId;
