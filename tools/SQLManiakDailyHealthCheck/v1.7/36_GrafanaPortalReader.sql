@@ -34,6 +34,7 @@ GRANT SELECT ON OBJECT::dhc.CapacityFileSample TO [dhc_portal_reader];
 GRANT SELECT ON OBJECT::dhc.CapacityLogSample TO [dhc_portal_reader];
 GRANT SELECT ON OBJECT::dhc.vCapacityFilegroupCurrent TO [dhc_portal_reader];
 GRANT SELECT ON OBJECT::dhc.vCapacityForecast TO [dhc_portal_reader];
+GRANT SELECT ON OBJECT::dhc.vCapacityLogCurrent TO [dhc_portal_reader];
 GO
 IF NOT EXISTS
 (
