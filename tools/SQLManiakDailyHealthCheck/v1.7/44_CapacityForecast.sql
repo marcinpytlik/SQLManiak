@@ -70,7 +70,22 @@ SELECT c.ServerInstance,c.DatabaseName,c.FilegroupName,c.SampleUTC,
             ELSE NULL END AS Headroom60DaysGB,
        CASE WHEN r.NetGrowthGBPerDay IS NOT NULL
             THEN CAST(c.InternalFreeGB+c.CurrentGrowthGB-90*r.NetGrowthGBPerDay AS decimal(19,2))
-            ELSE NULL END AS Headroom90DaysGB
+            ELSE NULL END AS Headroom90DaysGB,
+       CASE WHEN r.NetGrowthGBPerDay IS NULL THEN 'INSUFFICIENT HISTORY'
+            WHEN c.EffectiveHeadroomGB IS NULL THEN 'UNKNOWN CAPACITY'
+            WHEN r.NetGrowthGBPerDay<=0 THEN 'NO POSITIVE NET GROWTH'
+            WHEN c.EffectiveHeadroomGB<=7*r.NetGrowthGBPerDay THEN 'CRITICAL'
+            WHEN c.EffectiveHeadroomGB<=30*r.NetGrowthGBPerDay THEN 'WARNING'
+            WHEN c.EffectiveHeadroomGB<=60*r.NetGrowthGBPerDay THEN 'REVIEW'
+            ELSE 'OK' END AS ForecastAssessment,
+       CASE WHEN r.NetGrowthGBPerDay IS NULL THEN 'INSUFFICIENT HISTORY'
+            WHEN c.EffectiveHeadroomGB IS NULL THEN 'INSUFFICIENT DATA'
+            WHEN r.NetGrowthGBPerDay>0 AND c.EffectiveHeadroomGB<=60*r.NetGrowthGBPerDay
+              THEN CASE WHEN c.CurrentGrowthGB>100 THEN 'EXTEND EXISTING FILE'
+                        WHEN c.GrowthBlockedFiles>0 THEN 'INCREASE MAXSIZE / CHECK STORAGE'
+                        WHEN c.ExtendableVolumeCount>0 THEN 'EXTEND VOLUME'
+                        ELSE 'ADD FILE RECOMMENDED - VERIFY STORAGE' END
+            ELSE c.RecommendedAction END AS ForecastRecommendedAction
 FROM dhc.vCapacityFilegroupCurrent c
 LEFT JOIN rates r ON r.ServerInstance=c.ServerInstance AND r.DatabaseName=c.DatabaseName
  AND r.FilegroupName=c.FilegroupName;
