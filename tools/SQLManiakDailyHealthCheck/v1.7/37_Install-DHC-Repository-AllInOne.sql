@@ -938,6 +938,10 @@ GRANT SELECT ON OBJECT::dhc.vMonitoringSummary TO [dhc_portal_reader];
 GRANT SELECT ON OBJECT::dhc.vTempDBTrend TO [dhc_portal_reader];
 GRANT SELECT ON OBJECT::dhc.TempDBSnapshot TO [dhc_portal_reader];
 GRANT SELECT ON OBJECT::dhc.TempDBFile TO [dhc_portal_reader];
+GRANT SELECT ON OBJECT::dhc.CapacityFileSample TO [dhc_portal_reader];
+GRANT SELECT ON OBJECT::dhc.CapacityLogSample TO [dhc_portal_reader];
+GRANT SELECT ON OBJECT::dhc.vCapacityFilegroupCurrent TO [dhc_portal_reader];
+GRANT SELECT ON OBJECT::dhc.vCapacityForecast TO [dhc_portal_reader];
 GO
 IF NOT EXISTS
 (
