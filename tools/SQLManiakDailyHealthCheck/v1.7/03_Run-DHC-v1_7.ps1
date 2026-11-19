@@ -413,7 +413,7 @@ try {
     Write-Batches $capTables[$k] (200+$k) $expected[$k]
     $totalRows+=$capTables[$k].Rows.Count
    }
-   $fileCols=@('RunId','DatabaseName','DatabaseId','FileId','FilegroupName','LogicalFileName',
+   $fileCols=@('RunId','DatabaseName','DatabaseId','FileId','FileType','FilegroupName','LogicalFileName',
     'PhysicalName','VolumeMountPoint','AllocatedGB','UsedGB','InternalFreeGB','VolumeTotalGB',
     'VolumeFreeGB','MaxSizeGB','MaxSizeKind','GrowthMB','IsPercentGrowth','IsGrowthEnabled')
    $fileSQL='INSERT dhc.CapacityFileSample('+($fileCols -join ',')+') VALUES('+
