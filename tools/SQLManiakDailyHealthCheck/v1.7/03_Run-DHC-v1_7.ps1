@@ -10,6 +10,8 @@ param(
  [Parameter(Mandatory)][string]$RepositoryConnectionString,
  [string]$SqlFile=(Join-Path $PSScriptRoot 'SQLManiak_Daily_Health_Check_v1_5_CSV.sql'),
  [string]$TempDBSqlFile=(Join-Path $PSScriptRoot '02_TempDB_Collect.sql'),
+ [string]$CapacitySqlFile=(Join-Path $PSScriptRoot '43_CapacityCollect.sql'),
+ [switch]$SkipCapacity,
  [PSCredential]$SqlCredential,
  [switch]$TrustServerCertificate,
  [switch]$SkipTempDB,
@@ -24,6 +26,7 @@ Import-Module SqlServer -ErrorAction Stop
 Add-Type -AssemblyName Microsoft.Data.SqlClient -ErrorAction Stop
 if (-not (Test-Path -LiteralPath $SqlFile -PathType Leaf)) { throw "Missing DHC SQL file: $SqlFile" }
 if (-not $SkipTempDB -and -not (Test-Path -LiteralPath $TempDBSqlFile -PathType Leaf)) { throw "Missing TempDB SQL file: $TempDBSqlFile" }
+if (-not $SkipCapacity -and -not (Test-Path -LiteralPath $CapacitySqlFile -PathType Leaf)) { throw "Missing Capacity SQL file: $CapacitySqlFile" }
 
 function Get-Tables([object[]]$Results) {
  $list=[System.Collections.Generic.List[System.Data.DataTable]]::new()
@@ -391,6 +394,70 @@ try {
  foreach($row in $summary[0].Rows) {
   $sev=[string]$row['Severity'];if($sev -notin @('CRITICAL','WARNING')){continue}
   Add-Alert $sev ([string]$row['Area']) $(if($row.IsNull('ObjectName')){''}else{[string]$row['ObjectName']}) ([string]$row['Details'])
+ }
+
+
+ # Optional capacity module: same run / transaction, isolated using a savepoint.
+ # Database/file data are read-only at source. Partial failures are persisted as warnings.
+ if(-not $SkipCapacity) {
+  $transaction.Save('BeforeCapacity')
+  try {
+   $capTables=Get-Tables (Query-Source $CapacitySqlFile)
+   if($capTables.Count -ne 3) { throw 'Capacity collector must return FILES, LOGS and ERRORS (3 result sets).' }
+   $expected=@('CAPACITY_FILES','CAPACITY_LOGS','CAPACITY_ERRORS')
+   for($k=0;$k -lt 3;$k++) {
+    if(-not $capTables[$k].Columns.Contains('Section')) { throw "Capacity result $k missing Section." }
+    if($capTables[$k].Rows.Count -gt 0 -and [string]$capTables[$k].Rows[0]['Section'] -ne $expected[$k]) {
+     throw "Unexpected capacity result $k."
+    }
+    Write-Batches $capTables[$k] (200+$k) $expected[$k]
+    $totalRows+=$capTables[$k].Rows.Count
+   }
+   $fileCols=@('RunId','DatabaseName','DatabaseId','FileId','FilegroupName','LogicalFileName',
+    'PhysicalName','VolumeMountPoint','AllocatedGB','UsedGB','InternalFreeGB','VolumeTotalGB',
+    'VolumeFreeGB','MaxSizeGB','MaxSizeKind','GrowthMB','IsPercentGrowth','IsGrowthEnabled')
+   $fileSQL='INSERT dhc.CapacityFileSample('+($fileCols -join ',')+') VALUES('+
+    (($fileCols|ForEach-Object {'@'+$_}) -join ',')+')'
+   foreach($r in $capTables[0].Rows) {
+    $p=@{RunId=$runId}
+    foreach($c in $fileCols) {
+     if($c -eq 'RunId') {continue}
+     $v=$r[$c];$p[$c]=if($v -is [DBNull]){$null}else{$v}
+    }
+    Write-Sql $fileSQL $p
+    if(-not $r.IsNull('InternalFreeGB') -and [double]$r['AllocatedGB'] -gt 0) {
+     $pct=100*[double]$r['InternalFreeGB']/[double]$r['AllocatedGB']
+     if($pct -lt 5) {
+      Add-Alert 'WARNING' 'DATA FILE' ("$($r['DatabaseName']).$($r['LogicalFileName'])") ("Low internal free: {0:N2}% - evaluate filegroup headroom." -f $pct)
+     }
+    }
+   }
+   $logCols=@('RunId','DatabaseName','DatabaseId','AllocatedLogGB','UsedLogGB',
+     'UsedLogPct','LogReuseWait','RecoveryModel')
+   $logSQL='INSERT dhc.CapacityLogSample('+($logCols -join ',')+') VALUES('+
+    (($logCols|ForEach-Object {'@'+$_}) -join ',')+')'
+   foreach($r in $capTables[1].Rows) {
+    $p=@{RunId=$runId}
+    foreach($c in $logCols) {
+     if($c -eq 'RunId') {continue}
+     $v=$r[$c];$p[$c]=if($v -is [DBNull]){$null}else{$v}
+    }
+    Write-Sql $logSQL $p
+    if(-not $r.IsNull('UsedLogPct') -and [double]$r['UsedLogPct'] -ge 85) {
+     Add-Alert $(if([double]$r['UsedLogPct'] -ge 95){'CRITICAL'}else{'WARNING'}) 'LOG CAPACITY' ([string]$r['DatabaseName']) (
+       "Log usage $($r['UsedLogPct'])%; reuse wait: $($r['LogReuseWait']).")
+    }
+   }
+   foreach($r in $capTables[2].Rows) {
+    Add-Alert 'WARNING' 'CAPACITY COLLECTION' ([string]$r['DatabaseName']) ([string]$r['Details'])
+   }
+  }
+  catch {
+   $status='PARTIAL'
+   $capacityError=$_.Exception.Message
+   $transaction.Rollback('BeforeCapacity')
+   Add-Alert 'WARNING' 'CAPACITY COLLECTION' 'module' ('Capacity module failed: '+$capacityError)
+  }
  }
 
  if(-not $SkipTempDB) {
