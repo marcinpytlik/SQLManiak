@@ -448,6 +448,7 @@ try {
        "Log usage $($r['UsedLogPct'])%; reuse wait: $($r['LogReuseWait']).")
     }
    }
+   if($capTables[2].Rows.Count -gt 0) { $status='PARTIAL' }
    foreach($r in $capTables[2].Rows) {
     Add-Alert 'WARNING' 'CAPACITY COLLECTION' ([string]$r['DatabaseName']) ([string]$r['Details'])
    }
