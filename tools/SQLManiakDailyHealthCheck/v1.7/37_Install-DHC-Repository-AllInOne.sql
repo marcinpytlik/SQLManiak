@@ -666,9 +666,10 @@ GO
 CREATE OR ALTER VIEW dhc.vCapacityFilegroupCurrent
 AS
 WITH latest AS (
- SELECT ServerInstance,MAX(StartedUTC) AS StartedUTC
- FROM dhc.Run WHERE Status IN ('COMPLETE','PARTIAL')
- GROUP BY ServerInstance
+ SELECT r.ServerInstance,MAX(r.StartedUTC) AS StartedUTC
+ FROM dhc.Run r JOIN dhc.CapacityFileSample fs ON fs.RunId=r.RunId
+ WHERE r.Status IN ('COMPLETE','PARTIAL')
+ GROUP BY r.ServerInstance
 ),
 base AS (
  SELECT r.ServerInstance,r.StartedUTC,f.*,
@@ -829,6 +830,49 @@ LEFT JOIN rates r ON r.ServerInstance=c.ServerInstance AND r.DatabaseName=c.Data
  AND r.FilegroupName=c.FilegroupName;
 GO
 
+/* Current log usage is DATABASE-wide; LDF size/growth limits are FILE-wide.
+   They are intentionally reported separately (not allocated per LDF). */
+CREATE OR ALTER VIEW dhc.vCapacityLogCurrent
+AS
+WITH logruns AS (
+ SELECT r.ServerInstance,r.RunId,r.StartedUTC,l.DatabaseName,
+  l.AllocatedLogGB,l.UsedLogGB,l.UsedLogPct,l.LogReuseWait,l.RecoveryModel,
+  ROW_NUMBER() OVER(
+   PARTITION BY r.ServerInstance,l.DatabaseName
+   ORDER BY r.StartedUTC DESC,r.RunId DESC) AS rn
+ FROM dhc.Run r JOIN dhc.CapacityLogSample l ON l.RunId=r.RunId
+ WHERE r.Status IN ('COMPLETE','PARTIAL')
+),
+logfiles AS (
+ SELECT RunId,DatabaseName,COUNT(*) AS LogFileCount,
+ SUM(CASE WHEN IsGrowthEnabled=0 OR
+  (MaxSizeGB IS NOT NULL AND MaxSizeGB<=AllocatedGB)
+  THEN 1 ELSE 0 END) AS GrowthBlockedFiles,
+ MIN(VolumeFreeGB) AS MinVolumeFreeGB,
+ SUM(AllocatedGB) AS AllocatedLogFilesGB
+ FROM dhc.CapacityFileSample
+ WHERE FileType='LOG'
+ GROUP BY RunId,DatabaseName
+)
+SELECT l.ServerInstance,l.DatabaseName,l.StartedUTC,
+ l.AllocatedLogGB,l.UsedLogGB,l.UsedLogPct,l.LogReuseWait,l.RecoveryModel,
+ f.LogFileCount,f.GrowthBlockedFiles,f.MinVolumeFreeGB,f.AllocatedLogFilesGB,
+ CASE WHEN l.UsedLogPct>=95 THEN 'CRITICAL'
+      WHEN l.UsedLogPct>=85 THEN 'WARNING'
+      WHEN l.UsedLogPct IS NULL THEN 'UNKNOWN'
+      ELSE 'OK' END AS Assessment,
+ CASE WHEN l.UsedLogPct IS NULL THEN 'VERIFY LOG MEASUREMENT'
+      WHEN l.UsedLogPct>=85 AND l.LogReuseWait NOT IN ('NOTHING','CHECKPOINT')
+      THEN 'INVESTIGATE LOG REUSE WAIT'
+      WHEN l.UsedLogPct>=85 AND ISNULL(f.GrowthBlockedFiles,0)>0
+      THEN 'INCREASE MAXSIZE / EXTEND STORAGE'
+      WHEN l.UsedLogPct>=85 THEN 'PLAN LOG CAPACITY'
+      ELSE 'MONITOR' END AS RecommendedAction
+FROM logruns l LEFT JOIN logfiles f
+ ON f.RunId=l.RunId AND f.DatabaseName=l.DatabaseName
+WHERE l.rn=1;
+GO
+
 /* ===== END 44_CapacityForecast.sql ===== */
 
 /* ===== BEGIN 20_RepositoryLeastPrivilege.sql ===== */
@@ -942,6 +986,7 @@ GRANT SELECT ON OBJECT::dhc.CapacityFileSample TO [dhc_portal_reader];
 GRANT SELECT ON OBJECT::dhc.CapacityLogSample TO [dhc_portal_reader];
 GRANT SELECT ON OBJECT::dhc.vCapacityFilegroupCurrent TO [dhc_portal_reader];
 GRANT SELECT ON OBJECT::dhc.vCapacityForecast TO [dhc_portal_reader];
+GRANT SELECT ON OBJECT::dhc.vCapacityLogCurrent TO [dhc_portal_reader];
 GO
 IF NOT EXISTS
 (
@@ -1031,7 +1076,7 @@ INSERT @ExpectedObjects(Name,Type) VALUES
  (N'vMonitoringStatus','V'),(N'vMonitoringSummary','V'),
  (N'TryStartExecution','P'),(N'PurgeRuns','P'),
  (N'CapacityFileSample','U'),(N'CapacityLogSample','U'),(N'VolumeCapacityPolicy','U'),
- (N'vCapacityFilegroupCurrent','V'),(N'vCapacityForecast','V');
+ (N'vCapacityFilegroupCurrent','V'),(N'vCapacityForecast','V'),(N'vCapacityLogCurrent','V');
 IF EXISTS
 (
  SELECT 1 FROM @ExpectedObjects AS e
