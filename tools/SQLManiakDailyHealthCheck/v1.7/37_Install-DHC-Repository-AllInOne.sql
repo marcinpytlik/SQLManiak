@@ -623,7 +623,7 @@ CREATE TABLE dhc.CapacityFileSample(
  RunId uniqueidentifier NOT NULL REFERENCES dhc.Run(RunId),
  DatabaseName sysname NOT NULL,
  DatabaseId int NOT NULL,FileId int NOT NULL,
- FilegroupName sysname NULL,LogicalFileName sysname NOT NULL,
+ FileType varchar(12) NOT NULL,FilegroupName sysname NULL,LogicalFileName sysname NOT NULL,
  PhysicalName nvarchar(260) NOT NULL,VolumeMountPoint nvarchar(512) NULL,
  AllocatedGB decimal(19,3) NOT NULL,UsedGB decimal(19,3) NULL,
  InternalFreeGB decimal(19,3) NULL,
@@ -689,7 +689,7 @@ volume_group AS (
  SELECT ServerInstance,DatabaseName,FilegroupName,VolumeMountPoint,
   MAX(VolumeFreeGB) AS VolumeFreeGB,
   MAX(VolumeTotalGB) AS VolumeTotalGB,
-  MAX(CanExtend+0) AS CanExtend,MAX(MaxVolumeGB) AS MaxVolumeGB,
+  MAX(CONVERT(int,CanExtend)) AS CanExtend,MAX(MaxVolumeGB) AS MaxVolumeGB,
   MAX(SafetyReserveGB) AS SafetyReserveGB,
   MAX(PolicyMissing) AS PolicyMissing,
   SUM(FileGrowthRoomGB) AS ConfiguredGrowthGB,
@@ -742,8 +742,8 @@ SELECT f.*,r.CurrentGrowthGB,r.FutureVolumeExtensionGB,r.UnknownCapacity,r.Exten
  CASE WHEN f.UsedMissing=1 OR r.UnknownCapacity=1 THEN 'INSUFFICIENT DATA'
  WHEN f.InternalFreeGB+r.CurrentGrowthGB>=500 THEN 'CAPACITY SUFFICIENT'
  WHEN r.CurrentGrowthGB>100 THEN 'EXTEND EXISTING FILE'
+ WHEN f.GrowthBlockedFiles>0 AND r.CurrentGrowthGB=0 THEN 'INCREASE MAXSIZE / CHECK STORAGE'
  WHEN r.ExtendableVolumeCount>0 THEN 'EXTEND VOLUME'
- WHEN f.GrowthBlockedFiles>0 THEN 'INCREASE MAXSIZE / CHECK STORAGE'
  ELSE 'ADD FILE RECOMMENDED - VERIFY STORAGE' END AS RecommendedAction
 FROM fg f JOIN room r ON r.ServerInstance=f.ServerInstance AND r.DatabaseName=f.DatabaseName AND r.FilegroupName=f.FilegroupName;
 GO
