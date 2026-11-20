@@ -25,20 +25,21 @@ function Invoke-LabSql {
  param([string]$HostPort,[string]$Password,[string]$Database='master',[string]$InputFile,[string]$Query)
  $p=@{
   ServerInstance=$HostPort;Database=$Database;Username='sa';Password=$Password;
-  Encrypt='Optional';TrustServerCertificate=$true;QueryTimeout=120;ErrorAction='Stop'
+  Encrypt='Optional';TrustServerCertificate=$true;ConnectionTimeout=5;QueryTimeout=120;ErrorAction='Stop'
  }
  if($InputFile) { $p['InputFile']=$InputFile }
  else { $p['Query']=$Query }
  Invoke-Sqlcmd @p
 }
 if(-not $SkipConnectivityCheck) {
- foreach($s in @(@{name='localhost,15433';pw=$values['REPO_SA_PASSWORD']},@{name='localhost,15434';pw=$values['TARGET_SA_PASSWORD']})) {
+ foreach($s in @(@{name='127.0.0.1,15433';pw=$values['REPO_SA_PASSWORD']},@{name='127.0.0.1,15434';pw=$values['TARGET_SA_PASSWORD']})) {
   $ready=$false
+  $lastError=$null
   for($attempt=1; $attempt -le 30; $attempt++) {
    try { [void](Invoke-LabSql -HostPort $s.name -Password $s.pw -Query 'SELECT 1 AS Ready;'); $ready=$true; break }
-   catch { Start-Sleep -Seconds 2 }
+   catch { $lastError=$_.Exception.Message; Write-Warning "Attempt $attempt on $($s.name): $lastError"; Start-Sleep -Seconds 2 }
   }
-  if(-not $ready) { throw "SQL not ready on $($s.name). Check docker compose logs." }
+  if(-not $ready) { throw "SQL not ready on $($s.name). Last error: $lastError" }
   Write-Host "SQL reachable: $($s.name)"
  }
 }
@@ -46,9 +47,9 @@ foreach($file in @('00_Bootstrap.sql','01_Inventory_Core.sql','02_Patch_Planner.
  $path=Join-Path $root "sql/$file"
  $db=if($file -eq '00_Bootstrap.sql') {'master'} else {'DBACentralRepositoryv4'}
  Write-Host "Installing $file ..."
- [void](Invoke-LabSql -HostPort 'localhost,15433' -Password $values['REPO_SA_PASSWORD'] -Database $db -InputFile $path)
+ [void](Invoke-LabSql -HostPort '127.0.0.1,15433' -Password $values['REPO_SA_PASSWORD'] -Database $db -InputFile $path)
 }
-$result=Invoke-LabSql -HostPort 'localhost,15433' -Password $values['REPO_SA_PASSWORD'] -Database 'DBACentralRepositoryv4' -Query @'
+$result=Invoke-LabSql -HostPort '127.0.0.1,15433' -Password $values['REPO_SA_PASSWORD'] -Database 'DBACentralRepositoryv4' -Query @'
 SELECT DB_NAME() AS DatabaseName, (SELECT COUNT(*) FROM patch.PatchGroup) AS PatchGroups;
 '@
 $result | Format-Table
