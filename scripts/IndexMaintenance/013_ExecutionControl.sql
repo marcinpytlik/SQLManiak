@@ -4,6 +4,9 @@
 */
 USE [SQLManiakIndexMaintenance];
 GO
+IF COL_LENGTH(N'im.MaintenanceQueue',N'ExecutionToken') IS NULL
+ ALTER TABLE im.MaintenanceQueue ADD ExecutionToken uniqueidentifier NULL;
+GO
 CREATE OR ALTER PROCEDURE im.ClaimMaintenance
  @QueueId bigint,@ExecutionToken uniqueidentifier OUTPUT
 AS
@@ -35,7 +38,7 @@ BEGIN
   )
  ) THROW 51112,'Maintenance already running in same cluster or instance',1;
  UPDATE im.MaintenanceQueue SET Status='Running',StartedAtUtc=SYSUTCDATETIME(),
- ExecutionMessage=N'Claimed; awaiting target validation'
+ ExecutionMessage=N'Claimed; awaiting target validation',ExecutionToken=@ExecutionToken
  WHERE QueueId=@QueueId AND Status='Approved';
  IF @@ROWCOUNT<>1 THROW 51113,'Queue item changed during claim',1;
  COMMIT;
@@ -50,14 +53,14 @@ BEGIN
 END;
 GO
 CREATE OR ALTER PROCEDURE im.FinishMaintenance
- @QueueId bigint,@Status varchar(16),@Message nvarchar(4000)=NULL
+ @QueueId bigint,@ExecutionToken uniqueidentifier,@Status varchar(16),@Message nvarchar(4000)=NULL
 AS
 BEGIN
  SET NOCOUNT ON;SET XACT_ABORT ON;
  IF @Status NOT IN ('Completed','Failed','Skipped') THROW 51114,'Invalid terminal status',1;
  UPDATE im.MaintenanceQueue
  SET Status=@Status,FinishedAtUtc=SYSUTCDATETIME(),ExecutionMessage=@Message
- WHERE QueueId=@QueueId AND Status='Running';
+ WHERE QueueId=@QueueId AND Status='Running' AND ExecutionToken=@ExecutionToken;
  IF @@ROWCOUNT<>1 THROW 51115,'Queue item not running or already finished',1;
 END;
 GO
