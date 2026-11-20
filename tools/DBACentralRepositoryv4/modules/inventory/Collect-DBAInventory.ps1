@@ -111,10 +111,10 @@ function Save-Category {
   if($entityKey.Length -gt 450) { throw "Entity key too long: $Category" }
   if($Persist) {
    $json=ConvertTo-Json -InputObject $item -Depth 8 -Compress
-   [void](Invoke-DbCommand $Repository @'
+   [void](Invoke-DbCommand -Connection $Repository -Sql @'
 INSERT inventory.InventorySnapshot(ScanRunId,Category,EntityKey,DataJson)
 VALUES (@id,@category,@entity,@json);
-'@ @{id=$ScanRunId;category=$Category;entity=$entityKey;json=$json})
+'@ -Args @{id=$ScanRunId;category=$Category;entity=$entityKey;json=$json})
   }
   $saved++
  }
@@ -227,7 +227,7 @@ foreach($server in $cfg.sourceServers) {
    $arch=[string]$server.architecture
    if(-not $envCode) { throw 'sourceServers.environment is required in persist mode' }
    if(-not $arch) { $arch='UNKNOWN' }
-   $scanId=[long](Invoke-DbCommand $repo @'
+   $scanId=[long](Invoke-DbCommand -Connection $repo -Sql @'
 SET XACT_ABORT ON;
 BEGIN TRANSACTION;
 DECLARE @id bigint;
@@ -240,7 +240,7 @@ INSERT inventory.ScanRun(InstanceId,ScanType,CollectorVersion)
 VALUES(@id,'FULL','4.0.0-phase1');
 SELECT CONVERT(bigint,SCOPE_IDENTITY());
 COMMIT;
-'@ @{name=$serverName;env=$envCode;arch=$arch} -Scalar)
+'@ -Args @{name=$serverName;env=$envCode;arch=$arch} -Scalar)
   }
   foreach($category in $queries.Keys) {
    try {
@@ -253,7 +253,7 @@ COMMIT;
     $errors++
     Write-Warning "$serverName / $category : $($_.Exception.Message)"
     if($Persist) {
-     [void](Invoke-DbCommand $repo 'INSERT inventory.ScanFinding(ScanRunId,Category,Severity,Message) VALUES(@id,@cat,''ERROR'',@msg)' @{
+     [void](Invoke-DbCommand -Connection $repo -Sql 'INSERT inventory.ScanFinding(ScanRunId,Category,Severity,Message) VALUES(@id,@cat,''ERROR'',@msg)' -Args @{
       id=$scanId;cat=$category;msg=([string]$_.Exception.Message).Substring(0,[Math]::Min(3900,([string]$_.Exception.Message).Length))
      })
     }
@@ -276,7 +276,7 @@ COMMIT;
        $errors++
        Write-Warning "$serverName / $dbName / $category : $($_.Exception.Message)"
        if($Persist) {
-        [void](Invoke-DbCommand $repo 'INSERT inventory.ScanFinding(ScanRunId,Category,Severity,Message) VALUES(@id,@cat,''ERROR'',@msg)' @{
+        [void](Invoke-DbCommand -Connection $repo -Sql 'INSERT inventory.ScanFinding(ScanRunId,Category,Severity,Message) VALUES(@id,@cat,''ERROR'',@msg)' -Args @{
           id=$scanId;cat=$category;msg=("$dbName : $($_.Exception.Message)").Substring(0,[Math]::Min(3900,("$dbName : $($_.Exception.Message)").Length))
         })
        }
@@ -286,7 +286,7 @@ COMMIT;
      $errors++
      Write-Warning "$serverName / $dbName : $($_.Exception.Message)"
      if($Persist) {
-      [void](Invoke-DbCommand $repo 'INSERT inventory.ScanFinding(ScanRunId,Category,Severity,Message) VALUES(@id,@cat,''ERROR'',@msg)' @{
+      [void](Invoke-DbCommand -Connection $repo -Sql 'INSERT inventory.ScanFinding(ScanRunId,Category,Severity,Message) VALUES(@id,@cat,''ERROR'',@msg)' -Args @{
        id=$scanId;cat='DATABASE_USER';msg=("$dbName : $($_.Exception.Message)").Substring(0,[Math]::Min(3900,("$dbName : $($_.Exception.Message)").Length))
       })
      }
@@ -295,16 +295,16 @@ COMMIT;
   }
   if($Persist) {
    $state=if($errors -eq 0){'COMPLETE'}else{'PARTIAL'}
-   [void](Invoke-DbCommand $repo @'
+   [void](Invoke-DbCommand -Connection $repo -Sql @'
 UPDATE inventory.ScanRun SET ScanStatus=@status,FinishedUtc=SYSUTCDATETIME()
 WHERE ScanRunId=@id;
-'@ @{id=$scanId;status=$state})
+'@ -Args @{id=$scanId;status=$state})
   }
   Write-Host "Result: $serverName; rows=$rows; errors=$errors; scanId=$scanId"
  } catch {
   Write-Error "Inventory failed for $serverName : $($_.Exception.Message)" -ErrorAction Continue
   if($Persist -and $scanId -gt 0 -and $null -ne $repo) {
-   try { [void](Invoke-DbCommand $repo "UPDATE inventory.ScanRun SET ScanStatus='FAILED',FinishedUtc=SYSUTCDATETIME(),ErrorMessage=@msg WHERE ScanRunId=@id;" @{
+   try { [void](Invoke-DbCommand -Connection $repo -Sql "UPDATE inventory.ScanRun SET ScanStatus='FAILED',FinishedUtc=SYSUTCDATETIME(),ErrorMessage=@msg WHERE ScanRunId=@id;" -Args @{
     id=$scanId;msg=([string]$_.Exception.Message).Substring(0,[Math]::Min(3900,([string]$_.Exception.Message).Length))
    }) } catch { Write-Warning "Unable to mark scan $scanId FAILED" }
   }
