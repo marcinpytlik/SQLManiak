@@ -215,8 +215,13 @@ $keyMap=@{
  DATABASE_ROLE=@('DatabaseName','RoleName','MemberName')
  DATABASE_PERMISSION=@('DatabaseName','grantee_principal_id','class_desc','major_id','minor_id','permission_name','state_desc','grantor_principal_id')
 }
+. (Join-Path $PSScriptRoot 'Inventory.Extended.ps1')
+$extendedServerQueries=Get-ExtendedServerQueries
+$extendedDbQueries=Get-ExtendedDatabaseQueries
+$extendedKeys=Get-ExtendedKeys
 foreach($server in $cfg.sourceServers) {
  $src=$null; $repo=$null; $scanId=0L; $errors=0; $rows=0
+ $categoryCounts=@{}; $categoryErrors=@{}
  $serverName=[string]$server.name
  Write-Host "Inventory: $serverName | Persist=$([bool]$Persist)"
  try {
@@ -247,10 +252,12 @@ COMMIT;
     $table=Invoke-DbTable $src $queries[$category]
     $count=Save-Category $category $table $keyMap[$category] $scanId $repo
     $rows+=$count
+    $categoryCounts[$category]=$count
     Write-Host "  $category : $count"
    }
    catch {
     $errors++
+    $categoryErrors[$category]=$true
     Write-Warning "$serverName / $category : $($_.Exception.Message)"
     if($Persist) {
      [void](Invoke-DbCommand -Connection $repo -Sql 'INSERT inventory.ScanFinding(ScanRunId,Category,Severity,Message) VALUES(@id,@cat,''ERROR'',@msg)' -SqlParameters @{
@@ -259,7 +266,25 @@ COMMIT;
     }
    }
   }
-  if($dbSecurity) {
+  foreach($category in $extendedServerQueries.Keys) {
+   try {
+    $table=Invoke-DbTable $src $extendedServerQueries[$category]
+    $count=Save-Category $category $table $extendedKeys[$category] $scanId $repo
+    $rows+=$count
+    $categoryCounts[$category]=$count
+    Write-Host "  $category : $count"
+   } catch {
+    $errors++
+    $categoryErrors[$category]=$true
+    Write-Warning "$serverName / $category : $($_.Exception.Message)"
+    if($Persist) {
+     [void](Invoke-DbCommand -Connection $repo -Sql 'INSERT inventory.ScanFinding(ScanRunId,Category,Severity,Message) VALUES(@id,@cat,''ERROR'',@msg)' -SqlParameters @{
+      id=$scanId;cat=$category;msg=([string]$_.Exception.Message).Substring(0,[Math]::Min(3900,([string]$_.Exception.Message).Length))
+     })
+    }
+   }
+  }
+  if($true) {
    $dbs=Invoke-DbTable $src 'SELECT name FROM sys.databases WHERE state=0 AND HAS_DBACCESS(name)=1 ORDER BY database_id;'
    foreach($db in $dbs.Rows) {
     $dbName=[string]$db['name']
@@ -267,13 +292,17 @@ COMMIT;
     $dbc=$null
     try {
      $dbc=Open-Db $serverName $dbName $SourceCredential
-     foreach($category in $dbQueries.Keys) {
+     $databaseQueriesToRun=if($dbSecurity){ $dbQueries } else { [ordered]@{} }
+     foreach($category in $databaseQueriesToRun.Keys) {
       try {
        $table=Invoke-DbTable $dbc $dbQueries[$category]
        $count=Save-Category $category $table $keyMap[$category] $scanId $repo
        $rows+=$count
+       if(-not $categoryCounts.ContainsKey($category)) { $categoryCounts[$category]=0 }
+       $categoryCounts[$category]+=$count
       } catch {
        $errors++
+       $categoryErrors[$category]=$true
        Write-Warning "$serverName / $dbName / $category : $($_.Exception.Message)"
        if($Persist) {
         [void](Invoke-DbCommand -Connection $repo -Sql 'INSERT inventory.ScanFinding(ScanRunId,Category,Severity,Message) VALUES(@id,@cat,''ERROR'',@msg)' -SqlParameters @{
@@ -282,8 +311,28 @@ COMMIT;
        }
       }
      }
+     foreach($category in $extendedDbQueries.Keys) {
+      try {
+       $table=Invoke-DbTable $dbc $extendedDbQueries[$category]
+       $count=Save-Category $category $table $extendedKeys[$category] $scanId $repo
+       $rows+=$count
+       if(-not $categoryCounts.ContainsKey($category)) { $categoryCounts[$category]=0 }
+       $categoryCounts[$category]+=$count
+      } catch {
+       $errors++
+       $categoryErrors[$category]=$true
+       Write-Warning "$serverName / $dbName / $category : $($_.Exception.Message)"
+       if($Persist) {
+        [void](Invoke-DbCommand -Connection $repo -Sql 'INSERT inventory.ScanFinding(ScanRunId,Category,Severity,Message) VALUES(@id,@cat,''ERROR'',@msg)' -SqlParameters @{
+         id=$scanId;cat=$category;msg=("$dbName : $($_.Exception.Message)").Substring(0,[Math]::Min(3900,("$dbName : $($_.Exception.Message)").Length))
+        })
+       }
+      }
+     }
     } catch {
      $errors++
+     foreach($category in $extendedDbQueries.Keys) { $categoryErrors[$category]=$true }
+     if($dbSecurity) { foreach($category in $dbQueries.Keys) { $categoryErrors[$category]=$true } }
      Write-Warning "$serverName / $dbName : $($_.Exception.Message)"
      if($Persist) {
       [void](Invoke-DbCommand -Connection $repo -Sql 'INSERT inventory.ScanFinding(ScanRunId,Category,Severity,Message) VALUES(@id,@cat,''ERROR'',@msg)' -SqlParameters @{
@@ -294,11 +343,27 @@ COMMIT;
    }
   }
   if($Persist) {
+   $allCategories=@($queries.Keys)+@($extendedServerQueries.Keys)+@($extendedDbQueries.Keys)
+   if($dbSecurity) { $allCategories+=@($dbQueries.Keys) }
+   foreach($category in ($allCategories | Select-Object -Unique)) {
+    $status=if($categoryErrors.ContainsKey($category)){'PARTIAL'}else{'COMPLETE'}
+    $count=if($categoryCounts.ContainsKey($category)){[long]$categoryCounts[$category]}else{0L}
+    [void](Invoke-DbCommand -Connection $repo -Sql @'
+INSERT inventory.ScanCategory(ScanRunId,Category,CategoryStatus,RowCount)
+VALUES(@id,@cat,@status,@rows);
+'@ -SqlParameters @{id=$scanId;cat=$category;status=$status;rows=$count})
+   }
    $state=if($errors -eq 0){'COMPLETE'}else{'PARTIAL'}
    [void](Invoke-DbCommand -Connection $repo -Sql @'
 UPDATE inventory.ScanRun SET ScanStatus=@status,FinishedUtc=SYSUTCDATETIME()
 WHERE ScanRunId=@id;
 '@ -SqlParameters @{id=$scanId;status=$state})
+   if($state -eq 'COMPLETE') {
+    $changeReport=Invoke-DbTable $repo "EXEC inventory.usp_CompareCompletedScans @ScanRunId=$scanId;"
+    foreach($r in $changeReport.Rows) {
+     Write-Host "  Diff: $($r['Result']) changes=$($r['Changes']) previous=$($r['PreviousScanRunId'])"
+    }
+   }
   }
   Write-Host "Result: $serverName; rows=$rows; errors=$errors; scanId=$scanId"
  } catch {
