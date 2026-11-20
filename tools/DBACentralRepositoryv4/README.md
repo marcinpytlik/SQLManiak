@@ -60,8 +60,9 @@ Nie stosuj istniejących skryptów v3 przez zamianę nazwy bazy w ciemno.
 ## Plan ukończenia projektu
 
 - [x] Struktura v4, odrębna baza, inventory core i patch planner.
-- [ ] Migracja / budowa pełnych kolektorów (system configuration, databases/files/objects, Agent, security, FCI/AG).
-- [ ] Snapshot diff, polityka uprawnień, bezpieczna retencja, testy performance.
+- [x] Pierwsza implementacja rozszerzonego kolektora (obiekty, indeksy, statystyki, schematy, metadane HA) — **wymaga testów LAB**.
+- [x] Pierwsza implementacja snapshot diff + zapisu SqlBulkCopy — **wymaga testów LAB**.
+- [ ] Polityka uprawnień, bezpieczna retencja, testy wydajności i HA Windows LAB.
 - [ ] Import i uzgodnienie aktualnych przypisań piątek / niedziela.
 - [ ] Integracja patch lifecycle v3 i SQL Agent patching window.
 - [ ] Orkiestrator PowerShell: dry-run, approval gate, PRE/POST, FCI node sequence, health validation, resumption.
@@ -71,3 +72,7 @@ Nie stosuj istniejących skryptów v3 przez zamianę nazwy bazy w ciemno.
 ## Nazewnictwo
 
 Folder: `tools/DBACentralRepositoryv4/`; baza: `DBACentralRepositoryv4`; schematy `inventory`, `patch`, `audit`, `report`, `config`; wszystkie istniejące projekty pozostają bez zmian.
+
+## Inventory v4.1 — rozszerzony skan
+
+Po wykonaniu pięciu skryptów SQL z `sql/` (w tym `04_Extended_Inventory_And_Diff.sql`) uruchom `docker/Test-Inventory.ps1 -Persist`. Po drugim kompletnym skanie z pokryciem kategorii powstają zdarzenia w `inventory.ChangeEvent`. Instrukcja testów: [EXTENDED_INVENTORY.md](modules/inventory/EXTENDED_INVENTORY.md).
