@@ -1,0 +1,6 @@
+# Local credentials and lab settings
+/docker/.env
+/config/servers.local.json
+*.local.json
+/output/
+/logs/
