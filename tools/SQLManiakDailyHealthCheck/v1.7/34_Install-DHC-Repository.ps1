@@ -56,7 +56,8 @@ function Ensure-Login([Microsoft.Data.SqlClient.SqlConnection]$conn){
 # Repository installer: preview by default, no delete or scheduler.
 $files=@('01_Repository.sql','04_MonitoredServers.sql','08_ExecutionLog.sql',
          '09_MonitoringStatus.sql','12_TryStartExecution.sql',
-         '14_RunningWatch.sql','20_RepositoryLeastPrivilege.sql')
+         '14_RunningWatch.sql','42_CapacityRepository.sql','44_CapacityForecast.sql',
+         '20_RepositoryLeastPrivilege.sql')
 foreach($file in $files){
  if(-not(Test-Path -LiteralPath (Join-Path $PSScriptRoot $file) -PathType Leaf)){throw "Missing prerequisite: $file"}
 }

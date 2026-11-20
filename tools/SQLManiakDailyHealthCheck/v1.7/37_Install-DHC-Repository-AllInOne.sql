@@ -612,6 +612,310 @@ GO
 /* ===== END 14_RunningWatch.sql ===== */
 
 
+/* ===== BEGIN 42_CapacityRepository.sql ===== */
+/* DHC v1.7 capacity repository extension (administrator, repository instance).
+   Additive and re-runnable. This script does not collect source measurements.
+   All GB values are GiB (1024 MiB). */
+USE SQLManiakHealthHistory;
+GO
+IF OBJECT_ID(N'dhc.CapacityFileSample',N'U') IS NULL
+CREATE TABLE dhc.CapacityFileSample(
+ RunId uniqueidentifier NOT NULL REFERENCES dhc.Run(RunId),
+ DatabaseName sysname NOT NULL,
+ DatabaseId int NOT NULL,FileId int NOT NULL,
+ FileType varchar(12) NOT NULL,FilegroupName sysname NULL,LogicalFileName sysname NOT NULL,
+ PhysicalName nvarchar(260) NOT NULL,VolumeMountPoint nvarchar(512) NULL,
+ AllocatedGB decimal(19,3) NOT NULL,UsedGB decimal(19,3) NULL,
+ InternalFreeGB decimal(19,3) NULL,
+ VolumeTotalGB decimal(19,3) NULL,VolumeFreeGB decimal(19,3) NULL,
+ MaxSizeGB decimal(19,3) NULL,MaxSizeKind varchar(16) NOT NULL,
+ GrowthMB decimal(19,2) NULL,IsPercentGrowth bit NOT NULL,IsGrowthEnabled bit NOT NULL,
+ CONSTRAINT PK_CapacityFileSample PRIMARY KEY(RunId,DatabaseId,FileId));
+GO
+IF OBJECT_ID(N'dhc.CapacityLogSample',N'U') IS NULL
+CREATE TABLE dhc.CapacityLogSample(
+ RunId uniqueidentifier NOT NULL REFERENCES dhc.Run(RunId),
+ DatabaseName sysname NOT NULL,DatabaseId int NOT NULL,
+ AllocatedLogGB decimal(19,3) NULL,UsedLogGB decimal(19,3) NULL,
+ UsedLogPct decimal(9,3) NULL,LogReuseWait nvarchar(60) NULL,
+ RecoveryModel nvarchar(60) NULL,
+ CONSTRAINT PK_CapacityLogSample PRIMARY KEY(RunId,DatabaseId));
+GO
+IF OBJECT_ID(N'dhc.VolumeCapacityPolicy',N'U') IS NULL
+CREATE TABLE dhc.VolumeCapacityPolicy(
+ ServerInstance nvarchar(256) NOT NULL,
+ VolumeMountPoint nvarchar(512) NOT NULL,
+ CanExtend bit NOT NULL,
+ MaxVolumeGB decimal(19,3) NULL,
+ SafetyReserveGB decimal(19,3) NOT NULL CONSTRAINT DF_DHCCapSafety DEFAULT(100),
+ Notes nvarchar(1000) NULL,
+ UpdatedUTC datetime2(3) NOT NULL CONSTRAINT DF_DHCCapUpdated DEFAULT(SYSUTCDATETIME()),
+ CONSTRAINT PK_VolumeCapacityPolicy PRIMARY KEY(ServerInstance,VolumeMountPoint),
+ CONSTRAINT CK_VolumePolicyMax CHECK (MaxVolumeGB IS NULL OR MaxVolumeGB>0),
+ CONSTRAINT CK_VolumePolicyReserve CHECK (SafetyReserveGB>=0),
+ CONSTRAINT CK_VolumePolicyExtend CHECK(CanExtend=0 OR MaxVolumeGB IS NOT NULL));
+GO
+IF NOT EXISTS(SELECT 1 FROM sys.indexes WHERE object_id=OBJECT_ID(N'dhc.CapacityFileSample') AND name='IX_DHCCapFileGroup')
+ CREATE INDEX IX_DHCCapFileGroup ON dhc.CapacityFileSample(DatabaseName,FilegroupName,RunId)
+ INCLUDE(UsedGB,AllocatedGB,InternalFreeGB,VolumeMountPoint,VolumeFreeGB,MaxSizeGB,IsGrowthEnabled);
+GO
+/* The same volume can host files from other databases/filegroups.
+   Per-file volume free bytes are never summed without deduplicating mount point.
+   Reserve for other consumers is NOT guaranteed; policy remains an advisory.
+*/
+CREATE OR ALTER VIEW dhc.vCapacityFilegroupCurrent
+AS
+WITH latest AS (
+ SELECT r.ServerInstance,MAX(r.StartedUTC) AS StartedUTC
+ FROM dhc.Run r JOIN dhc.CapacityFileSample fs ON fs.RunId=r.RunId
+ WHERE r.Status IN ('COMPLETE','PARTIAL')
+ GROUP BY r.ServerInstance
+),
+base AS (
+ SELECT r.ServerInstance,r.StartedUTC,f.*,
+  p.CanExtend,p.MaxVolumeGB,p.SafetyReserveGB,
+  CASE WHEN p.ServerInstance IS NULL THEN 1 ELSE 0 END AS PolicyMissing,
+  CASE WHEN f.MaxSizeKind='NO_GROWTH' OR f.IsGrowthEnabled=0 THEN CONVERT(decimal(19,3),0)
+       WHEN f.MaxSizeGB IS NULL THEN CONVERT(decimal(19,3),999999999)
+       ELSE CASE WHEN f.MaxSizeGB>f.AllocatedGB THEN f.MaxSizeGB-f.AllocatedGB
+                 ELSE CONVERT(decimal(19,3),0) END END AS FileGrowthRoomGB
+ FROM dhc.Run r
+ JOIN latest x ON x.ServerInstance=r.ServerInstance AND x.StartedUTC=r.StartedUTC
+ JOIN dhc.CapacityFileSample f ON f.RunId=r.RunId
+ LEFT JOIN dhc.VolumeCapacityPolicy p ON p.ServerInstance=r.ServerInstance
+      AND p.VolumeMountPoint=f.VolumeMountPoint
+ WHERE r.Status IN ('COMPLETE','PARTIAL') AND f.FilegroupName IS NOT NULL
+),
+volume_group AS (
+ SELECT ServerInstance,DatabaseName,FilegroupName,VolumeMountPoint,
+  MAX(VolumeFreeGB) AS VolumeFreeGB,
+  MAX(VolumeTotalGB) AS VolumeTotalGB,
+  MAX(CONVERT(int,CanExtend)) AS CanExtend,MAX(MaxVolumeGB) AS MaxVolumeGB,
+  MAX(SafetyReserveGB) AS SafetyReserveGB,
+  MAX(PolicyMissing) AS PolicyMissing,
+  SUM(FileGrowthRoomGB) AS ConfiguredGrowthGB,
+  MAX(CASE WHEN VolumeMountPoint IS NULL OR VolumeFreeGB IS NULL THEN 1 ELSE 0 END) AS MetadataMissing
+ FROM base GROUP BY ServerInstance,DatabaseName,FilegroupName,VolumeMountPoint
+),
+volume_room AS (
+ SELECT *,
+ CASE WHEN PolicyMissing=1 OR MetadataMissing=1 THEN NULL
+      ELSE
+       CASE WHEN ConfiguredGrowthGB <
+             CASE WHEN VolumeFreeGB-ISNULL(SafetyReserveGB,0)>0
+                  THEN VolumeFreeGB-ISNULL(SafetyReserveGB,0)
+                  ELSE 0 END
+            THEN ConfiguredGrowthGB
+            ELSE CASE WHEN VolumeFreeGB-ISNULL(SafetyReserveGB,0)>0
+                      THEN VolumeFreeGB-ISNULL(SafetyReserveGB,0) ELSE 0 END END
+ END AS CurrentGrowthGB,
+ CASE WHEN PolicyMissing=1 OR MetadataMissing=1 THEN NULL
+      WHEN CanExtend=1 AND MaxVolumeGB>VolumeTotalGB
+      THEN MaxVolumeGB-VolumeTotalGB ELSE CONVERT(decimal(19,3),0) END AS FutureVolumeExtensionGB
+ FROM volume_group
+),
+fg AS (
+ SELECT ServerInstance,DatabaseName,FilegroupName,COUNT(*) AS FileCount,
+  SUM(AllocatedGB) AS AllocatedGB,SUM(UsedGB) AS UsedGB,
+  SUM(InternalFreeGB) AS InternalFreeGB,
+  MAX(CASE WHEN UsedGB IS NULL OR InternalFreeGB IS NULL THEN 1 ELSE 0 END) AS UsedMissing,
+  SUM(CASE WHEN FileGrowthRoomGB=0 THEN 1 ELSE 0 END) AS GrowthBlockedFiles,
+  MAX(StartedUTC) AS SampleUTC
+ FROM base GROUP BY ServerInstance,DatabaseName,FilegroupName
+),
+room AS (
+ SELECT ServerInstance,DatabaseName,FilegroupName,
+  SUM(CurrentGrowthGB) AS CurrentGrowthGB,
+  SUM(FutureVolumeExtensionGB) AS FutureVolumeExtensionGB,
+  MAX(CASE WHEN CurrentGrowthGB IS NULL OR FutureVolumeExtensionGB IS NULL THEN 1 ELSE 0 END) AS UnknownCapacity,
+  SUM(CASE WHEN CanExtend=1 AND FutureVolumeExtensionGB>0 THEN 1 ELSE 0 END) AS ExtendableVolumeCount,
+  SUM(CASE WHEN PolicyMissing=1 THEN 1 ELSE 0 END) AS MissingPolicyCount
+ FROM volume_room GROUP BY ServerInstance,DatabaseName,FilegroupName
+)
+SELECT f.*,r.CurrentGrowthGB,r.FutureVolumeExtensionGB,r.UnknownCapacity,r.ExtendableVolumeCount,r.MissingPolicyCount,
+ CASE WHEN f.UsedMissing=1 OR r.UnknownCapacity=1 THEN NULL
+ ELSE f.InternalFreeGB+r.CurrentGrowthGB END AS EffectiveHeadroomGB,
+ CASE WHEN f.UsedMissing=1 OR r.UnknownCapacity=1 THEN 'INSUFFICIENT DATA'
+ WHEN f.InternalFreeGB+r.CurrentGrowthGB<100 THEN 'CRITICAL'
+ WHEN f.InternalFreeGB+r.CurrentGrowthGB<500 THEN 'WARNING'
+ WHEN f.InternalFreeGB/NULLIF(f.AllocatedGB,0)<0.10 THEN 'REVIEW'
+ ELSE 'OK' END AS Assessment,
+ CASE WHEN f.UsedMissing=1 OR r.UnknownCapacity=1 THEN 'INSUFFICIENT DATA'
+ WHEN f.InternalFreeGB+r.CurrentGrowthGB>=500 THEN 'CAPACITY SUFFICIENT'
+ WHEN r.CurrentGrowthGB>100 THEN 'EXTEND EXISTING FILE'
+ WHEN f.GrowthBlockedFiles>0 AND r.CurrentGrowthGB=0 THEN 'INCREASE MAXSIZE / CHECK STORAGE'
+ WHEN r.ExtendableVolumeCount>0 THEN 'EXTEND VOLUME'
+ ELSE 'ADD FILE RECOMMENDED - VERIFY STORAGE' END AS RecommendedAction
+FROM fg f JOIN room r ON r.ServerInstance=f.ServerInstance AND r.DatabaseName=f.DatabaseName AND r.FilegroupName=f.FilegroupName;
+GO
+
+/* Extend existing retention procedure so historical capacity FKs are removed
+   before dhc.Run. No automatic deletion; DryRun remains default. */
+CREATE OR ALTER PROCEDURE dhc.PurgeRuns
+ @OlderThanUTC datetime2(3), @DryRun bit=1
+AS
+BEGIN
+ SET NOCOUNT ON;
+ IF @DryRun=1
+ BEGIN
+  SELECT COUNT_BIG(*) AS RunsToDelete
+  FROM dhc.Run WHERE StartedUTC<@OlderThanUTC;
+  RETURN;
+ END;
+ BEGIN TRAN;
+ DELETE c FROM dhc.CapacityLogSample c JOIN dhc.Run r ON c.RunId=r.RunId WHERE r.StartedUTC<@OlderThanUTC;
+ DELETE c FROM dhc.CapacityFileSample c JOIN dhc.Run r ON c.RunId=r.RunId WHERE r.StartedUTC<@OlderThanUTC;
+ DELETE t FROM dhc.TempDBSession t JOIN dhc.Run r ON t.RunId=r.RunId WHERE r.StartedUTC<@OlderThanUTC;
+ DELETE t FROM dhc.TempDBFile t JOIN dhc.Run r ON t.RunId=r.RunId WHERE r.StartedUTC<@OlderThanUTC;
+ DELETE t FROM dhc.TempDBSnapshot t JOIN dhc.Run r ON t.RunId=r.RunId WHERE r.StartedUTC<@OlderThanUTC;
+ DELETE t FROM dhc.Alert t JOIN dhc.Run r ON t.RunId=r.RunId WHERE r.StartedUTC<@OlderThanUTC;
+ DELETE t FROM dhc.ResultBatch t JOIN dhc.Run r ON t.RunId=r.RunId WHERE r.StartedUTC<@OlderThanUTC;
+ DELETE FROM dhc.Run WHERE StartedUTC<@OlderThanUTC;
+ COMMIT;
+END;
+GO
+
+/* ===== END 42_CapacityRepository.sql ===== */
+
+/* ===== BEGIN 44_CapacityForecast.sql ===== */
+/* Optional forecasting: at least 5 distinct samples spanning 7+ days.
+   Uses USED GiB, not MDF autogrowth; linear forecast is advisory.
+   Negative/zero growth has no exhaustion date.
+   Data reorganization, file movement and shrink can invalidate the trend.
+*/
+USE SQLManiakHealthHistory;
+GO
+CREATE OR ALTER VIEW dhc.vCapacityForecast
+AS
+WITH samples AS (
+ SELECT r.ServerInstance,f.DatabaseName,f.FilegroupName,r.RunId,r.StartedUTC,
+        SUM(f.UsedGB) AS UsedGB,
+        MAX(CASE WHEN f.UsedGB IS NULL THEN 1 ELSE 0 END) AS UnknownUsed
+ FROM dhc.Run r
+ JOIN dhc.CapacityFileSample f ON f.RunId=r.RunId
+ WHERE r.Status='COMPLETE' AND f.FilegroupName IS NOT NULL
+   AND r.StartedUTC>=DATEADD(DAY,-31,SYSUTCDATETIME())
+ GROUP BY r.ServerInstance,f.DatabaseName,f.FilegroupName,r.RunId,r.StartedUTC
+),
+trend AS (
+ SELECT ServerInstance,DatabaseName,FilegroupName,
+        COUNT(*) AS Samples,
+        MIN(StartedUTC) AS FirstSampleUTC,MAX(StartedUTC) AS LastSampleUTC,
+        MAX(UnknownUsed) AS HasMissingMeasurements
+ FROM samples
+ GROUP BY ServerInstance,DatabaseName,FilegroupName
+),
+ends AS (
+ SELECT t.*,s1.UsedGB AS FirstUsedGB,s2.UsedGB AS LastUsedGB
+ FROM trend t
+ OUTER APPLY (
+  SELECT TOP(1) UsedGB FROM samples s
+  WHERE s.ServerInstance=t.ServerInstance AND s.DatabaseName=t.DatabaseName
+    AND s.FilegroupName=t.FilegroupName
+  ORDER BY StartedUTC ASC,RunId ASC
+ ) s1
+ OUTER APPLY (
+  SELECT TOP(1) UsedGB FROM samples s
+  WHERE s.ServerInstance=t.ServerInstance AND s.DatabaseName=t.DatabaseName
+    AND s.FilegroupName=t.FilegroupName
+  ORDER BY StartedUTC DESC,RunId DESC
+ ) s2
+),
+rates AS (
+ SELECT *,
+  CASE WHEN Samples>=5 AND HasMissingMeasurements=0
+         AND DATEDIFF(SECOND,FirstSampleUTC,LastSampleUTC)>=7*86400
+       THEN (LastUsedGB-FirstUsedGB) /
+        NULLIF(DATEDIFF(SECOND,FirstSampleUTC,LastSampleUTC)/86400.0,0)
+       ELSE NULL END AS NetGrowthGBPerDay
+ FROM ends
+)
+SELECT c.ServerInstance,c.DatabaseName,c.FilegroupName,c.SampleUTC,
+       c.AllocatedGB,c.UsedGB,c.InternalFreeGB,c.CurrentGrowthGB,
+       c.FutureVolumeExtensionGB,c.EffectiveHeadroomGB,
+       c.UnknownCapacity,c.Assessment,c.RecommendedAction,
+       r.Samples,r.FirstSampleUTC,r.LastSampleUTC,r.NetGrowthGBPerDay,
+       CASE WHEN r.NetGrowthGBPerDay>0 AND c.EffectiveHeadroomGB IS NOT NULL
+            THEN CAST(c.EffectiveHeadroomGB/r.NetGrowthGBPerDay AS decimal(19,1))
+            ELSE NULL END AS DaysToFull,
+       CASE WHEN r.NetGrowthGBPerDay IS NULL THEN 'INSUFFICIENT HISTORY'
+            WHEN r.NetGrowthGBPerDay<=0 THEN 'NO POSITIVE NET GROWTH'
+            WHEN c.EffectiveHeadroomGB IS NULL THEN 'UNKNOWN CAPACITY'
+            ELSE 'LINEAR ESTIMATE' END AS ForecastStatus,
+       CASE WHEN r.NetGrowthGBPerDay IS NOT NULL
+            THEN CAST(c.InternalFreeGB+c.CurrentGrowthGB-30*r.NetGrowthGBPerDay AS decimal(19,2))
+            ELSE NULL END AS Headroom30DaysGB,
+       CASE WHEN r.NetGrowthGBPerDay IS NOT NULL
+            THEN CAST(c.InternalFreeGB+c.CurrentGrowthGB-60*r.NetGrowthGBPerDay AS decimal(19,2))
+            ELSE NULL END AS Headroom60DaysGB,
+       CASE WHEN r.NetGrowthGBPerDay IS NOT NULL
+            THEN CAST(c.InternalFreeGB+c.CurrentGrowthGB-90*r.NetGrowthGBPerDay AS decimal(19,2))
+            ELSE NULL END AS Headroom90DaysGB,
+       CASE WHEN r.NetGrowthGBPerDay IS NULL THEN 'INSUFFICIENT HISTORY'
+            WHEN c.EffectiveHeadroomGB IS NULL THEN 'UNKNOWN CAPACITY'
+            WHEN r.NetGrowthGBPerDay<=0 THEN 'NO POSITIVE NET GROWTH'
+            WHEN c.EffectiveHeadroomGB<=7*r.NetGrowthGBPerDay THEN 'CRITICAL'
+            WHEN c.EffectiveHeadroomGB<=30*r.NetGrowthGBPerDay THEN 'WARNING'
+            WHEN c.EffectiveHeadroomGB<=60*r.NetGrowthGBPerDay THEN 'REVIEW'
+            ELSE 'OK' END AS ForecastAssessment,
+       CASE WHEN r.NetGrowthGBPerDay IS NULL THEN 'INSUFFICIENT HISTORY'
+            WHEN c.EffectiveHeadroomGB IS NULL THEN 'INSUFFICIENT DATA'
+            WHEN r.NetGrowthGBPerDay>0 AND c.EffectiveHeadroomGB<=60*r.NetGrowthGBPerDay
+              THEN CASE WHEN c.CurrentGrowthGB>100 THEN 'EXTEND EXISTING FILE'
+                        WHEN c.GrowthBlockedFiles>0 THEN 'INCREASE MAXSIZE / CHECK STORAGE'
+                        WHEN c.ExtendableVolumeCount>0 THEN 'EXTEND VOLUME'
+                        ELSE 'ADD FILE RECOMMENDED - VERIFY STORAGE' END
+            ELSE c.RecommendedAction END AS ForecastRecommendedAction
+FROM dhc.vCapacityFilegroupCurrent c
+LEFT JOIN rates r ON r.ServerInstance=c.ServerInstance AND r.DatabaseName=c.DatabaseName
+ AND r.FilegroupName=c.FilegroupName;
+GO
+
+/* Current log usage is DATABASE-wide; LDF size/growth limits are FILE-wide.
+   They are intentionally reported separately (not allocated per LDF). */
+CREATE OR ALTER VIEW dhc.vCapacityLogCurrent
+AS
+WITH logruns AS (
+ SELECT r.ServerInstance,r.RunId,r.StartedUTC,l.DatabaseName,
+  l.AllocatedLogGB,l.UsedLogGB,l.UsedLogPct,l.LogReuseWait,l.RecoveryModel,
+  ROW_NUMBER() OVER(
+   PARTITION BY r.ServerInstance,l.DatabaseName
+   ORDER BY r.StartedUTC DESC,r.RunId DESC) AS rn
+ FROM dhc.Run r JOIN dhc.CapacityLogSample l ON l.RunId=r.RunId
+ WHERE r.Status IN ('COMPLETE','PARTIAL')
+),
+logfiles AS (
+ SELECT RunId,DatabaseName,COUNT(*) AS LogFileCount,
+ SUM(CASE WHEN IsGrowthEnabled=0 OR
+  (MaxSizeGB IS NOT NULL AND MaxSizeGB<=AllocatedGB)
+  THEN 1 ELSE 0 END) AS GrowthBlockedFiles,
+ MIN(VolumeFreeGB) AS MinVolumeFreeGB,
+ SUM(AllocatedGB) AS AllocatedLogFilesGB
+ FROM dhc.CapacityFileSample
+ WHERE FileType='LOG'
+ GROUP BY RunId,DatabaseName
+)
+SELECT l.ServerInstance,l.DatabaseName,l.StartedUTC,
+ l.AllocatedLogGB,l.UsedLogGB,l.UsedLogPct,l.LogReuseWait,l.RecoveryModel,
+ f.LogFileCount,f.GrowthBlockedFiles,f.MinVolumeFreeGB,f.AllocatedLogFilesGB,
+ CASE WHEN l.UsedLogPct>=95 THEN 'CRITICAL'
+      WHEN l.UsedLogPct>=85 THEN 'WARNING'
+      WHEN l.UsedLogPct IS NULL THEN 'UNKNOWN'
+      ELSE 'OK' END AS Assessment,
+ CASE WHEN l.UsedLogPct IS NULL THEN 'VERIFY LOG MEASUREMENT'
+      WHEN l.UsedLogPct>=85 AND l.LogReuseWait NOT IN ('NOTHING','CHECKPOINT')
+      THEN 'INVESTIGATE LOG REUSE WAIT'
+      WHEN l.UsedLogPct>=85 AND ISNULL(f.GrowthBlockedFiles,0)>0
+      THEN 'INCREASE MAXSIZE / EXTEND STORAGE'
+      WHEN l.UsedLogPct>=85 THEN 'PLAN LOG CAPACITY'
+      ELSE 'MONITOR' END AS RecommendedAction
+FROM logruns l LEFT JOIN logfiles f
+ ON f.RunId=l.RunId AND f.DatabaseName=l.DatabaseName
+WHERE l.rn=1;
+GO
+
+/* ===== END 44_CapacityForecast.sql ===== */
+
 /* ===== BEGIN 20_RepositoryLeastPrivilege.sql ===== */
 /* SQLManiak DHC v1.7 - repository least-privilege ROLE only.
    Run on LAB Repository after 01,04,08,09,12,14.
@@ -657,6 +961,9 @@ GRANT INSERT ON OBJECT::dhc.Alert TO dhc_collector;
 GRANT INSERT ON OBJECT::dhc.TempDBSnapshot TO dhc_collector;
 GRANT INSERT ON OBJECT::dhc.TempDBFile TO dhc_collector;
 GRANT INSERT ON OBJECT::dhc.TempDBSession TO dhc_collector;
+GRANT INSERT ON OBJECT::dhc.CapacityFileSample TO dhc_collector;
+GRANT INSERT ON OBJECT::dhc.CapacityLogSample TO dhc_collector;
+GRANT SELECT ON OBJECT::dhc.VolumeCapacityPolicy TO dhc_collector;
 GO
 -- Role grants audit: should NOT show CONTROL, ALTER, DELETE, db_owner.
 SELECT
@@ -716,6 +1023,11 @@ GRANT SELECT ON OBJECT::dhc.vMonitoringSummary TO [dhc_portal_reader];
 GRANT SELECT ON OBJECT::dhc.vTempDBTrend TO [dhc_portal_reader];
 GRANT SELECT ON OBJECT::dhc.TempDBSnapshot TO [dhc_portal_reader];
 GRANT SELECT ON OBJECT::dhc.TempDBFile TO [dhc_portal_reader];
+GRANT SELECT ON OBJECT::dhc.CapacityFileSample TO [dhc_portal_reader];
+GRANT SELECT ON OBJECT::dhc.CapacityLogSample TO [dhc_portal_reader];
+GRANT SELECT ON OBJECT::dhc.vCapacityFilegroupCurrent TO [dhc_portal_reader];
+GRANT SELECT ON OBJECT::dhc.vCapacityForecast TO [dhc_portal_reader];
+GRANT SELECT ON OBJECT::dhc.vCapacityLogCurrent TO [dhc_portal_reader];
 GO
 IF NOT EXISTS
 (
@@ -803,7 +1115,9 @@ INSERT @ExpectedObjects(Name,Type) VALUES
  (N'MonitoredServer','U'),(N'ExecutionLog','U'),
  (N'vTempDBTrend','V'),(N'vDailyAlerts','V'),
  (N'vMonitoringStatus','V'),(N'vMonitoringSummary','V'),
- (N'TryStartExecution','P'),(N'PurgeRuns','P');
+ (N'TryStartExecution','P'),(N'PurgeRuns','P'),
+ (N'CapacityFileSample','U'),(N'CapacityLogSample','U'),(N'VolumeCapacityPolicy','U'),
+ (N'vCapacityFilegroupCurrent','V'),(N'vCapacityForecast','V'),(N'vCapacityLogCurrent','V');
 IF EXISTS
 (
  SELECT 1 FROM @ExpectedObjects AS e

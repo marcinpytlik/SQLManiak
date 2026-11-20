@@ -42,6 +42,10 @@ GRANT INSERT ON OBJECT::dhc.Alert TO dhc_collector;
 GRANT INSERT ON OBJECT::dhc.TempDBSnapshot TO dhc_collector;
 GRANT INSERT ON OBJECT::dhc.TempDBFile TO dhc_collector;
 GRANT INSERT ON OBJECT::dhc.TempDBSession TO dhc_collector;
+-- Capacity metrics are append-only; volume policy remains DBA-managed.
+GRANT INSERT ON OBJECT::dhc.CapacityFileSample TO dhc_collector;
+GRANT INSERT ON OBJECT::dhc.CapacityLogSample TO dhc_collector;
+GRANT SELECT ON OBJECT::dhc.VolumeCapacityPolicy TO dhc_collector;
 GO
 -- Role grants audit: should NOT show CONTROL, ALTER, DELETE, db_owner.
 SELECT
