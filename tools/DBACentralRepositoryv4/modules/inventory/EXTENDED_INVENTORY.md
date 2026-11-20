@@ -19,7 +19,7 @@ Instalator wykona `sql/04_Extended_Inventory_And_Diff.sql` po poprzednich cztere
 
 - **DB**: obiekty użytkownika (tabele/widoki/procedury/funkcje/triggery), schematy, kolumny, FK, indeksy i ich kolumny, partycje, statystyki i ich kolumny, funkcje/schematy partycjonowania.
 - **Instance**: ustawienia `sys.configurations`, tempdb, linked servers (bez provider string), metadane credentials (bez sekretów), trace flags, usługi, wolumeny.
-- **HA**: FCI — węzły i właściciel z `sys.dm_os_cluster_nodes` (tylko jeśli IsClustered=1); AG — repliki i bazy z DMV (tylko jeśli IsHadrEnabled=1).
+- **HA**: FCI — węzły i właściciel z `sys.dm_os_cluster_nodes` (tylko jeśli IsClustered=1); nazwa SQL VNN nie jest nazwą fizycznego klastra WSFC; AG — repliki i bazy z DMV (tylko jeśli IsHadrEnabled=1).
 - **Security**: istniejące odczyty ról i uprawnień serwerowych/bazodanowych.
 
 Kolektor **nie wykonuje** TABLE SCAN, `FULLSCAN`, `UPDATE STATISTICS`, `DBCC CHECKDB` ani restartów/failoverów. Odczytuje metadane katalogowe; `sys.partitions.rows` to oszacowanie liczby wierszy, nie pomiar `COUNT(*)`.
@@ -53,7 +53,7 @@ Zmiany SQL Agent, metadane logowania i role to informacje wrażliwe. Repozytoriu
 ## Ograniczenia / kolejne prace
 
 1. Brak testów na FCI/AG w Docker standalone — to ścieżka do testów na Windows LAB.
-2. Pojedyncze INSERT snapshotów w PowerShell wymagają przejścia na SqlBulkCopy przed skalą wielkich instancji.
+2. Snapshoty zapisujemy paczkami SqlBulkCopy (500 wierszy); potrzebujemy jeszcze pomiarów wydajności i retencji dla bardzo dużych instancji.
 3. Historia zdarzeń to porównanie dwóch kolejnych kompletnych skanów; nie jest to audyt DDL w czasie rzeczywistym.
 4. Klucze obiektów oparte o object_id mogą nie wykryć zmiany nazwy jako RENAME; zalecany jest dodatkowy raport nazw.
 5. Zbierane metadane zależą od widoczności katalogów dla użytkownika kolektora.
