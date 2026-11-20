@@ -30,8 +30,9 @@ FROM sys.master_files mf
 CROSS APPLY sys.dm_os_volume_stats(mf.database_id,mf.file_id) vs;
 '@
  $q['HA_CLUSTER']=@'
-SELECT cluster_name,quorum_type_desc,quorum_state_desc
-FROM sys.dm_hadr_cluster;
+SELECT CAST(SERVERPROPERTY('MachineName') AS nvarchar(128)) AS ClusterName,
+NodeName,status_description AS NodeStatus,is_current_owner AS IsCurrentOwner
+FROM sys.dm_os_cluster_nodes;
 '@
  $q['HA_REPLICA']=@'
 SELECT ag.name AS AvailabilityGroupName,ar.replica_server_name,
