@@ -23,9 +23,13 @@ service_account,filename
 FROM sys.dm_server_services;
 '@
  $q['VOLUME']=@'
-SELECT DISTINCT vs.volume_mount_point,vs.logical_volume_name,
-vs.total_bytes,vs.available_bytes,vs.file_system_type,
-vs.supports_compression
+SELECT DISTINCT
+ COALESCE(NULLIF(LTRIM(RTRIM(vs.volume_mount_point)),N''),
+          NULLIF(LTRIM(RTRIM(vs.logical_volume_name)),N''),
+          N'FILE:' + mf.physical_name) AS VolumeKey,
+ vs.volume_mount_point,vs.logical_volume_name,
+ vs.total_bytes,vs.available_bytes,vs.file_system_type,
+ vs.supports_compression
 FROM sys.master_files mf
 CROSS APPLY sys.dm_os_volume_stats(mf.database_id,mf.file_id) vs;
 '@
@@ -167,7 +171,7 @@ function Get-ExtendedKeys {
  TRACE_FLAG=@('TraceFlag','Global','Session')
  LINKED_SERVER=@('server_id')
  SERVICE=@('servicename')
- VOLUME=@('volume_mount_point')
+ VOLUME=@('VolumeKey')
  HA_CLUSTER=@('SqlVirtualNetworkName','NodeName')
  HA_REPLICA=@('AvailabilityGroupName','replica_server_name')
  HA_DATABASE=@('AvailabilityGroupName','database_name','replica_server_name')
