@@ -74,12 +74,12 @@ function Invoke-DbTable {
  finally { $adapter.Dispose(); $cmd.Dispose() }
 }
 function Invoke-DbCommand {
- param([System.Data.SqlClient.SqlConnection]$Connection,[string]$Sql,[hashtable]$Args=@{},[switch]$Scalar)
+ param([System.Data.SqlClient.SqlConnection]$Connection,[string]$Sql,[hashtable]$SqlParameters=@{},[switch]$Scalar)
  $cmd=$Connection.CreateCommand()
  $cmd.CommandTimeout=$timeout
  $cmd.CommandText=$Sql
- foreach($key in $Args.Keys) {
-  $value=$Args[$key]
+ foreach($key in $SqlParameters.Keys) {
+  $value=$SqlParameters[$key]
   if($null -eq $value) { $value=[DBNull]::Value }
   [void]$cmd.Parameters.AddWithValue('@'+$key,$value)
  }
@@ -114,7 +114,7 @@ function Save-Category {
    [void](Invoke-DbCommand -Connection $Repository -Sql @'
 INSERT inventory.InventorySnapshot(ScanRunId,Category,EntityKey,DataJson)
 VALUES (@id,@category,@entity,@json);
-'@ -Args @{id=$ScanRunId;category=$Category;entity=$entityKey;json=$json})
+'@ -SqlParameters @{id=$ScanRunId;category=$Category;entity=$entityKey;json=$json})
   }
   $saved++
  }
@@ -240,7 +240,7 @@ INSERT inventory.ScanRun(InstanceId,ScanType,CollectorVersion)
 VALUES(@id,'FULL','4.0.0-phase1');
 SELECT CONVERT(bigint,SCOPE_IDENTITY());
 COMMIT;
-'@ -Args @{name=$serverName;env=$envCode;arch=$arch} -Scalar)
+'@ -SqlParameters @{name=$serverName;env=$envCode;arch=$arch} -Scalar)
   }
   foreach($category in $queries.Keys) {
    try {
@@ -253,7 +253,7 @@ COMMIT;
     $errors++
     Write-Warning "$serverName / $category : $($_.Exception.Message)"
     if($Persist) {
-     [void](Invoke-DbCommand -Connection $repo -Sql 'INSERT inventory.ScanFinding(ScanRunId,Category,Severity,Message) VALUES(@id,@cat,''ERROR'',@msg)' -Args @{
+     [void](Invoke-DbCommand -Connection $repo -Sql 'INSERT inventory.ScanFinding(ScanRunId,Category,Severity,Message) VALUES(@id,@cat,''ERROR'',@msg)' -SqlParameters @{
       id=$scanId;cat=$category;msg=([string]$_.Exception.Message).Substring(0,[Math]::Min(3900,([string]$_.Exception.Message).Length))
      })
     }
@@ -276,7 +276,7 @@ COMMIT;
        $errors++
        Write-Warning "$serverName / $dbName / $category : $($_.Exception.Message)"
        if($Persist) {
-        [void](Invoke-DbCommand -Connection $repo -Sql 'INSERT inventory.ScanFinding(ScanRunId,Category,Severity,Message) VALUES(@id,@cat,''ERROR'',@msg)' -Args @{
+        [void](Invoke-DbCommand -Connection $repo -Sql 'INSERT inventory.ScanFinding(ScanRunId,Category,Severity,Message) VALUES(@id,@cat,''ERROR'',@msg)' -SqlParameters @{
           id=$scanId;cat=$category;msg=("$dbName : $($_.Exception.Message)").Substring(0,[Math]::Min(3900,("$dbName : $($_.Exception.Message)").Length))
         })
        }
@@ -286,7 +286,7 @@ COMMIT;
      $errors++
      Write-Warning "$serverName / $dbName : $($_.Exception.Message)"
      if($Persist) {
-      [void](Invoke-DbCommand -Connection $repo -Sql 'INSERT inventory.ScanFinding(ScanRunId,Category,Severity,Message) VALUES(@id,@cat,''ERROR'',@msg)' -Args @{
+      [void](Invoke-DbCommand -Connection $repo -Sql 'INSERT inventory.ScanFinding(ScanRunId,Category,Severity,Message) VALUES(@id,@cat,''ERROR'',@msg)' -SqlParameters @{
        id=$scanId;cat='DATABASE_USER';msg=("$dbName : $($_.Exception.Message)").Substring(0,[Math]::Min(3900,("$dbName : $($_.Exception.Message)").Length))
       })
      }
@@ -298,13 +298,15 @@ COMMIT;
    [void](Invoke-DbCommand -Connection $repo -Sql @'
 UPDATE inventory.ScanRun SET ScanStatus=@status,FinishedUtc=SYSUTCDATETIME()
 WHERE ScanRunId=@id;
-'@ -Args @{id=$scanId;status=$state})
+'@ -SqlParameters @{id=$scanId;status=$state})
   }
   Write-Host "Result: $serverName; rows=$rows; errors=$errors; scanId=$scanId"
  } catch {
-  Write-Error "Inventory failed for $serverName : $($_.Exception.Message)" -ErrorAction Continue
+  Write-Warning "Inventory failed for $serverName : $($_.Exception.Message)"
+  Write-Warning "Location: $($_.InvocationInfo.PositionMessage)"
+  Write-Warning "Script stack: $($_.ScriptStackTrace)"
   if($Persist -and $scanId -gt 0 -and $null -ne $repo) {
-   try { [void](Invoke-DbCommand -Connection $repo -Sql "UPDATE inventory.ScanRun SET ScanStatus='FAILED',FinishedUtc=SYSUTCDATETIME(),ErrorMessage=@msg WHERE ScanRunId=@id;" -Args @{
+   try { [void](Invoke-DbCommand -Connection $repo -Sql "UPDATE inventory.ScanRun SET ScanStatus='FAILED',FinishedUtc=SYSUTCDATETIME(),ErrorMessage=@msg WHERE ScanRunId=@id;" -SqlParameters @{
     id=$scanId;msg=([string]$_.Exception.Message).Substring(0,[Math]::Min(3900,([string]$_.Exception.Message).Length))
    }) } catch { Write-Warning "Unable to mark scan $scanId FAILED" }
   }
