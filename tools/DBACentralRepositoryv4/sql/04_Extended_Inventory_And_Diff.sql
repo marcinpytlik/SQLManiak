@@ -58,6 +58,7 @@ BEGIN
  SELECT TOP(1) @PreviousScanRunId=ScanRunId
  FROM inventory.ScanRun
  WHERE InstanceId=@InstanceId AND ScanStatus='COMPLETE' AND ScanRunId<>@ScanRunId
+  AND EXISTS (SELECT 1 FROM inventory.ScanCategory sc WHERE sc.ScanRunId=inventory.ScanRun.ScanRunId)
   AND StartedUtc < (SELECT StartedUtc FROM inventory.ScanRun WHERE ScanRunId=@ScanRunId)
  ORDER BY StartedUtc DESC,ScanRunId DESC;
  IF @PreviousScanRunId IS NULL
