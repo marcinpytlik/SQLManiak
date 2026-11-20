@@ -55,6 +55,9 @@ LEFT JOIN sys.dm_hadr_database_replica_states drs
  ON drs.group_id=adc.group_id AND drs.replica_id=ar.replica_id
  AND drs.group_database_id=adc.group_database_id;
 '@
+ $q['TRACE_FLAG']=@'
+DBCC TRACESTATUS(-1) WITH NO_INFOMSGS;
+'@
  $q['CREDENTIAL_METADATA']=@'
 SELECT credential_id,name,credential_identity,create_date,modify_date
 FROM sys.credentials;
@@ -63,6 +66,21 @@ FROM sys.credentials;
 }
 function Get-ExtendedDatabaseQueries {
  $q=[ordered]@{}
+ $q['SCHEMA']=@'
+SELECT DB_NAME() DatabaseName,s.schema_id,s.name SchemaName,USER_NAME(s.principal_id) OwnerName
+FROM sys.schemas s WHERE s.schema_id<>0;
+'@
+ $q['COLUMN']=@'
+SELECT DB_NAME() DatabaseName,sch.name SchemaName,o.name ObjectName,
+c.object_id,c.column_id,c.name ColumnName,ty.name TypeName,
+c.max_length,c.precision,c.scale,c.is_nullable,c.is_identity,c.is_computed,
+c.collation_name
+FROM sys.columns c
+JOIN sys.objects o ON o.object_id=c.object_id AND o.is_ms_shipped=0
+JOIN sys.schemas sch ON sch.schema_id=o.schema_id
+JOIN sys.types ty ON ty.user_type_id=c.user_type_id
+WHERE o.type IN ('U','V','TF','IF');
+'@
  $q['OBJECT']=@'
 SELECT DB_NAME() DatabaseName,s.name SchemaName,o.name ObjectName,
 o.object_id,o.type,o.type_desc,o.create_date,o.modify_date,
@@ -83,6 +101,14 @@ JOIN sys.objects obj ON obj.object_id=i.object_id AND obj.is_ms_shipped=0
 JOIN sys.schemas sch ON sch.schema_id=obj.schema_id
 WHERE obj.type IN ('U','V');
 '@
+ $q['INDEX_COLUMN']=@'
+SELECT DB_NAME() DatabaseName,ic.object_id,ic.index_id,ic.index_column_id,
+ic.key_ordinal,ic.is_descending_key,ic.is_included_column,
+ic.partition_ordinal,c.name ColumnName
+FROM sys.index_columns ic
+JOIN sys.objects o ON o.object_id=ic.object_id AND o.is_ms_shipped=0
+JOIN sys.columns c ON c.object_id=ic.object_id AND c.column_id=ic.column_id;
+'@
  $q['INDEX_PARTITION']=@'
 SELECT DB_NAME() DatabaseName,sch.name SchemaName,t.name TableName,
 p.object_id,p.index_id,p.partition_number,p.rows AS ApproxRowCount,
@@ -99,6 +125,24 @@ STATS_DATE(st.object_id,st.stats_id) LastUpdatedUtcOrLocal
 FROM sys.stats st
 JOIN sys.objects o ON o.object_id=st.object_id AND o.is_ms_shipped=0
 JOIN sys.schemas sch ON sch.schema_id=o.schema_id;
+'@
+ $q['STATISTICS_COLUMN']=@'
+SELECT DB_NAME() DatabaseName,sc.object_id,sc.stats_id,sc.stats_column_id,
+c.name ColumnName
+FROM sys.stats_columns sc
+JOIN sys.objects o ON o.object_id=sc.object_id AND o.is_ms_shipped=0
+JOIN sys.columns c ON c.object_id=sc.object_id AND c.column_id=sc.column_id;
+'@
+ $q['FOREIGN_KEY']=@'
+SELECT DB_NAME() DatabaseName,fk.object_id,fk.name ForeignKeyName,
+OBJECT_SCHEMA_NAME(fk.parent_object_id) ParentSchema,
+OBJECT_NAME(fk.parent_object_id) ParentTable,
+OBJECT_SCHEMA_NAME(fk.referenced_object_id) ReferencedSchema,
+OBJECT_NAME(fk.referenced_object_id) ReferencedTable,
+fk.is_disabled,fk.is_not_trusted,fk.delete_referential_action_desc,
+fk.update_referential_action_desc
+FROM sys.foreign_keys fk JOIN sys.tables t ON t.object_id=fk.parent_object_id
+WHERE t.is_ms_shipped=0;
 '@
  $q['PARTITION_FUNCTION']=@'
 SELECT DB_NAME() DatabaseName,pf.function_id,pf.name FunctionName,
@@ -120,6 +164,7 @@ LEFT JOIN sys.filegroups fg ON fg.data_space_id=dds.data_space_id;
 function Get-ExtendedKeys {
  return @{
  TEMPDB=@('DatabaseName','file_id')
+ TRACE_FLAG=@('TraceFlag','Global','Session')
  LINKED_SERVER=@('server_id')
  SERVICE=@('servicename')
  VOLUME=@('volume_mount_point')
@@ -128,9 +173,14 @@ function Get-ExtendedKeys {
  HA_DATABASE=@('AvailabilityGroupName','database_name','replica_server_name')
  CREDENTIAL_METADATA=@('credential_id')
  OBJECT=@('DatabaseName','object_id')
+ SCHEMA=@('DatabaseName','schema_id')
+ COLUMN=@('DatabaseName','object_id','column_id')
+ FOREIGN_KEY=@('DatabaseName','object_id')
  INDEX=@('DatabaseName','object_id','index_id')
+ INDEX_COLUMN=@('DatabaseName','object_id','index_id','index_column_id')
  INDEX_PARTITION=@('DatabaseName','object_id','index_id','partition_number')
  STATISTICS=@('DatabaseName','object_id','stats_id')
+ STATISTICS_COLUMN=@('DatabaseName','object_id','stats_id','stats_column_id')
  PARTITION_FUNCTION=@('DatabaseName','function_id','boundary_id')
  PARTITION_SCHEME=@('DatabaseName','data_space_id','destination_id')
  }
