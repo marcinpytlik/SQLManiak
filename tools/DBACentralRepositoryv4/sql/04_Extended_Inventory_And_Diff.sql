@@ -19,11 +19,11 @@ BEGIN
   ScanRunId bigint NOT NULL REFERENCES inventory.ScanRun(ScanRunId),
   Category varchar(32) NOT NULL,
   CategoryStatus varchar(12) NOT NULL,
-  RowCount bigint NOT NULL,
+  SnapshotRows bigint NOT NULL,
   RecordedUtc datetime2(0) NOT NULL CONSTRAINT DF_v4_Category_Recorded DEFAULT SYSUTCDATETIME(),
   CONSTRAINT PK_v4_ScanCategory PRIMARY KEY(ScanRunId,Category),
   CONSTRAINT CK_v4_Category_Status CHECK(CategoryStatus IN('COMPLETE','PARTIAL')),
-  CONSTRAINT CK_v4_Category_Rows CHECK(RowCount>=0)
+  CONSTRAINT CK_v4_Category_Rows CHECK(SnapshotRows>=0)
  );
 END;
 GO
