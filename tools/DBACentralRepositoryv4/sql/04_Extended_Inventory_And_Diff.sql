@@ -86,12 +86,10 @@ BEGIN
     WHEN n.InventorySnapshotId IS NULL THEN 'REMOVED'
     ELSE 'MODIFIED'
    END AS ChangeType
-  FROM inventory.InventorySnapshot p
-  FULL OUTER JOIN inventory.InventorySnapshot n
-   ON n.Category=p.Category AND n.EntityKey=p.EntityKey AND n.ScanRunId=@ScanRunId
-  WHERE (p.ScanRunId=@PreviousScanRunId OR p.ScanRunId IS NULL)
-   AND (n.ScanRunId=@ScanRunId OR n.ScanRunId IS NULL)
-   AND EXISTS (SELECT 1 FROM SafeCategories c WHERE c.Category=COALESCE(n.Category,p.Category))
+  FROM (SELECT * FROM inventory.InventorySnapshot WHERE ScanRunId=@PreviousScanRunId) p
+  FULL OUTER JOIN (SELECT * FROM inventory.InventorySnapshot WHERE ScanRunId=@ScanRunId) n
+   ON n.Category=p.Category AND n.EntityKey=p.EntityKey
+  WHERE EXISTS (SELECT 1 FROM SafeCategories c WHERE c.Category=COALESCE(n.Category,p.Category))
    AND (p.InventorySnapshotId IS NULL OR n.InventorySnapshotId IS NULL
      OR HASHBYTES('SHA2_256',CONVERT(varbinary(max),p.DataJson))
       <> HASHBYTES('SHA2_256',CONVERT(varbinary(max),n.DataJson)))
