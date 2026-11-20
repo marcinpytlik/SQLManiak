@@ -1,11 +1,11 @@
 {
   "repository": {
-    "server": "localhost,15433",
+    "server": "127.0.0.1,15433",
     "database": "DBACentralRepositoryv4"
   },
   "sourceServers": [
     {
-      "name": "localhost,15434",
+      "name": "127.0.0.1,15434",
       "environment": "LAB",
       "architecture": "STANDALONE"
     }
