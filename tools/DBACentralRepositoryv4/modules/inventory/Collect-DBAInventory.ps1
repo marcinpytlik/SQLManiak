@@ -226,6 +226,9 @@ foreach($server in $cfg.sourceServers) {
  Write-Host "Inventory: $serverName | Persist=$([bool]$Persist)"
  try {
   $src=Open-Db $serverName 'master' $SourceCredential
+  $haState=Invoke-DbTable $src "SELECT CONVERT(int,SERVERPROPERTY('IsClustered')) AS IsClustered,CONVERT(int,SERVERPROPERTY('IsHadrEnabled')) AS IsHadrEnabled;"
+  $isFci=([int]$haState.Rows[0]['IsClustered'] -eq 1)
+  $isAg=([int]$haState.Rows[0]['IsHadrEnabled'] -eq 1)
   if($Persist) {
    $repo=Open-Db ([string]$cfg.repository.server) ([string]$cfg.repository.database) $RepositoryCredential
    $envCode=[string]$server.environment
@@ -242,7 +245,7 @@ IF @id IS NULL BEGIN
  SET @id=SCOPE_IDENTITY();
 END;
 INSERT inventory.ScanRun(InstanceId,ScanType,CollectorVersion)
-VALUES(@id,'FULL','4.0.0-phase1');
+VALUES(@id,'FULL','4.1.0-extended');
 SELECT CONVERT(bigint,SCOPE_IDENTITY());
 COMMIT;
 '@ -SqlParameters @{name=$serverName;env=$envCode;arch=$arch} -Scalar)
