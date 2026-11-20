@@ -1,0 +1,59 @@
+# Inventory v4 — Etap 2: obiekty, HA i wykrywanie zmian
+
+## Instalacja
+
+Na istniejącym LAB wystarczy wykonać:
+
+```powershell
+git pull --ff-only
+cd tools/DBACentralRepositoryv4
+./docker/Initialize-Repository.ps1
+./docker/Test-Inventory.ps1
+./docker/Test-Inventory.ps1 -Persist
+./docker/Test-Inventory-Changes.ps1
+```
+
+Instalator wykona `sql/04_Extended_Inventory_And_Diff.sql` po poprzednich czterech skryptach. Nie nadpisuje danych istniejących snapshotów.
+
+## Zakres kolekcji
+
+- **DB**: obiekty użytkownika (tabele/widoki/procedury/funkcje/triggery), schematy, kolumny, FK, indeksy i ich kolumny, partycje, statystyki i ich kolumny, funkcje/schematy partycjonowania.
+- **Instance**: ustawienia `sys.configurations`, tempdb, linked servers (bez provider string), metadane credentials (bez sekretów), trace flags, usługi, wolumeny.
+- **HA**: FCI — węzły i właściciel z `sys.dm_os_cluster_nodes` (tylko jeśli IsClustered=1); AG — repliki i bazy z DMV (tylko jeśli IsHadrEnabled=1).
+- **Security**: istniejące odczyty ról i uprawnień serwerowych/bazodanowych.
+
+Kolektor **nie wykonuje** TABLE SCAN, `FULLSCAN`, `UPDATE STATISTICS`, `DBCC CHECKDB` ani restartów/failoverów. Odczytuje metadane katalogowe; `sys.partitions.rows` to oszacowanie liczby wierszy, nie pomiar `COUNT(*)`.
+
+## Wykrywanie zmian
+
+`inventory.ScanCategory` rejestruje także kategorie z zerową liczbą obiektów i status ich kompletności. Procedura `inventory.usp_CompareCompletedScans` porównuje tylko dwa pełne skany tej samej instancji, i tylko kategorie poprawnie zakończone w obu przebiegach.
+
+Zmiany zapisuje `inventory.ChangeEvent`:
+- ADDED — nowy obiekt / wpis katalogowy,
+- REMOVED — usunięty,
+- MODIFIED — zmienione metadane.
+
+Dane historyczne z poprzedniej wersji kolektora nie mają `ScanCategory`, dlatego pierwszy skan po aktualizacji staje się nowym punktem odniesienia. Dopiero następny skan generuje miarodajne zdarzenia.
+
+```sql
+SELECT TOP(100) *
+FROM report.vInventoryChanges
+ORDER BY DetectedUtc DESC,ChangeEventId DESC;
+
+SELECT TOP(10) * FROM inventory.ScanRun ORDER BY ScanRunId DESC;
+SELECT * FROM inventory.ScanCategory WHERE ScanRunId=(SELECT MAX(ScanRunId) FROM inventory.ScanRun);
+```
+
+## Uprawnienia i bezpieczeństwo
+
+Do części DMV wymagane są uprawnienia VIEW SERVER STATE / VIEW SERVER PERFORMANCE STATE (zależnie od wersji) i prawa w bazach. Gdy kategoria się nie powiedzie, ScanRun otrzymuje PARTIAL, a `ScanFinding` rejestruje błąd. Na produkcji nie używać SA.
+
+Zmiany SQL Agent, metadane logowania i role to informacje wrażliwe. Repozytorium należy zabezpieczyć osobną rolą tylko do odczytu raportów, odrębnym kontem zapisu i kontrolą retencji.
+
+## Ograniczenia / kolejne prace
+
+1. Brak testów na FCI/AG w Docker standalone — to ścieżka do testów na Windows LAB.
+2. Pojedyncze INSERT snapshotów w PowerShell wymagają przejścia na SqlBulkCopy przed skalą wielkich instancji.
+3. Historia zdarzeń to porównanie dwóch kolejnych kompletnych skanów; nie jest to audyt DDL w czasie rzeczywistym.
+4. Klucze obiektów oparte o object_id mogą nie wykryć zmiany nazwy jako RENAME; zalecany jest dodatkowy raport nazw.
+5. Zbierane metadane zależą od widoczności katalogów dla użytkownika kolektora.
