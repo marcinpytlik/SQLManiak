@@ -99,26 +99,53 @@ function Convert-Row {
  return $h
 }
 function Save-Category {
- param([string]$Category,[System.Data.DataTable]$Table,[string[]]$Keys,[long]$ScanRunId,[System.Data.SqlClient.SqlConnection]$Repository)
+ param(
+  [string]$Category,[System.Data.DataTable]$Table,[string[]]$Keys,
+  [long]$ScanRunId,[System.Data.SqlClient.SqlConnection]$Repository
+ )
  $saved=0
  if($null -eq $Table) { return 0 }
- foreach($row in $Table.Rows) {
-  $item=Convert-Row $row
-  $parts=@()
-  foreach($key in $Keys) { $parts += [string]$item[$key] }
-  $entityKey=$parts -join '|'
-  if([string]::IsNullOrWhiteSpace($entityKey)) { throw "Empty entity key: $Category" }
-  if($entityKey.Length -gt 450) { throw "Entity key too long: $Category" }
-  if($Persist) {
-   $json=ConvertTo-Json -InputObject $item -Depth 8 -Compress
-   [void](Invoke-DbCommand -Connection $Repository -Sql @'
-INSERT inventory.InventorySnapshot(ScanRunId,Category,EntityKey,DataJson)
-VALUES (@id,@category,@entity,@json);
-'@ -SqlParameters @{id=$ScanRunId;category=$Category;entity=$entityKey;json=$json})
+ $batch=$null
+ $bulk=$null
+ if($Persist) {
+  if($null -eq $Repository -or $Repository.State -ne 'Open') { throw 'Repository connection is not open' }
+  $batch=[System.Data.DataTable]::new()
+  [void]$batch.Columns.Add('ScanRunId',[long])
+  [void]$batch.Columns.Add('Category',[string])
+  [void]$batch.Columns.Add('EntityKey',[string])
+  [void]$batch.Columns.Add('DataJson',[string])
+  $bulk=[System.Data.SqlClient.SqlBulkCopy]::new($Repository)
+  $bulk.DestinationTableName='inventory.InventorySnapshot'
+  $bulk.BatchSize=500
+  $bulk.BulkCopyTimeout=[Math]::Max(120,$timeout)
+  foreach($name in @('ScanRunId','Category','EntityKey','DataJson')) {
+   [void]$bulk.ColumnMappings.Add($name,$name)
   }
-  $saved++
  }
- return $saved
+ try {
+  foreach($row in $Table.Rows) {
+   $item=Convert-Row $row
+   $parts=@()
+   foreach($key in $Keys) { $parts += [string]$item[$key] }
+   $entityKey=$parts -join '|'
+   if([string]::IsNullOrWhiteSpace($entityKey)) { throw "Empty entity key: $Category" }
+   if($entityKey.Length -gt 450) { throw "Entity key too long: $Category" }
+   if($Persist) {
+    $json=ConvertTo-Json -InputObject $item -Depth 8 -Compress
+    [void]$batch.Rows.Add([long]$ScanRunId,[string]$Category,[string]$entityKey,[string]$json)
+    if($batch.Rows.Count -ge 500) {
+     $bulk.WriteToServer($batch)
+     $batch.Clear()
+    }
+   }
+   $saved++
+  }
+  if($Persist -and $batch.Rows.Count -gt 0) { $bulk.WriteToServer($batch) }
+  return $saved
+ } finally {
+  if($null -ne $bulk) { $bulk.Dispose() }
+  if($null -ne $batch) { $batch.Dispose() }
+ }
 }
 $queries=[ordered]@{
  INSTANCE=@"
