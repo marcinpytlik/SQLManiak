@@ -30,7 +30,7 @@ FROM sys.master_files mf
 CROSS APPLY sys.dm_os_volume_stats(mf.database_id,mf.file_id) vs;
 '@
  $q['HA_CLUSTER']=@'
-SELECT CAST(SERVERPROPERTY('MachineName') AS nvarchar(128)) AS ClusterName,
+SELECT CAST(SERVERPROPERTY('MachineName') AS nvarchar(128)) AS SqlVirtualNetworkName,
 NodeName,status_description AS NodeStatus,is_current_owner AS IsCurrentOwner
 FROM sys.dm_os_cluster_nodes;
 '@
@@ -168,7 +168,7 @@ function Get-ExtendedKeys {
  LINKED_SERVER=@('server_id')
  SERVICE=@('servicename')
  VOLUME=@('volume_mount_point')
- HA_CLUSTER=@('cluster_name')
+ HA_CLUSTER=@('SqlVirtualNetworkName','NodeName')
  HA_REPLICA=@('AvailabilityGroupName','replica_server_name')
  HA_DATABASE=@('AvailabilityGroupName','database_name','replica_server_name')
  CREDENTIAL_METADATA=@('credential_id')
