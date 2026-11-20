@@ -379,7 +379,7 @@ COMMIT;
     $status=if($categoryErrors.ContainsKey($category)){'PARTIAL'}else{'COMPLETE'}
     $count=if($categoryCounts.ContainsKey($category)){[long]$categoryCounts[$category]}else{0L}
     [void](Invoke-DbCommand -Connection $repo -Sql @'
-INSERT inventory.ScanCategory(ScanRunId,Category,CategoryStatus,RowCount)
+INSERT inventory.ScanCategory(ScanRunId,Category,CategoryStatus,SnapshotRows)
 VALUES(@id,@cat,@status,@rows);
 '@ -SqlParameters @{id=$scanId;cat=$category;status=$status;rows=$count})
    }
