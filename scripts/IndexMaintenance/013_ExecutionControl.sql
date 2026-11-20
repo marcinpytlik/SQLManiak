@@ -21,10 +21,18 @@ BEGIN
  SELECT @clusterId=i.ClusterId,@instanceId=i.InstanceId
  FROM im.MaintenanceQueue q WITH(UPDLOCK,HOLDLOCK)
  JOIN im.ManagedDatabase d ON d.DatabaseId=q.DatabaseId
+ JOIN im.IndexAssessment a ON a.AssessmentId=q.AssessmentId
+ JOIN im.AuditRun ar ON ar.AuditRunId=a.AuditRunId AND ar.Status='Completed'
  JOIN im.ManagedInstance i ON i.InstanceId=d.InstanceId
  JOIN im.ConnectionEndpoint e ON e.InstanceId=i.InstanceId AND e.IsPrimary=1 AND e.IsEnabled=1
  WHERE q.QueueId=@QueueId AND q.Status='Approved'
-   AND q.ApprovedAtUtc IS NOT NULL AND i.IsEnabled=1 AND d.IsEnabled=1;
+   AND q.ApprovedAtUtc IS NOT NULL AND i.IsEnabled=1 AND d.IsEnabled=1
+   AND ar.CompletedAtUtc >= DATEADD(day,-7,SYSUTCDATETIME())
+   AND NOT EXISTS(
+      SELECT 1 FROM im.AuditRun newer
+      WHERE newer.DatabaseId=d.DatabaseId AND newer.Status='Completed'
+        AND newer.AuditRunId>ar.AuditRunId
+   );
  IF @instanceId IS NULL THROW 51111,'Queue item is not approved or target is disabled',1;
  IF EXISTS
  (
