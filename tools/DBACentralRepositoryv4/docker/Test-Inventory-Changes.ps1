@@ -1,8 +1,9 @@
 #requires -Version 7.0
 <#
 .SYNOPSIS
- Runs two complete Inventory scans in Docker LAB, changes schema between them
- and verifies that v4 recorded the change. Creates LAB-only test objects.
+ Runs two complete Inventory scans in Docker LAB, creates a permanent
+ table in tempdb between them and checks that v4 records ADDED.
+ tempdb is reset by SQL Server restart; never run against production.
 #>
 [CmdletBinding()]
 param()
@@ -41,13 +42,10 @@ SELECT TOP(1) ScanRunId,ScanStatus FROM inventory.ScanRun ORDER BY ScanRunId DES
 Write-Host 'Running initial full scan ...'
 $before=Invoke-CompleteScan
 Write-Host "Baseline ScanRunId=$before"
-[void](Invoke-LabQuery '127.0.0.1,15434' $values['TARGET_SA_PASSWORD'] 'master' @'
-IF DB_ID(N'DBACentralV4ChangeLab') IS NULL CREATE DATABASE [DBACentralV4ChangeLab];
-'@)
 $tableName='InventoryProbe_'+(Get-Date -Format 'yyyyMMddHHmmssfff')
 $query='CREATE TABLE dbo.'+'['+$tableName+']'+' ([Id] int NOT NULL PRIMARY KEY, [Note] nvarchar(50) NULL);'
-[void](Invoke-LabQuery '127.0.0.1,15434' $values['TARGET_SA_PASSWORD'] 'DBACentralV4ChangeLab' $query)
-Write-Host "Created LAB table: dbo.$tableName"
+[void](Invoke-LabQuery '127.0.0.1,15434' $values['TARGET_SA_PASSWORD'] 'tempdb' $query)
+Write-Host "Created LAB table: tempdb.dbo.$tableName"
 Write-Host 'Running second full scan ...'
 $after=Invoke-CompleteScan
 Write-Host "Second ScanRunId=$after"
