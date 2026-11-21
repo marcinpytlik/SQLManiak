@@ -74,3 +74,15 @@ FROM inventory.ChangeEvent
 WHERE Category='VOLUME' AND ScanRunId IN (3,4)
 ORDER BY ScanRunId,EntityKey;
 ```
+
+## Walidacja MODIFIED / REMOVED w Docker LAB
+
+Uruchom z katalogu `tools/DBACentralRepositoryv4`:
+
+```powershell
+./docker/Test-Inventory-ModifiedRemoved.ps1
+```
+
+Skrypt **nie modyfikuje istniejącej tabeli testowej**. Tworzy nową tabelę `tempdb.dbo.InventoryV4Probe_*`, wykonuje skan bazowy, zmienia kolumnę `Note` z `nvarchar(50)` na `nvarchar(100)`, weryfikuje `COLUMN/MODIFIED`, usuwa własną tabelę i weryfikuje `OBJECT/REMOVED` oraz dwa `COLUMN/REMOVED`. Na końcu usuwa tabelę testową również w razie wyjątku. Jest ograniczony do `127.0.0.1:15433/15434`, środowiska `LAB` i instancji o nazwie `sqlmaniak-v4-target`. Wynik końcowy: `PASS: MODIFIED + REMOVED verified`.
+
+Historyczne pomiary `VOLUME` ze skanów 3 i 4 różniły się wartością `available_bytes`, bez zmian `total_bytes`; po poprawce skan 6 zgłosił `changes=0` względem skanu 5.
