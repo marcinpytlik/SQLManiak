@@ -80,3 +80,7 @@ Po wykonaniu pięciu skryptów SQL z `sql/` (w tym `04_Extended_Inventory_And_Di
 ## Inventory v4.2 — Production Readiness (LAB verification pending)
 
 New tooling: [Test-InventoryReadiness.ps1](modules/inventory/Test-InventoryReadiness.ps1) (read-only Windows/FCI permissions and metadata preflight), [Measure-Inventory.ps1](modules/inventory/Measure-Inventory.ps1) (read-only performance timing), and [05_Retention_Preview.sql](sql/05_Retention_Preview.sql) (candidate-count preview, **no deletion**). Read the [production readiness runbook](modules/inventory/PRODUCTION_READINESS.md). No production onboarding or automatic patching in this phase.
+
+## FCI owner monitoring — observation only
+
+A new repository-only `06_FCI_Owner_Observation.sql` and collector integration save historical FCI node/owner observations; **no failover, no cluster resource restart, no role movement**. See [FCI_MONITORING_ONLY.md](modules/inventory/FCI_MONITORING_ONLY.md). Windows FCI source-to-repository integration remains unverified; use read-only readiness tests first.
