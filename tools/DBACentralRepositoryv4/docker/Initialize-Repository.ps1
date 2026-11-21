@@ -43,7 +43,7 @@ if(-not $SkipConnectivityCheck) {
   Write-Host "SQL reachable: $($s.name)"
  }
 }
-foreach($file in @('00_Bootstrap.sql','01_Inventory_Core.sql','02_Patch_Planner.sql','03_Reports.sql','04_Extended_Inventory_And_Diff.sql')) {
+foreach($file in @('00_Bootstrap.sql','01_Inventory_Core.sql','02_Patch_Planner.sql','03_Reports.sql','04_Extended_Inventory_And_Diff.sql','05_Retention_Preview.sql')) {
  $path=Join-Path $root "sql/$file"
  $db=if($file -eq '00_Bootstrap.sql') {'master'} else {'DBACentralRepositoryv4'}
  Write-Host "Installing $file ..."
