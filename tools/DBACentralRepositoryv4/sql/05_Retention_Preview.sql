@@ -21,7 +21,8 @@ BEGIN
   (SELECT COUNT_BIG(*) FROM inventory.InventorySnapshot s JOIN Expired e ON s.ScanRunId=e.ScanRunId) AS CandidateSnapshots,
   (SELECT COUNT_BIG(*) FROM inventory.ScanCategory c JOIN Expired e ON c.ScanRunId=e.ScanRunId) AS CandidateCategories,
   (SELECT COUNT_BIG(*) FROM inventory.ScanFinding f JOIN Expired e ON f.ScanRunId=e.ScanRunId) AS CandidateFindings,
-  (SELECT COUNT_BIG(*) FROM inventory.ChangeEvent c JOIN Expired e ON c.ScanRunId=e.ScanRunId OR c.PreviousScanRunId=e.ScanRunId) AS CandidateChangeEvents
+  (SELECT COUNT_BIG(*) FROM inventory.ChangeEvent c WHERE EXISTS
+    (SELECT 1 FROM Expired e WHERE e.ScanRunId=c.ScanRunId OR e.ScanRunId=c.PreviousScanRunId)) AS CandidateChangeEvents
  FROM Expired;
  SELECT TOP(100) s.ScanRunId,i.ServerInstance,s.StartedUtc,s.ScanStatus
  FROM inventory.ScanRun s
