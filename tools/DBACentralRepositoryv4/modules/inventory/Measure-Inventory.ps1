@@ -23,10 +23,11 @@ for($i=1; $i -le $Repetitions; $i++) {
  $stopwatch=[System.Diagnostics.Stopwatch]::StartNew()
  $arguments=@{ConfigPath=$configFile}
  if($null -ne $SourceCredential) { $arguments['SourceCredential']=$SourceCredential }
+ $global:LASTEXITCODE=0
  $messages=@(& $collector @arguments 2>&1)
  $stopwatch.Stop()
  $failed=@($messages | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] })
- $summaries=@($messages | Where-Object { [string]$_ -match '^Result: ' })
+ $collectorFailed=($global:LASTEXITCODE -ne 0)
  # Collector writes ordinary progress to host. Capture duration independently;
  # do not treat its global LASTEXITCODE as a reliable per-run indicator.
  $results.Add([pscustomobject]@{
@@ -37,7 +38,7 @@ for($i=1; $i -le $Repetitions; $i++) {
   CompletedUtc=[datetime]::UtcNow.ToString('o')
  })
  Write-Host "Iteration $i/$Repetitions : $([math]::Round($stopwatch.Elapsed.TotalSeconds,2)) s, PowerShell errors=$($failed.Count)"
- if($failed.Count -gt 0) { throw "Read-only benchmark interrupted by PowerShell errors on iteration $i." }
+ if($failed.Count -gt 0 -or $collectorFailed) { throw "Read-only benchmark interrupted by PowerShell errors on iteration $i." }
 }
 $results | Format-Table -AutoSize
 if($CsvPath) {
