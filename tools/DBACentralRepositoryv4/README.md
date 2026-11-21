@@ -76,3 +76,7 @@ Folder: `tools/DBACentralRepositoryv4/`; baza: `DBACentralRepositoryv4`; schemat
 ## Inventory v4.1 — rozszerzony skan
 
 Po wykonaniu pięciu skryptów SQL z `sql/` (w tym `04_Extended_Inventory_And_Diff.sql`) uruchom `docker/Test-Inventory.ps1 -Persist`. Po drugim kompletnym skanie z pokryciem kategorii powstają zdarzenia w `inventory.ChangeEvent`. Instrukcja testów: [EXTENDED_INVENTORY.md](modules/inventory/EXTENDED_INVENTORY.md).
+
+## Inventory v4.2 — Production Readiness (LAB verification pending)
+
+New tooling: [Test-InventoryReadiness.ps1](modules/inventory/Test-InventoryReadiness.ps1) (read-only Windows/FCI permissions and metadata preflight), [Measure-Inventory.ps1](modules/inventory/Measure-Inventory.ps1) (read-only performance timing), and [05_Retention_Preview.sql](sql/05_Retention_Preview.sql) (candidate-count preview, **no deletion**). Read the [production readiness runbook](modules/inventory/PRODUCTION_READINESS.md). No production onboarding or automatic patching in this phase.
