@@ -297,6 +297,12 @@ COMMIT;
    }
   }
   foreach($category in $extendedServerQueries.Keys) {
+   if(($category -eq 'HA_CLUSTER' -and -not $isFci) -or
+      ($category -in @('HA_REPLICA','HA_DATABASE') -and -not $isAg)) {
+    $categoryCounts[$category]=0
+    Write-Host "  $category : 0 (feature disabled)"
+    continue
+   }
    try {
     $table=Invoke-DbTable $src $extendedServerQueries[$category]
     $count=Save-Category $category $table $extendedKeys[$category] $scanId $repo
@@ -314,7 +320,7 @@ COMMIT;
     }
    }
   }
-  if($true) {
+  if($dbSecurity -or $extendedDbQueries.Count -gt 0) {
    $dbs=Invoke-DbTable $src 'SELECT name FROM sys.databases WHERE state=0 AND HAS_DBACCESS(name)=1 ORDER BY database_id;'
    foreach($db in $dbs.Rows) {
     $dbName=[string]$db['name']
