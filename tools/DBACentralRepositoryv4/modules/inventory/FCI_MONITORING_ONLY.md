@@ -53,3 +53,37 @@ Expected from the last observation: `procjon1` current owner, `procjon2` other n
 The next integration test will use *read-only access* to FCI and a **separate non-production repository**, with explicitly approved credentials. No central production writes should be attempted before a service-account least-privilege review, retention plan and HA data verification.
 
 Avoid reusing the Docker SA account for a production source. The collector supports separate SourceCredential and RepositoryCredential parameters.
+
+## One-off source-to-LAB integration (explicit, limited)
+
+After Docker LAB schema verification, from PowerShell 7 on a workstation with approved integrated Windows access to `SQL32,1530`:
+
+```powershell
+.\modules\inventory\Test-FciOwnerToLab.ps1 -PreviewOnly
+```
+
+Preview reads source identity and `sys.dm_os_cluster_nodes` only; no repository connection or write.
+
+When preview matches the intended `SQL32\SQLINS32` and two FCI nodes:
+
+```powershell
+.\modules\inventory\Test-FciOwnerToLab.ps1
+```
+
+The second command **only writes into the local Docker SQLManiak repository**, never into source/WSFC. It inserts a DELTA scan for the owner observation and records node/current-owner state. Multiple runs produce new owner observations. No failover occurs.
+
+Verify in Docker repository:
+
+```sql
+SELECT TOP (10) ScanRunId,ServerInstance,ObservedUtc,PreviousOwner,CurrentOwner,IsChanged
+FROM report.vFciOwnerHistory ORDER BY ScanRunId DESC;
+
+SELECT i.ServerInstance,h.HostName,ih.IsCurrentOwner,ih.LastObservedUtc
+FROM inventory.InstanceHost ih
+JOIN inventory.Instance i ON i.InstanceId=ih.InstanceId
+JOIN inventory.Host h ON h.HostId=ih.HostId
+WHERE i.ServerInstance=N'SQL32\SQLINS32'
+ORDER BY h.HostName;
+```
+
+An initial observation has `IsChanged=0` with no previous owner; a second observation with the same owner must also have `IsChanged=0`. Owner changes are only detected if an authorized administrator changes the FCI state independently and later monitoring observes it.
