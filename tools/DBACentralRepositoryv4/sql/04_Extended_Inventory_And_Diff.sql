@@ -44,7 +44,7 @@ BEGIN
  CREATE INDEX IX_v4_Change_Scan ON inventory.ChangeEvent(ScanRunId,Category,ChangeType);
 END;
 GO
-/* Only two COMPLETE scans and the categories explicitly marked COMPLETE in both.
+/* Compare VOLUME without volatile available_bytes; retain original JSON in snapshots and events.\n   Only two COMPLETE scans and the categories explicitly marked COMPLETE in both.
    This prevents false REMOVED findings after privilege errors or skipped collectors. */
 CREATE OR ALTER PROCEDURE inventory.usp_CompareCompletedScans
  @ScanRunId bigint
@@ -93,8 +93,14 @@ BEGIN
    ON n.Category=p.Category AND n.EntityKey=p.EntityKey
   WHERE EXISTS (SELECT 1 FROM SafeCategories c WHERE c.Category=COALESCE(n.Category,p.Category))
    AND (p.InventorySnapshotId IS NULL OR n.InventorySnapshotId IS NULL
-     OR HASHBYTES('SHA2_256',CONVERT(varbinary(max),p.DataJson))
-      <> HASHBYTES('SHA2_256',CONVERT(varbinary(max),n.DataJson)))
+     OR HASHBYTES('SHA2_256',CONVERT(varbinary(max),
+          CASE WHEN COALESCE(n.Category,p.Category)='VOLUME'
+               THEN JSON_MODIFY(p.DataJson,'$.available_bytes',NULL)
+               ELSE p.DataJson END))
+      <> HASHBYTES('SHA2_256',CONVERT(varbinary(max),
+          CASE WHEN COALESCE(n.Category,p.Category)='VOLUME'
+               THEN JSON_MODIFY(n.DataJson,'$.available_bytes',NULL)
+               ELSE n.DataJson END)))
  )
  INSERT inventory.ChangeEvent(PreviousScanRunId,ScanRunId,Category,EntityKey,ChangeType,OldJson,NewJson)
  SELECT @PreviousScanRunId,@ScanRunId,Category,EntityKey,ChangeType,OldJson,NewJson FROM Diff;
