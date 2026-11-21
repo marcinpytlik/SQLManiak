@@ -248,7 +248,7 @@ $extendedDbQueries=Get-ExtendedDatabaseQueries
 $extendedKeys=Get-ExtendedKeys
 foreach($server in $cfg.sourceServers) {
  $src=$null; $repo=$null; $scanId=0L; $errors=0; $rows=0
- $categoryCounts=@{}; $categoryErrors=@{}
+ $categoryCounts=@{}; $categoryErrors=@{}; $fciNodes=$null
  $serverName=[string]$server.name
  Write-Host "Inventory: $serverName | Persist=$([bool]$Persist)"
  try {
@@ -272,7 +272,7 @@ IF @id IS NULL BEGIN
  SET @id=SCOPE_IDENTITY();
 END;
 INSERT inventory.ScanRun(InstanceId,ScanType,CollectorVersion)
-VALUES(@id,'FULL','4.1.0-extended');
+VALUES(@id,'FULL','4.2.0-fci-observation');
 SELECT CONVERT(bigint,SCOPE_IDENTITY());
 COMMIT;
 '@ -SqlParameters @{name=$serverName;env=$envCode;arch=$arch} -Scalar)
@@ -308,6 +308,7 @@ COMMIT;
     $count=Save-Category $category $table $extendedKeys[$category] $scanId $repo
     $rows+=$count
     $categoryCounts[$category]=$count
+    if($category -eq 'HA_CLUSTER') { $fciNodes=$table }
     Write-Host "  $category : $count"
    } catch {
     $errors++
@@ -318,6 +319,32 @@ COMMIT;
       id=$scanId;cat=$category;msg=([string]$_.Exception.Message).Substring(0,[Math]::Min(3900,([string]$_.Exception.Message).Length))
      })
     }
+   }
+  }
+  # Repository-only FCI ownership observation; NEVER initiate failover or cluster actions.
+  if($Persist -and $isFci -and $null -ne $fciNodes -and
+     -not $categoryErrors.ContainsKey('HA_CLUSTER')) {
+   try {
+    $ownerCount=@($fciNodes.Rows | Where-Object { $_['IsCurrentOwner'] -eq $true }).Count
+    if($ownerCount -ne 1) { throw "Expected exactly one FCI current owner; found $ownerCount" }
+    $nodes=[System.Collections.Generic.List[object]]::new()
+    foreach($node in $fciNodes.Rows) {
+     $nodes.Add([pscustomobject]@{
+      NodeName=[string]$node['NodeName']
+      NodeStatus=[string]$node['NodeStatus']
+      IsCurrentOwner=[bool]$node['IsCurrentOwner']
+     })
+    }
+    $nodesJson=ConvertTo-Json -InputObject @($nodes.ToArray()) -Depth 4 -Compress
+    [void](Invoke-DbCommand -Connection $repo -Sql 'EXEC inventory.usp_RecordFciObservation @ScanRunId=@id,@NodesJson=@json;' -SqlParameters @{id=$scanId;json=$nodesJson})
+    Write-Host "  FCI ownership: recorded $($nodes.Count) node(s) in central repository"
+   } catch {
+    $errors++
+    $categoryErrors['HA_CLUSTER']=$true
+    Write-Warning "$serverName / FCI owner persistence : $($_.Exception.Message)"
+    [void](Invoke-DbCommand -Connection $repo -Sql 'INSERT inventory.ScanFinding(ScanRunId,Category,Severity,Message) VALUES(@id,''HA_CLUSTER'',''ERROR'',@msg);' -SqlParameters @{
+     id=$scanId;msg=([string]$_.Exception.Message).Substring(0,[Math]::Min(3900,([string]$_.Exception.Message).Length))
+    })
    }
   }
   if($dbSecurity -or $extendedDbQueries.Count -gt 0) {
