@@ -59,7 +59,7 @@ function Run-Inventory {
 function Get-EventCount {
  param([long]$ScanRunId,[string]$Category,[string]$ChangeType,[string]$TableName,[string]$ColumnName='')
  # TableName and ColumnName are trusted generated identifiers, not user input.
- $needle="%'"+$TableName+"%'"
+ $needle="'%$TableName%'"
  $columnPredicate=if($ColumnName){" AND JSON_VALUE(COALESCE(NewJson,OldJson),'$.ColumnName')=N'$ColumnName'"}else{''}
  $jsonColumn=if($ChangeType -eq 'REMOVED'){'OldJson'}else{'NewJson'}
  $query=@"
