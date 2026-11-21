@@ -57,3 +57,20 @@ Zmiany SQL Agent, metadane logowania i role to informacje wrażliwe. Repozytoriu
 3. Historia zdarzeń to porównanie dwóch kolejnych kompletnych skanów; nie jest to audyt DDL w czasie rzeczywistym.
 4. Klucze obiektów oparte o object_id mogą nie wykryć zmiany nazwy jako RENAME; zalecany jest dodatkowy raport nazw.
 5. Zbierane metadane zależą od widoczności katalogów dla użytkownika kolektora.
+
+## VOLUME: pomiary vs. zmiany konfiguracji
+
+Kolektor nadal zapisuje `available_bytes` w `inventory.InventorySnapshot.DataJson`. Procedura porównania pomija **tylko** `available_bytes` w kategorii VOLUME przy sprawdzaniu `MODIFIED`, ponieważ jest to chwilowy pomiar wolnego miejsca. Inne atrybuty, np. `total_bytes`, `file_system_type` i identyfikator wolumenu, pozostają porównywane. Oryginalne JSON w ChangeEvent nie są modyfikowane.
+
+Poprzednie zdarzenia ChangeEvent pozostają zapisane; aktualizacja procedury nie usuwa istniejącej historii. Przed uznaniem tych wcześniejszych zmian za fałszywe alarmy można porównać pola JSON z obu snapshotów:
+
+```sql
+SELECT ScanRunId, EntityKey,
+       JSON_VALUE(OldJson,'$.available_bytes') AS OldAvailableBytes,
+       JSON_VALUE(NewJson,'$.available_bytes') AS NewAvailableBytes,
+       JSON_VALUE(OldJson,'$.total_bytes') AS OldTotalBytes,
+       JSON_VALUE(NewJson,'$.total_bytes') AS NewTotalBytes
+FROM inventory.ChangeEvent
+WHERE Category='VOLUME' AND ScanRunId IN (3,4)
+ORDER BY ScanRunId,EntityKey;
+```
