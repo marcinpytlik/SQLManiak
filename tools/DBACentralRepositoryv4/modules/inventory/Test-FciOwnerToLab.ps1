@@ -94,7 +94,7 @@ SELECT DB_NAME() AS DatabaseName, @@SERVERNAME AS ServerName,
  foreach($node in $nodes) {
   $records.Add([pscustomobject]@{
    NodeName=[string]$node.NodeName
-   NodeStatus=if($null -eq $node.NodeStatus){$null}else{[string]$node.NodeStatus}
+   NodeStatus=if($null -eq $node.NodeStatus -or $node.NodeStatus -is [DBNull]){$null}else{[string]$node.NodeStatus}
    IsCurrentOwner=([int]$node.IsCurrentOwner -eq 1)
   })
  }
@@ -117,7 +117,7 @@ DECLARE @ExistingArchitecture varchar(20);
 SELECT @ExistingArchitecture=Architecture FROM inventory.Instance WHERE InstanceId=@InstanceId;
 IF @ExistingArchitecture<>'FCI' THROW 54210,'Existing instance is not categorized as FCI.',1;
 INSERT inventory.ScanRun(InstanceId,ScanType,CollectorVersion)
-VALUES(@InstanceId,'FULL','4.2-fci-owner-only');
+VALUES(@InstanceId,'DELTA','4.2-fci-owner-only');
 SELECT CONVERT(bigint,SCOPE_IDENTITY()) AS ScanRunId;
 COMMIT;
 '@
