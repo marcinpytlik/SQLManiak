@@ -25,7 +25,9 @@ param(
     [ValidateRange(1,300)][int]$ConnectionTimeout = 5,
     [ValidateRange(1,1000)][int]$JsonBatchRows = 100,
     [string]$SqlFile = (Join-Path $PSScriptRoot 'SQLManiak_Daily_Health_Check_v1_5_CSV.sql'),
-    [string]$TempDBSqlFile = (Join-Path $PSScriptRoot '02_TempDB_Collect.sql')
+    [string]$TempDBSqlFile = (Join-Path $PSScriptRoot '02_TempDB_Collect.sql'),
+    [string]$CapacitySqlFile = (Join-Path $PSScriptRoot '43_CapacityCollect.sql'),
+    [switch]$SkipCapacity
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -188,6 +190,8 @@ foreach($item in $instances) {
             QueryTimeout = $QueryTimeout
             ConnectionTimeout = $ConnectionTimeout
             JsonBatchRows = $JsonBatchRows
+            CapacitySqlFile = $CapacitySqlFile
+            SkipCapacity = [bool]$SkipCapacity
             TrustServerCertificate = [bool]$TrustServerCertificate
         }
         if($null -ne $SqlCredentialByServer) {

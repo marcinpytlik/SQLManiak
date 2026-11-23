@@ -638,3 +638,61 @@ $collector=Get-Credential
 ## Grafana Portal MVP
 
 The read-only Grafana portal (Overview, Instances, Alerts and History) is in `dashboards/sqlserver/sqlmaniak-dhc-portal-mvp.json`. Install optional LAB Grafana with `grafana-compose.yaml`, configure `dhc_grafana_reader` via `36_GrafanaPortalReader.sql`, and see [Portal MVP instructions](../../../dashboards/sqlserver/SQLManiak-DHC-Portal-MVP.md). The collector and its 1440-minute due interval are unchanged; 60-minute scheduler setup is a separate task.
+
+
+---
+
+## Capacity extension: transaction log, data files, filegroups and per-instance volume policy (v1.7)
+
+Deployment artifacts:
+- \`42_CapacityRepository.sql\` — append-only typed \`dhc.CapacityFileSample\` and \`dhc.CapacityLogSample\`, administrator-managed \`dhc.VolumeCapacityPolicy\`, current filegroup capacity advisory, retention support.
+- \`43_CapacityCollect.sql\` — **source read-only** file/log measurements: MDF/NDF/LDF size, used data pages (not valid for LDF), free pages, growth settings, MAXSIZE, physical volume stats, log usage and reuse wait. Database-scoped permission errors become explicit \`CAPACITY_ERRORS\`.
+- \`44_CapacityForecast.sql\` — \`dhc.vCapacityForecast\` and \`dhc.vCapacityLogCurrent\`. Forecast uses growth of USED data pages, not MDF allocation.
+- \`45_CapacityChecks.sql\` — read-only repository verification and commented example policies.
+
+The regular modular installer (\`34_Install-DHC-Repository.ps1 -Apply\`) includes scripts 42 and 44 before the least-privilege grants. The standalone all-in-one installer 37 includes the same schema, views, and grants. For an existing repository, run scripts 42 and 44 as a deployment DBA and reapply \`20_RepositoryLeastPrivilege.sql\`; if using Grafana, reapply \`36_GrafanaPortalReader.sql\`. Do not deploy both installation variants unnecessarily.
+
+\`03_Run-DHC-v1_7.ps1\` and \`06_Run-DHC-MonitoredServers.ps1\` now collect capacity by default. Supply \`-SkipCapacity\` to disable it, or \`-CapacitySqlFile <path>\` for another compatible collector. Capacity uses a transaction savepoint: failures mark a run \`PARTIAL\` and create an alert, retaining prior DHC results. The existing original **external** \`SQLManiak_Daily_Health_Check_v1_5_CSV.sql\` remains required beside the PowerShell collector or via \`-SqlFile\`; it is deliberately not committed to this repository. The collector continues enforcing \`@SaveHistory=0\` on that original file.
+
+### Configure each instance's storage policy in the central repository
+
+Policies are keyed by the EXACT \`dhc.Run.ServerInstance\` connection endpoint and the EXACT \`VolumeMountPoint\` reported by \`sys.dm_os_volume_stats\` (usually \`G:\\\`, not \`G:\`). For FCI, use the stable virtual network/instance name, never the physical WSFC node. There are no default policies for unknown servers.
+
+The following is an illustration **only**; replace endpoint and volume strings with results from \`45_CapacityChecks.sql\` before executing:
+
+\`\`\`sql
+USE SQLManiakHealthHistory;
+-- Example FCI_A: G fixed, P/R potentially extendable to 6 TiB (6144 GiB).
+INSERT dhc.VolumeCapacityPolicy
+ (ServerInstance,VolumeMountPoint,CanExtend,MaxVolumeGB,SafetyReserveGB,Notes)
+VALUES
+ (N'FCI_A',N'G:\',0,NULL,150,N'Cannot extend storage'),
+ (N'FCI_A',N'P:\',1,6144,150,N'6 TiB storage cap'),
+ (N'FCI_A',N'R:\',1,6144,150,N'6 TiB storage cap');
+\`\`\`
+
+Maintain these rows as a DBA; the \`dhc_collector\` role has SELECT only on policy, not INSERT/UPDATE/DELETE. Before applying any extension check the physical LUN, mount points on all FCI nodes, maximum capacity and competing consumers. If a policy is absent, filegroup capacity is \`INSUFFICIENT DATA\` (fail-closed); it must not be presented as sufficient. Free volume bytes are deduplicated only **inside one filegroup**. Multiple filegroups and databases sharing a volume may compete for the same space. The estimate is not a reservation of physical storage.
+
+### Reports
+
+\`\`\`sql
+USE SQLManiakHealthHistory;
+SELECT * FROM dhc.vCapacityFilegroupCurrent
+ ORDER BY Assessment,EffectiveHeadroomGB;
+SELECT * FROM dhc.vCapacityLogCurrent
+ ORDER BY UsedLogPct DESC;
+SELECT * FROM dhc.vCapacityForecast
+ ORDER BY DaysToFull;
+\`\`\`
+
+\`vCapacityFilegroupCurrent\` separates available **current** headroom from possible **future** volume extension. Recommendation labels include \`INSUFFICIENT DATA\`, \`CAPACITY SUFFICIENT\`, \`EXTEND EXISTING FILE\`, \`INCREASE MAXSIZE / CHECK STORAGE\`, \`EXTEND VOLUME\`, and \`ADD FILE RECOMMENDED - VERIFY STORAGE\`. These are diagnostic suggestions, never executable operations.
+
+Forecast is linear and needs **at least five COMPLETE measurements over at least seven elapsed days**. Before that it returns \`INSUFFICIENT HISTORY\`; negative or zero net growth does not produce a finite exhaustion date. Storage extension capacity is deliberately EXCLUDED from current effective headroom and the forecast. Planned schema changes, deletions, switch operations, restore/reseed, and shrink can invalidate a historical rate. Inspect those events before treating any 30/60/90-day prediction as a deadline.
+
+### Safety and deployment validation
+
+- Source: read-only metadata/DMV queries and local \`#temp\` tables; no \`ALTER DATABASE\`, \`ADD FILE\`, \`SHRINK\`, or backup commands.
+- Repository: inserts snapshots and alerts and updates run status; deployment scripts require a DBA. Volume policies are changed only by explicit DBA commands.
+- SQL Server 2022 may require \`VIEW SERVER PERFORMANCE STATE\` for \`sys.dm_os_volume_stats\`, and database metadata/log DMV permissions must be checked using the service collector identity. The existing source permissions audit scripts should be rerun.
+- Use \`45_CapacityChecks.sql\` to verify measurements, missing policies, and forecasts. Validate installation and collection first in Docker LAB and then on a staging SQL instance before production. There is no claim of an executed SQL Server integration test for this extension.
+- The original v1.7 scheduling and RUNNING lock/claim behavior stays unchanged. No scheduler is installed or enabled by this extension.
