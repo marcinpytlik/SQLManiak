@@ -1,0 +1,34 @@
+name: sqlmaniak-v4-lab
+
+services:
+  repository:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    hostname: sqlmaniak-v4-repo
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: ${REPO_SA_PASSWORD:?Set REPO_SA_PASSWORD in docker/.env}
+      MSSQL_AGENT_ENABLED: "true"
+    ports:
+      - "127.0.0.1:15433:1433"
+    volumes:
+      - repo-data:/var/opt/mssql
+    restart: unless-stopped
+
+  target:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    hostname: sqlmaniak-v4-target
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: ${TARGET_SA_PASSWORD:?Set TARGET_SA_PASSWORD in docker/.env}
+      MSSQL_AGENT_ENABLED: "true"
+    ports:
+      - "127.0.0.1:15434:1433"
+    volumes:
+      - target-data:/var/opt/mssql
+    restart: unless-stopped
+
+volumes:
+  repo-data:
+  target-data:
