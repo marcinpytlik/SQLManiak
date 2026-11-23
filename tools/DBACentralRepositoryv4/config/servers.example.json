@@ -1,0 +1,20 @@
+{
+  "repository": {
+    "server": "127.0.0.1,15433",
+    "database": "DBACentralRepositoryv4"
+  },
+  "sourceServers": [
+    {
+      "name": "127.0.0.1,15434",
+      "environment": "LAB",
+      "architecture": "STANDALONE"
+    }
+  ],
+  "options": {
+    "encrypt": true,
+    "trustServerCertificate": true,
+    "commandTimeoutSeconds": 120,
+    "includeSystemDatabases": true,
+    "collectDatabaseSecurity": true
+  }
+}

@@ -100,3 +100,14 @@ pwsh -File ./collector/Invoke-CentralAudit.ps1 -RepositoryServer 'CENTRAL-SQL'
 - Uwierzytelnianie Windows i TLS; `-TrustServerCertificate` wyłącznie w izolowanym laboratorium. Konfiguracja SQL i agent nie przechowują poświadczeń.
 - SQL Server 2022+ (FCI, standalone); AG wymaga dodatkowego rozpoznania roli i uprawnień. Raport obejmuje tylko clustered/nonclustered rowstore, nie pełną inwentaryzację wszystkich indeksów.
 - Tę wersję trzeba przetestować na rzeczywistych instancjach i obciążeniach. Testy SQL zawierają smoke-check i przykłady reguł, nie są jeszcze pełnymi automatycznymi testami integracyjnymi.
+
+
+## v0.2 — od audytu do zatwierdzonej konserwacji (GAŁĄŹ PROJEKTOWA)
+
+Pełna instrukcja i testy: [WORKFLOW-v02.md](WORKFLOW-v02.md).
+
+Nowe skrypty: `011_HistoryAndTrends.sql`, `012_PlanQueue.sql`, `013_ExecutionControl.sql`, `014_HistoryInsights.sql`, `import/Import-IndexHistoryCsv.ps1`, `executor/Invoke-ApprovedMaintenance.ps1`, `tests/Workflow-Regression.sql`.
+
+**Kolejność:** SQL 001–010 (z poprzedniej wersji), następnie 011–013 i raport 014. Najpierw w środowisku testowym. Wykonawca jest domyślnie w trybie DRY RUN i wymaga jawnego zatwierdzenia zadania oraz dwóch przełączników do wykonania. Obecnie **nie przeprowadzono testu SQL/PowerShell na działającym środowisku**. Nie należy aktywować wykonawcy na produkcji przed ukończeniem kryteriów odbioru z runbooka.
+
+Uwaga: historyczne agregaty nie są równoważne danym per-partycja i nie mogą być bezpośrednią podstawą do wykonania `ALTER INDEX`. Aktualne progi są heurystyką pilotażową; wyniki wymagają dodatkowej oceny DBA.
