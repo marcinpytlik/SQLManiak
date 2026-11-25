@@ -711,4 +711,26 @@ History is stored in existing dhc.ResultBatch, with reserved indexes 300–303 a
 
 Single source: pass -LinkedServerProbeAllowlist @('LAB_LINK') explicitly to 03_Run-DHC-v1_7.ps1. Multi-source runner: pass -LinkedServerProbeByInstance @{'SQL01'=@('LAB_LINK')} with exact inventory endpoints. Empty allowlist means no remote connections; -SkipLinkedServer disables the module. Only enabled data access and effective finite connect/query timeouts <=15/30 seconds qualify. No timeout or linked server configuration changes. Driver/provider behavior can exceed these limits; outer QueryTimeout also applies. Never probe non-SQL targets with this template. Tests use collector credentials, not necessarily the affected interactive user. Provider errors may escape TRY/CATCH; module failures mark PARTIAL. 
 
-LAB acceptance: run passive collection with no linked servers; inspect empty batches; create a disposable SQL-to-SQL linked server with finite timeouts and explicit LAB-only credentials; verify PASS and remote identity, then simulate an unreachable target and inspect FAILED or PARTIAL. Test disabled data access and unlimited timeout as SKIPPED. Verify purge dry run and run counts. Windows Kerberos delegation requires a separate domain LAB; Docker cannot establish that behavior. No runtime tests have been performed here.
+LAB acceptance: run passive collection with no linked servers; inspect empty batches; create a disposable SQL-to-SQL linked server with finite timeouts and explicit LAB-only credentials; verify PASS and remote identity, then simulate an unreachable target and inspect FAILED or PARTIAL. Test disabled data access and unlimited timeout as SKIPPED. Verify purge dry run and run counts. Windows Kerberos delegation requires a separate domain LAB; Docker cannot establish that behavior. Runtime results for the original implementation are recorded below; subsequent fixes require regression testing.
+
+### Docker LAB acceptance evidence — 2026-11-25
+
+Operator-reported SQL Server 2022 Linux LAB (repository 15433, source 15434, remote 15435). Clean AllInOne installation completed in 11.542 s; eight capacity/linked-server objects verified. Initial PARTIAL was caused by missing dhc.CapacityFileSample in an older repository; clean deployment resolved it. Capacity persisted 11 file and 4 log samples.
+
+| Scenario | RunId | Collector | Probe | Duration ms | Warnings |
+|---|---|---|---|---:|---:|
+| Baseline | 68773028-4324-4f60-82ee-82399ae30ffe | COMPLETE | PASS | 24 | 9 |
+| Remote stopped | 0f8f7cc4-001f-46ac-a1c9-1e5b1629e6e1 | COMPLETE | FAILED | 7223 | 10 |
+| Remote restored | 9f807cf4-0154-4fa8-b3f4-6e23bdce2ad1 | COMPLETE | PASS | 38 | 9 |
+| Default passive | de3fe311-b9ce-4f77-baf0-05049309e992 | COMPLETE | No probe | — | 9 |
+
+Failure 11001 (TCP Provider: No such host is known) was stored with a WARNING alert; all five linked-server batches survived. Passive collection stored indexes 300–303 only. One baseline critical alert was the stopped SQL Agent. The measured probe duration is not a hard connect-timeout bound. These tests used sa and explicit SQL authentication, not Kerberos or least privilege.
+
+### Follow-up hardening
+
+- Collector preflight checks required writable tables for enabled modules before source queries; missing objects or invisible metadata fail early. This is not a full schema/version/permission audit. Installer separately validates linked-server reporting views.
+- ResultSets remains a compatibility alias for SourceResultSets (main SQL only). StoredResultSets counts logical JSON result sets, including empty sets but excluding extra batches, and rolls back with module savepoints. RowsStored counts JSON source rows, not duplicate typed-table inserts. ModuleErrors returns module failure summaries; dhc.Run.ErrorText is limited to 2000 characters. Individual alerts retain details. A FAILED remote probe is not a module error.
+- ERRORLOG evidence accepts Message or Text column names. Anonymous logon evidence is not attribution. Positive evidence test remains pending.
+- Deploy updated 49_LinkedServerReports.sql on existing repositories. The DBA-only vLinkedServerStateChanges view classifies observed transitions, with SKIPPED breaking continuity; absent/passive runs are not observations. No automatic notification or exact outage duration is implied.
+- PowerShell connection builder examples should use indexer keys, e.g. $builder['Data Source'], $builder['Initial Catalog'], $builder['User ID'], $builder['Connect Timeout']; never print the password-bearing connection string.
+- Regression gate: re-run baseline, stopped/restored remote, passive, missing-table preflight (disposable repository), module exception and counter checks; verify state changes and positive authentication evidence. Test dedicated repository collector with existing grants, source least privilege, retention dry run and disposable deletion, then Windows 2019/2022 Kerberos pilot. Do not merge before review and regression. No new runtime validation of these hardening changes has been performed.
