@@ -4,7 +4,7 @@
 
 Read-only dashboard for **Overview / Instances / Alerts / History** using the existing `SQLManiakHealthHistory` schema. This is **not** a real-time health monitor: source data is collected at `IntervalMinutes=1440`, while Windows scheduler checks due instances every 60 minutes. Dashboard refresh is 1 hour; it does not trigger collection.
 
-Dashboard JSON: `dashboards/sqlserver/sqlmaniak-dhc-portal-mvp.json` (11 panels, MVP-02). SQL reader grants: `tools/SQLManiakDailyHealthCheck/v1.7/36_GrafanaPortalReader.sql`. Optional isolated LAB container: `tools/SQLManiakDailyHealthCheck/v1.7/grafana-compose.yaml`.
+Dashboard JSON: `dashboards/sqlserver/sqlmaniak-dhc-portal-mvp.json` (11 panels, MVP-02). SQL reader grants: `tools/SQLManiakDailyHealthCheck/v1.7/36_GrafanaPortalReader.sql`. Optional isolated LAB container: [archived grafana-compose.yaml](https://github.com/marcinpytlik/SQLManiak/blob/archive/dhc-v1.7-lab-20261125/tools/SQLManiakDailyHealthCheck/v1.7/grafana-compose.yaml).
 
 ## LAB setup
 
@@ -13,7 +13,7 @@ Dashboard JSON: `dashboards/sqlserver/sqlmaniak-dhc-portal-mvp.json` (11 panels,
    `CREATE LOGIN [dhc_grafana_reader] WITH PASSWORD = <PRIVATE_STRONG_SECRET>, CHECK_POLICY=ON, CHECK_EXPIRATION=OFF;`
    The angle-bracket placeholder is *not executable SQL*. Provision the login through a secure UI / secret workflow.
 3. Run `36_GrafanaPortalReader.sql` on Repository as deployment administrator. It does not create a login or reset a password, grants only the six objects required for portal queries and maps the existing login to `dhc_portal_reader`.
-4. For an optional local Grafana, start the separate Compose file from the DHC v1.7 directory:
+4. For an optional local Grafana, use the DHC v1.7 directory from a separate checkout of `archive/dhc-v1.7-lab-20261125` (not the production directory on master), then start the separate Compose file:
    ```powershell
    $env:DHC_GRAFANA_ADMIN_PASSWORD = Read-Host 'LAB Grafana admin password' -AsSecureString |
      ConvertFrom-SecureString -AsPlainText
