@@ -5,7 +5,7 @@
 #>
 [CmdletBinding()]
 param(
- [string]$SqlFile=(Join-Path $PSScriptRoot 'SQLManiak_Daily_Health_Check_v1_5_CSV.sql')
+ [string]$SqlFile=(Join-Path $PSScriptRoot '../03_Collector/SQLManiak_Daily_Health_Check_v1_5_CSV.sql')
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'

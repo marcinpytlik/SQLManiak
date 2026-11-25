@@ -1,5 +1,7 @@
 # SQLManiak DHC v1.7 — SQL Server 2022+ production XE deployment
 
+> Ścieżki poleceń PowerShell w tym dokumencie są względem głównego katalogu v1.7. Zachować strukturę podkatalogów; pełny wykaz plików i katalogów: [README](../README.md). Przed instalacją uruchomić ` .\05_Validation\Test-DHC-Package.ps1 `.
+
 **Status: production pilot candidate (SQL Server 2022+). Docker SQL Server 2022 LAB S10.3–S10.8 passed; this revision suppresses a legacy informational HISTORY notice and requires one follow-up regression run before merging. FCI and production-specific checks are still required.**
 All-in-one SQL installers are T-SQL for SSMS. Scheduled collector runtime remains PowerShell 7.5+.
 Do not install over the existing running collector until approved cutover.
@@ -14,7 +16,7 @@ Do not install over the existing running collector until approved cutover.
 | `40_Validate-DHC-Source-XE-Deployment.sql` | Each monitored instance | Read-only verification as dedicated login. |
 | `03_Run-DHC-v1_7.ps1` | Collector host | Main DHC + TempDB + in-memory rewrite of original v1.5 section 12C to XE. |
 
-**Compatibility**: SQL Server **2022+ only**. SQL Server 2016/2019 are deliberately excluded from installers 38–40; validate separately. `SQLManiak_Daily_Health_Check_v1_5_CSV.sql` is an **external local file** and is deliberately not committed here. The XE runtime rewrite expects the precise v1.5 section markers; it fails explicitly if they change.
+**Compatibility**: SQL Server **2022+ only**. SQL Server 2016/2019 are deliberately excluded from installers 38–40; validate separately. `SQLManiak_Daily_Health_Check_v1_5_CSV.sql` is **included in the v1.7 package** as the audited, unchanged baseline. SHA256: `8978B06A630F24D672EDD78721B1B8A4A84DD6CCC724B9B87DF4DBB847DA67B8`. The local `.gitattributes` disables line-ending normalization for this file. See [SOURCE_SQL_AUDIT.md](SOURCE_SQL_AUDIT.md). The XE runtime rewrite expects the precise v1.5 section markers; it fails explicitly if they change.
 
 ## Confirmed integration test (18 Nov 2026)
 
@@ -52,8 +54,8 @@ Production fresh installs use `STARTUP_STATE = ON`; the existing LAB session had
 
 ## Known limits / gates
 
-- Existing source v1.5 file is not part of repository; source layout compatibility must be verified in pilot.
-- The central collector filters the obsolete v1.5 local-history INFO SUMMARY row, without changing source SQL. Test that `13 SUMMARY` retains all CRITICAL/WARNING rows and that `dhc.Alert` matches; the original `14 COUNTS` remains a source-side count.
+- The included v1.5 baseline must match the documented SHA256; source layout compatibility and runtime behavior must still be verified in the pilot. Check for legacy hc.Sample before collection.
+- The central collector filters the obsolete v1.5 local-history INFO SUMMARY row, without changing source SQL. Test that `16 SUMMARY` retains all CRITICAL/WARNING rows and that `dhc.Alert` matches; the original `17 COUNTS` remains a source-side count.
 - Do not reuse the Docker LAB XEL path on Windows FCI. Keep `@GrantAlterTrace=0` and verify `VIEW ANY DEFINITION` was security-approved.
 - The most recent code change for INFO suppression still requires a collector rerun on the isolated test Repository before the PR is considered fully regression-tested.
 - XE file loss/rollover and service restarts can leave incomplete coverage.

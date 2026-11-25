@@ -1,5 +1,7 @@
 # DHC v1.7 — SQL-only setup of a monitored SQL Server (source)
 
+> Ścieżki poleceń PowerShell w tym dokumencie są względem głównego katalogu v1.7. Zachować strukturę podkatalogów; pełny wykaz plików i katalogów: [README](../README.md). Przed instalacją uruchomić ` .\05_Validation\Test-DHC-Package.ps1 `.
+
 Use `38_Configure-DHC-Source-AllInOne.sql` in **SSMS**, on **each monitored SQL Server 2022+ instance**, as an authorized deployment DBA. No PowerShell is used in the installation phase. This script provisions the **source** login and permissions; the central Repository setup is a different script: `37_Install-DHC-Repository-AllInOne.sql`.
 
 ## Steps

@@ -1,4 +1,6 @@
 # SQLManiak Daily Health Check v1.7
+
+> Ścieżki poleceń PowerShell w tym dokumencie są względem głównego katalogu v1.7. Zachować strukturę podkatalogów; pełny wykaz plików i katalogów: [README](../README.md). Przed instalacją uruchomić ` .\05_Validation\Test-DHC-Package.ps1 `.
 ## Architektura, instalacja i eksploatacja produkcyjna
 
 **Wersja dokumentu:** 2026-11-25. **Status:** kandydat do pilotażu SQL Server 2022, nie certyfikacja produkcyjna. **Zakres:** czysta instalacja centralnego repozytorium oraz kolektora na Windows; źródła SQL Server 2022. SQL Server 2019 wymaga osobnego pilotażu i modelu uprawnień, SQL Server 2016 poza zakresem. Podstawą są skrypty z PR #141 i wyniki LAB z 25 listopada 2026.
@@ -36,7 +38,7 @@ Strzałki źródło–kolektor oznaczają przepływ wyników; połączenia inicj
 | 37 / 38 / 39 / 40 | Instalacja repozytorium, kont źródeł, XE, walidacja |
 | 34 / 35 | Alternatywna ścieżka instalacji PowerShell (nie łączyć bez potrzeby z AllInOne) |
 | 10 / 45 / 50 | Kontrole repozytorium bez zmian danych |
-| 21 / 24 | Audyt tożsamości schedulera i statyczny audyt zewnętrznego SQL |
+| 21 / 24 | Audyt tożsamości schedulera i statyczny audyt bazowego SQL |
 | 36 | Opcjonalny odrębny czytelnik Grafana; 37 już zawiera jego konfigurację |
 
 ## 3. Model danych i zachowanie transakcyjne
@@ -62,7 +64,7 @@ Główne wyniki mają stabilne indeksy 1–17; nieznane lub duplikaty trafiają 
 
 - Centralny SQL Server 2022+, przestrzeń danych/logu, uzgodniony recovery model, backup i odtwarzanie. Instalator 37 tworzy bazę z domyślną konfiguracją instancji; jeśli standard wymaga określonych plików, utworzyć pustą bazę z uzgodnionymi parametrami wcześniej.
 - Windows host kolektora, PowerShell 7.5 zalecany (skrypty wymagają co najmniej 7.2), moduł SqlServer i Microsoft.Data.SqlClient. Sprawdzić wersje i przypiąć zatwierdzony zestaw na hoście.
-- **Zewnętrzny plik SQLManiak_Daily_Health_Check_v1_5_CSV.sql jest obowiązkowy i nie znajduje się w Git.** Skopiować zatwierdzoną wersję obok 03, 06 i 17. Ręczne 03/06 przyjmują -SqlFile, wrapper 17 korzysta z domyślnej ścieżki. Utrwalić SHA256. In-memory rewrite wymusza SaveHistory=0, adaptuje ERRORLOG, autogrowth XE i zależność JOBS. Nie stosować dowolnego innego skryptu v1.5 bez sprawdzenia kontraktu.
+- **Obowiązkowy [SQLManiak_Daily_Health_Check_v1_5_CSV.sql](../03_Collector/SQLManiak_Daily_Health_Check_v1_5_CSV.sql) jest częścią pakietu v1.7.** Zachować go w 03_Collector obok 03 i 06; wrapper 17 jest w 04_Configuration; nie pobierać z innego repozytorium. Ręczne 03/06 przyjmują -SqlFile, wrapper 17 odwołuje się do 03_Collector. Sprawdzić SHA256 zgodnie z [raportem audytu](SOURCE_SQL_AUDIT.md). In-memory rewrite wymusza SaveHistory=0, adaptuje ERRORLOG, autogrowth XE i zależność JOBS. Nie stosować dowolnego innego skryptu v1.5 bez sprawdzenia kontraktu.
 - SQL loginy: dhc_repository_collector na repo, dhc_source_collector na każdym źródle, dhc_grafana_reader tylko do raportowania. 37 tworzy dwa konta repozytorium, także gdy Grafana nie będzie używana. Można wybrać 34 zamiast 37, jeśli wymagane jest pominięcie konta Grafana.
 - Żaden kolektor nie ma być sysadmin, db_owner ani db_datawriter. Role nie cofają historycznych nadmiarowych grantów; audyt efektywnych uprawnień obowiązkowy.
 - Źródło 2022: VIEW SERVER PERFORMANCE STATE, VIEW SERVER SECURITY STATE, VIEW ANY ERROR LOG, VIEW ANY DEFINITION; msdb SQLAgentReaderRole oraz dhc_agent_history_reader (SELECT sysjobs, sysjobhistory, sysjobschedules, sysjobactivity, sysschedules; EXECUTE agent_datetime). VIEW ANY DEFINITION ujawnia metadane całej instancji; zatwierdzić z bezpieczeństwem. ALTER TRACE pozostaje 0. Dostęp do każdej bazy i wymaganych DMV sprawdzić indywidualnie; brak dostępu do ONLINE może skutkować PARTIAL. Nie dodawać użytkownika do model automatycznie (dziedziczenie przez nowe bazy).
@@ -81,11 +83,13 @@ Import-Module SqlServer -ErrorAction Stop
 Add-Type -AssemblyName Microsoft.Data.SqlClient -ErrorAction Stop
 $PSVersionTable.PSVersion
 Get-Module SqlServer | Select-Object Name,Version
-Get-FileHash .\SQLManiak_Daily_Health_Check_v1_5_CSV.sql -Algorithm SHA256
-.\24_Audit-SourceSqlPermissions.ps1
+$expectedHash = '8978B06A630F24D672EDD78721B1B8A4A84DD6CCC724B9B87DF4DBB847DA67B8'
+$actualHash = (Get-FileHash .\03_Collector\SQLManiak_Daily_Health_Check_v1_5_CSV.sql -Algorithm SHA256).Hash
+if ($actualHash -ne $expectedHash) { throw 'DHC baseline SQL SHA256 mismatch; stop deployment.' }
+.\05_Validation\24_Audit-SourceSqlPermissions.ps1
 ```
 
-Jeżeli modułu brakuje, zainstalować zatwierdzoną wersję z dozwolonego repozytorium pakietów (Install-Module SqlServer -Scope CurrentUser); konto wykonawcze musi mieć do niej dostęp. Skopiować kod do wersjonowanego katalogu wdrożeniowego z ACL i zachować poprzednią wersję. Nie uruchamiać harmonogramu bez pilotażu.
+Jeżeli modułu brakuje, zainstalować zatwierdzoną wersję z dozwolonego repozytorium pakietów (Install-Module SqlServer -Scope CurrentUser); konto wykonawcze musi mieć do niej dostęp. Skopiować cały pakiet z zachowaniem podkatalogów do wersjonowanego katalogu wdrożeniowego z ACL i zachować poprzednią wersję. Nie uruchamiać harmonogramu bez pilotażu.
 
 ## 6. Czysta instalacja centralnego repozytorium
 
@@ -138,7 +142,7 @@ Oczekiwane 0/1/0/0. Sprawdzić także efektywne uprawnienia na poziomie serwera 
 4. 40_Validate-DHC-Source-XE-Deployment.sql: ustawić @ExpectedServer, zweryfikować stan sesji, widoczne pliki, granty i odczyt XEL pod tożsamością kolektora. Puste zdarzenia mogą oznaczać brak zdarzeń lub ograniczoną historię; nie wymuszać autogrow na produkcji.
 5. Sprawdzić rzeczywisty dostęp do baz użytkownika i DMV. Nie przyznawać szerokiego CONNECT ANY DATABASE ani praw do model bez oceny. Szczegółowa procedura XE i rollback: [41_PRODUCTION_XE_DEPLOYMENT.md](41_PRODUCTION_XE_DEPLOYMENT.md).
 
-SQL Server 2019: instalatory 34/35/37/38/39/40 ograniczone do 2022+ w swoim zakresie; nie usuwać warunków wersji. Repozytorium pozostaje 2022. Źródło 2019 wymaga osobnej matrycy grantów (m.in. VIEW SERVER STATE zamiast nowszych praw), audytu zewnętrznego SQL, XE i pełnego testu runtime. Nie włączać 2019 do PROD inventory przed zatwierdzeniem.
+SQL Server 2019: instalatory 34/35/37/38/39/40 ograniczone do 2022+ w swoim zakresie; nie usuwać warunków wersji. Repozytorium pozostaje 2022. Źródło 2019 wymaga osobnej matrycy grantów (m.in. VIEW SERVER STATE zamiast nowszych praw), audytu bazowego SQL, XE i pełnego testu runtime. Nie włączać 2019 do PROD inventory przed zatwierdzeniem.
 
 ## 8. Inventory i ręczny pilot
 
@@ -168,10 +172,10 @@ $b['Connect Timeout'] = 5
 $map = @{}
 $map[$source] = $sourceCredential
 try {
-  .\06_Run-DHC-MonitoredServers.ps1 -RepositoryConnectionString $b.ConnectionString `
+  .\03_Collector\06_Run-DHC-MonitoredServers.ps1 -RepositoryConnectionString $b.ConnectionString `
     -SqlCredentialByServer $map -Environment PROD -ServerInstance $source
   # Po sprawdzeniu preview i zatwierdzeniu pilota:
-  .\06_Run-DHC-MonitoredServers.ps1 -RepositoryConnectionString $b.ConnectionString `
+  .\03_Collector\06_Run-DHC-MonitoredServers.ps1 -RepositoryConnectionString $b.ConnectionString `
     -SqlCredentialByServer $map -Environment PROD -ServerInstance $source `
     -Execute -ConnectionTimeout 5 -QueryTimeout 300
 } finally { $b.Clear() }
@@ -199,21 +203,21 @@ Dostarczone stare skrypty rejestrujące zadania były wyłącznie LAB; nie wdra�
 ```powershell
 # W sesji rzeczywistego konta wykonawczego; $map i $repoCredential jak wyżej.
 $dir = Join-Path $env:LOCALAPPDATA 'SQLManiakDHC-PROD'
-.\16_Save-DHC-SchedulerConfig.ps1 -RepositoryServer $repoServer `
+.\04_Configuration\16_Save-DHC-SchedulerConfig.ps1 -RepositoryServer $repoServer `
   -RepositoryCredential $repoCredential -SqlCredentialByServer $map -SecretsDirectory $dir
 # Ograniczyć ACL i sprawdzić brak dostępu innych użytkowników.
 $config = Join-Path $dir 'scheduler.json'
-.\21_Test-SchedulerIdentity.ps1 -ConfigPath $config -Environment PROD -CheckSqlPreview
-.\17_Invoke-DHC-Scheduled.ps1 -ConfigPath $config -Environment PROD
+.\05_Validation\21_Test-SchedulerIdentity.ps1 -ConfigPath $config -Environment PROD -CheckSqlPreview
+.\04_Configuration\17_Invoke-DHC-Scheduled.ps1 -ConfigPath $config -Environment PROD
 # Po akceptacji, test pod tożsamością zadania:
-.\17_Invoke-DHC-Scheduled.ps1 -ConfigPath $config -Environment PROD -Execute
+.\04_Configuration\17_Invoke-DHC-Scheduled.ps1 -ConfigPath $config -Environment PROD -Execute
 ```
 
 16 odmawia nadpisania istniejącego katalogu. Rotacja: utworzyć nowy katalog, zweryfikować, przełączyć konfigurację zadania, po akceptacji bezpiecznie wycofać stary. Nie przenosić plików na inny host.
 
 Utworzyć Windows Task Scheduler ręcznie według polityki organizacji, początkowo Disabled. Program: zatwierdzona pełna ścieżka do pwsh.exe. Argumenty:
 ```text
--NoProfile -NonInteractive -File "C:\SQLManiakDHC\17_Invoke-DHC-Scheduled.ps1" -ConfigPath "C:\PRIVATE\scheduler.json" -Environment PROD -Execute
+-NoProfile -NonInteractive -File "C:\SQLManiakDHC\04_Configuration\17_Invoke-DHC-Scheduled.ps1" -ConfigPath "C:\PRIVATE\scheduler.json" -Environment PROD -Execute
 ```
 Podstawić faktyczne ścieżki (config pod LOCALAPPDATA konta). Start in: katalog wdrożenia. Ustawić uruchamianie niezależnie od logowania użytkownika, jeżeli zatwierdzona tożsamość to obsługuje, oraz Do not start a new instance (IgnoreNew). Nie ustawiać limitu czasu krótszego niż uzgodnione najgorsze wykonanie wszystkich instancji; brutalne zatrzymanie może pozostawić RUNNING. Proponowana częstotliwość wyzwalacza 5–15 min; runner sam ocenia IntervalMinutes. Zadanie nie jest automatycznie tworzone przez skrypty. Wrapper 17 zgłasza FAILED jako błąd procesu, PARTIAL należy monitorować w bazie. Wrapper nie udostępnia parametru allowlist sond: aktywne sondy uruchamiać przez 03/06, a ich automatyzację wdrożyć dopiero po odrębnej decyzji.
 
@@ -230,7 +234,7 @@ $probes[$source] = @('REPLACE_WITH_APPROVED_LINK')
 ```
 vLinkedServerStateChanges rozdziela historie według źródła, linked servera i CollectorLogin. PASS→FAILED = OUTAGE, FAILED→PASS = RECOVERY; SKIPPED przerywa ciągłość, pasywny przebieg nie jest pomiarem dostępności. Nie oznacza dokładnego czasu awarii. SQL auth w LAB nie potwierdza Kerberos double hop.
 
-Grafana: użyć osobnego dhc_grafana_reader, wyłącznie wybrane tabele i widoki z 36, bez raw JSON i nowych uprawnień do linked login metadata. Dashboard MVP znajduje się poza katalogiem v1.7: [instrukcja portalu](../../../dashboards/sqlserver/SQLManiak-DHC-Portal-MVP.md). Nie zakładać, że wszystkie nowe widoki są dostępne w Grafana.
+Grafana: użyć osobnego dhc_grafana_reader, wyłącznie wybrane tabele i widoki z 36, bez raw JSON i nowych uprawnień do linked login metadata. Dashboard MVP znajduje się poza katalogiem v1.7: [instrukcja portalu](../../../../dashboards/sqlserver/SQLManiak-DHC-Portal-MVP.md). Nie zakładać, że wszystkie nowe widoki są dostępne w Grafana.
 
 ## 11. Retencja i utrzymanie
 
@@ -256,7 +260,9 @@ Pozostałe ograniczenia: Windows FCI/Kerberos, pełna integracja 2019, aktualna 
 
 ## 13. Minimalny manifest produkcyjny i archiwum
 
-**Runtime:** 02,03,06,16,17,21,24,43,47,48 oraz obowiązkowy zewnętrzny v1.5 SQL. **Instalacja SQL:** 37,38,39,40; 41 i 38 MD jako uzupełnienie. **Kontrole:** 10,45,50. **Alternatywny modularny instalator i definicje źródłowe:** 01,04,08,09,12,14,20,34,35,36,42,44,49. Nie usuwać tych definicji: 34 korzysta z nich bezpośrednio; są też podstawą utrzymania AllInOne. .gitignore pozostaje.
+Dokumenty uzupełniające: [ARCHITECTURE.md](ARCHITECTURE.md), [SOURCE_SQL_AUDIT.md](SOURCE_SQL_AUDIT.md). Przed pierwszą kolekcją na każdym źródle DBA powinien potwierdzić, że `OBJECT_ID(N'SQLManiakHealthHistory.hc.Sample', N'U')` jest NULL (przy odpowiedniej widoczności metadanych). Jeżeli obiekt istnieje, wstrzymać pilot i ocenić zależność legacy; nie usuwać automatycznie. SaveHistory=0 nie blokuje odczytu starego schematu hc.
+
+**Runtime:** 02,03,06,16,17,21,24,43,47,48 oraz obowiązkowy dołączony v1.5 SQL (oraz .gitattributes chroniący jego bajty). **Instalacja SQL:** 37,38,39,40; 41 i 38 MD jako uzupełnienie. **Kontrole:** 10,45,50. **Alternatywny modularny instalator i definicje źródłowe:** 01,04,08,09,12,14,20,34,35,36,42,44,49. Nie usuwać tych definicji: 34 korzysta z nich bezpośrednio; są też podstawą utrzymania AllInOne. .gitignore pozostaje.
 
 Z katalogu produkcyjnego usunięto 22 plików laboratoryjnych. Cała poprzednia wersja, Docker Compose, testy i stary README są dostępne w gałęzi [archive/dhc-v1.7-lab-20261125](https://github.com/marcinpytlik/SQLManiak/tree/archive/dhc-v1.7-lab-20261125/tools/SQLManiakDailyHealthCheck/v1.7), a także w niezmiennym commicie e06018c08d5e112e906d67ae8ba11ac7bbad1927. Testy regresyjne można odtwarzać z archiwum z zachowaniem właściwej wersji. Nie uruchamiać archiwalnych skryptów na produkcji.
 
