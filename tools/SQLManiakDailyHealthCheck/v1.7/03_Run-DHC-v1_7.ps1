@@ -12,6 +12,8 @@ param(
  [string]$TempDBSqlFile=(Join-Path $PSScriptRoot '02_TempDB_Collect.sql'),
  [string]$CapacitySqlFile=(Join-Path $PSScriptRoot '43_CapacityCollect.sql'),
  [switch]$SkipCapacity,
+ [switch]$SkipLinkedServer,
+ [string[]]$LinkedServerProbeAllowlist=@(),
  [PSCredential]$SqlCredential,
  [switch]$TrustServerCertificate,
  [switch]$SkipTempDB,
@@ -37,6 +39,44 @@ function Get-Tables([object[]]$Results) {
  }
  Write-Output -NoEnumerate $list
 }
+function Get-MainCollectionContract {
+ # DHC v1.5 CSV + v1.7 XE rewrite: LAB-observed column signatures.
+ # Match exact column sets (case insensitive), not row count or ordinal.
+ $contract=[ordered]@{
+  INSTANCE='Section,SqlServerName,ConnectedInstance,ActiveNode,IsClustered,ProductVersion,ProductLevel,SqlServerStartTime,FromTime,ToTime'
+  SERVICES='Section,servicename,status_desc,startup_type_desc,last_startup_time,is_clustered,cluster_nodename'
+  ERRORLOG='Section,LogDate,ProcessInfo,Message'
+  JOBS_CURRENT='Section,JobName,IsEnabled,IsRunning,RunningSince,LastRunTime,LastRunResult,LastMessage'
+  JOBS_STEPS='Section,JobName,step_id,step_name,Status,RunTime,sql_message_id,sql_severity,message'
+  DISK_VOLUMES='Section,volume_mount_point,logical_volume_name,TotalGB,FreeGB,FreePercent,TotalBytes,FreeBytes'
+  DATABASES_BACKUPS='Section,DatabaseName,state_desc,recovery_model_desc,is_read_only,is_in_standby,LastFull,LastDiff,LastLog'
+  TRANSACTION_LOG='Section,DatabaseName,LogSizeMB,UsedPercent'
+  BLOCKING='Section,BlockedSessionId,BlockerSessionId,DatabaseName,wait_type,WaitSeconds,status,host_name,program_name,login_name,RunningStatement'
+  FILES_AUTOGROWTH='Section,DatabaseName,LogicalFileName,type_desc,AllocatedMB,GrowthSetting,MaxSizeSetting,PhysicalName'
+  MISSED_JOBS='Section,JobName,ScheduleName,ExpectedAt'
+  SCHEDULE_DIAGNOSTICS='Section,JobName,ScheduleName,Reason'
+  HISTORY='Section,Message'
+  AUTOGROWTH_EVENTS='Section,DatabaseName,LogicalFileName,FileType,AllocatedMB,GrowthSetting,HistoryStatus,Events24h,GrowthMB24h,LastAutoGrowth,MaxDurationMs24h,EventsInAvailableTrace,PhysicalName'
+  LOG_OVERSIZING='Section,DatabaseName,RecoveryModel,DataSizeGB,LogSizeGB,LogToDataRatio,LogUsedPercent,UsedLogMB,FreeLogMB,LogReuseWait,TotalVLF,ActiveVLF,ActiveVLFSizeMB,VLFStatus,Assessment'
+  SUMMARY='Section,Severity,Area,ObjectName,Details'
+  COUNTS='Section,CriticalAlerts,WarningAlerts,InfoAlerts,SinceTime,UntilTime'
+ }
+ return $contract
+}
+function Get-MainResultSignature($Table) {
+ return (($Table.Columns | ForEach-Object {$_.ColumnName.ToLowerInvariant()} | Sort-Object) -join ',')
+}
+function Test-MainCollectionContract($Tables) {
+ $contract=Get-MainCollectionContract
+ $observed=@(foreach($t in $Tables){ Get-MainResultSignature $t })
+ foreach($id in $contract.Keys){
+  $signature=(($contract[$id].ToLowerInvariant() -split ',') | Sort-Object) -join ','
+  $matches=@($observed | Where-Object {$_ -eq $signature}).Count
+  if($matches -ne 1){ "Contract v1: $id expected one matching result schema; found $matches." }
+ }
+ if($Tables.Count -ne $contract.Count){ "Contract v1: expected $($contract.Count) result sets; observed $($Tables.Count)." }
+}
+
 function Convert-Row([System.Data.DataRow]$Row) {
  $values=[ordered]@{}
  foreach($c in $Row.Table.Columns) {
@@ -288,7 +328,64 @@ END CATCH;
     [System.Text.RegularExpressions.MatchEvaluator]{param($m) $replacement})
 }
 
-function Query-Source([string]$QueryFile) {
+function Update-JobsDependency([string]$SqlText) {
+ # Keep v1.5 on disk unchanged. Fail closed for unrecognised SQL versions.
+ $rules=@(
+  @{
+   Pattern='(?m)^(/\* 3\. All SQL Server Agent jobs and recent failures \*/\r?\n)BEGIN TRY'
+   Replacement=@'
+$1CREATE TABLE #Jobs(
+ job_id uniqueidentifier NOT NULL, JobName sysname NOT NULL,
+ IsEnabled tinyint NULL, IsRunning int NOT NULL, RunningSince datetime NULL,
+ LastRunTime datetime NULL, LastRunStatus int NULL, LastMessage nvarchar(4000) NULL,
+ LastRunResult varchar(32) NOT NULL
+);
+DECLARE @JobsCollectionSucceeded bit=0;
+BEGIN TRY
+'@
+  },
+  @{
+   Pattern='(?m)^(\s*)SELECT j\.job_id, j\.name AS JobName, j\.enabled AS IsEnabled,'
+   Replacement='$1INSERT #Jobs(job_id,JobName,IsEnabled,IsRunning,RunningSince,LastRunTime,LastRunStatus,LastMessage,LastRunResult) SELECT j.job_id, j.name AS JobName, j.enabled AS IsEnabled,'
+  },
+  @{
+   Pattern='(?m)^[ \t]*INTO #Jobs[ \t]*\r?\n'
+   Replacement=''
+  },
+  @{
+   Pattern="(?m)^END TRY\r?\nBEGIN CATCH\r?\n[ \t]*INSERT #Alerts VALUES \('WARNING','JOBS',NULL,ERROR_MESSAGE\(\)\);\r?\nEND CATCH;"
+   Replacement=@'
+    SET @JobsCollectionSucceeded=1;
+END TRY
+BEGIN CATCH
+    INSERT #Alerts VALUES ('WARNING','JOBS',NULL,CONCAT('COLLECTION_FAILED: ',ERROR_MESSAGE()));
+END CATCH;
+'@
+  },
+  @{
+   Pattern='(?m)^BEGIN TRY\r?\n([ \t]*CREATE TABLE #ScheduleCoverage\()'
+   Replacement=@'
+BEGIN TRY
+    IF @JobsCollectionSucceeded=0
+        THROW 51071,'DEPENDENCY_FAILED: JOBS collection unavailable; schedule inference skipped.',1;
+$1
+'@
+  },
+  @{
+   Pattern="(?m)INSERT #Alerts VALUES \('WARNING','JOB SCHEDULE',NULL,ERROR_MESSAGE\(\)\);"
+   Replacement="INSERT #Alerts VALUES ('WARNING','JOB SCHEDULE',NULL,CONCAT('COLLECTION_FAILED: ',ERROR_MESSAGE()));"
+  }
+ )
+ foreach($rule in $rules){
+  if(([regex]::Matches($SqlText,$rule.Pattern)).Count -ne 1){
+   throw "DHC JOBS dependency rewrite: expected exactly one known anchor: $($rule.Pattern)"
+  }
+  $SqlText=[regex]::Replace($SqlText,$rule.Pattern,$rule.Replacement)
+ }
+ return $SqlText
+}
+
+function Query-Source([string]$QueryFile,[string]$Prefix='') {
  $args=@{ServerInstance=$ServerInstance;Database='master';QueryTimeout=$QueryTimeout;ConnectionTimeout=$ConnectionTimeout;
          OutputAs='DataSet';ErrorAction='Stop'}
  if ($null -ne $SqlCredential) { $args.Credential=$SqlCredential }
@@ -303,7 +400,9 @@ function Query-Source([string]$QueryFile) {
   $args.Query=[regex]::Replace($args.Query,$pattern,'${1}0${2}')
   $args.Query=Update-ErrorLogScan $args.Query
   $args.Query=Update-AutogrowthScan $args.Query
+  $args.Query=Update-JobsDependency $args.Query
  }
+ $args.Query=$Prefix+$args.Query
  return @(Invoke-Sqlcmd @args)
 }
 function Remove-LegacyLocalHistoryNotice([System.Data.DataTable]$Table) {
@@ -351,6 +450,7 @@ function Write-Batches([System.Data.DataTable]$Table,[int]$Index,[string]$Name) 
  if($slice.Count -gt 0 -or $number -eq 0) {
   $number++; Save-Batch $Index $number $Name $colsJson $slice
  }
+ $script:storedResultSets++
 }
 function Save-Batch([int]$Index,[int]$BatchNo,[string]$Name,[string]$ColsJson,$Slice) {
  $json=ConvertTo-Json -InputObject @($Slice.ToArray()) -Compress -Depth 6
@@ -364,42 +464,97 @@ function Add-Alert([string]$Severity,[string]$Area,[string]$ObjectName,[string]$
  RunId=$runId;Severity=$Severity;Area=$Area;ObjectName=$ObjectName;Details=$Details.Substring(0,[Math]::Min(2000,$Details.Length)) }
  if($Severity -eq 'CRITICAL') { $script:critical++ } else { $script:warnings++ }
 }
+function Test-RepositorySchema {
+ $required=[ordered]@{'dhc.Run'='01_Repository.sql';'dhc.ResultBatch'='01_Repository.sql';'dhc.Alert'='01_Repository.sql'}
+ if(-not $SkipCapacity){$required['dhc.CapacityFileSample']='42_CapacityRepository.sql';$required['dhc.CapacityLogSample']='42_CapacityRepository.sql'}
+ if(-not $SkipTempDB){foreach($n in @('dhc.TempDBSnapshot','dhc.TempDBFile','dhc.TempDBSession')){$required[$n]='01_Repository.sql'}}
+ $cmd=$connection.CreateCommand()
+ try {
+  $cmd.CommandTimeout=$QueryTimeout
+  $cmd.CommandText="SELECT OBJECT_ID(@name,N'U')"
+  [void]$cmd.Parameters.Add('@name',[System.Data.SqlDbType]::NVarChar,128)
+  $missing=@()
+  foreach($n in $required.Keys){
+   $cmd.Parameters['@name'].Value=$n
+   $id=$cmd.ExecuteScalar()
+   if($null -eq $id -or $id -is [DBNull]){$missing+="${n} (migration: $($required[$n]); or metadata permission missing)"}
+  }
+  if($missing.Count){throw ('Repository schema preflight failed: '+($missing -join '; '))}
+ }finally{$cmd.Dispose()}
+}
 function Number($Value) { if ($Value -is [DBNull] -or $null -eq $Value) { return 0 }; return [double]$Value }
 function Is-Null($Value) { return ($Value -is [DBNull] -or $null -eq $Value) }
 
 $runId=[guid]::NewGuid();$started=[datetime]::UtcNow
-$critical=0;$warnings=0;$totalRows=[long]0;$status='COMPLETE';$tempdbError=$null
+$critical=0;$warnings=0;$totalRows=[long]0;$status='COMPLETE';$tempdbError=$null;$moduleErrors=[System.Collections.Generic.List[string]]::new();$storedResultSets=0
 $connection=[Microsoft.Data.SqlClient.SqlConnection]::new($RepositoryConnectionString)
 $transaction=$null
 try {
  # Fail early if the repository does not exist or DML permissions are missing.
- $connection.Open();$transaction=$connection.BeginTransaction()
+ $connection.Open();Test-RepositorySchema;$transaction=$connection.BeginTransaction()
  Write-Sql 'INSERT dhc.Run(RunId,ServerInstance,StartedUTC,Status) VALUES(@RunId,@ServerInstance,@StartedUTC,@Status)' @{
  RunId=$runId;ServerInstance=$ServerInstance;StartedUTC=$started;Status='RUNNING'}
 
  $mainTables=Get-Tables (Query-Source $SqlFile)
  foreach($table in $mainTables) { Remove-LegacyLocalHistoryNotice $table }
+ # Stable indices for unique, recognised main schemas. Quarantine all duplicates
+ # and unknown schemas using negative indices (no overlap with module ranges).
+ $contract=Get-MainCollectionContract
+ $signatureMap=@{}
+ $index=0
+ foreach($id in $contract.Keys){
+  $index++
+  $signature=(($contract[$id].ToLowerInvariant() -split ',') | Sort-Object) -join ','
+  $signatureMap[$signature]=[pscustomobject]@{Index=$index;Id=$id}
+ }
+ $observed=@(foreach($t in $mainTables){Get-MainResultSignature $t})
  $i=0
  foreach($t in $mainTables) {
   $i++
-  $section="ResultSet_$i"
-  if($t.Columns.Contains('Section') -and $t.Rows.Count -gt 0) {
-   $candidate=[string]$t.Rows[0]['Section'];if($candidate.Trim()){$section=$candidate.Trim()}
+  $signature=Get-MainResultSignature $t
+  $resultIndex=-$i
+  $section="UNRECOGNIZED_$i"
+  if($signatureMap.ContainsKey($signature)){
+   $entry=$signatureMap[$signature]
+   if(@($observed | Where-Object {$_ -eq $signature}).Count -eq 1){
+    $resultIndex=$entry.Index
+    $section=$entry.Id
+    if($t.Columns.Contains('Section') -and $t.Rows.Count -gt 0){
+     $candidate=[string]$t.Rows[0]['Section'];if($candidate.Trim()){$section=$candidate.Trim()}
+    }
+   }else{
+    $section="DUPLICATE_$($entry.Id)_$i"
+   }
   }
-  Write-Batches $t $i $section
+  Write-Batches $t $resultIndex $section
   $totalRows+=$t.Rows.Count
  }
  $summary=@($mainTables | Where-Object { $_.Columns.Contains('Section') -and $_.Columns.Contains('Severity') -and $_.Columns.Contains('Area') -and $_.Columns.Contains('Details') })
- if($summary.Count -ne 1) {throw "Expected one DHC summary result set, found $($summary.Count)."}
- foreach($row in $summary[0].Rows) {
+ foreach($issue in @(Test-MainCollectionContract $mainTables)){
+  $status='PARTIAL';$moduleErrors.Add('Main SQL: '+$issue)
+  Add-Alert 'WARNING' 'COLLECTION CONTRACT' 'Main SQL' $issue
+ }
+ if($summary.Count -ne 1){
+  $status='PARTIAL';$message="Expected one DHC summary result set, found $($summary.Count)."
+  $moduleErrors.Add('Main SQL: '+$message)
+  Add-Alert 'WARNING' 'COLLECTION CONTRACT' 'SUMMARY' $message
+ }
+ foreach($summaryTable in $summary){
+ foreach($row in $summaryTable.Rows) {
   $sev=[string]$row['Severity'];if($sev -notin @('CRITICAL','WARNING')){continue}
   Add-Alert $sev ([string]$row['Area']) $(if($row.IsNull('ObjectName')){''}else{[string]$row['ObjectName']}) ([string]$row['Details'])
+  if([string]$row['Details'] -match '(?i)COLLECTION_FAILED:|DEPENDENCY_FAILED:|permission was denied|permission denied|access is denied|does not have permission|not authorized|odmowa dostępu|odmówiono uprawnień'){
+   $status='PARTIAL'
+   $moduleErrors.Add("Main SQL: collection failure or possible access denial in $($row['Area']); see alerts.")
+   Add-Alert 'WARNING' 'COLLECTION CONTRACT' ([string]$row['Area']) 'Collection failure or possible permission denial reported by legacy collector; review original alert.'
+  }
  }
-
+ }
 
  # Optional capacity module: same run / transaction, isolated using a savepoint.
  # Database/file data are read-only at source. Partial failures are persisted as warnings.
  if(-not $SkipCapacity) {
+  $savedRows=$totalRows;$savedWarnings=$warnings;$savedCritical=$critical;$savedSets=$storedResultSets
   $transaction.Save('BeforeCapacity')
   try {
    $capTables=Get-Tables (Query-Source $CapacitySqlFile)
@@ -448,20 +603,72 @@ try {
        "Log usage $($r['UsedLogPct'])%; reuse wait: $($r['LogReuseWait']).")
     }
    }
-   if($capTables[2].Rows.Count -gt 0) { $status='PARTIAL' }
+   if($capTables[2].Rows.Count -gt 0) { $status='PARTIAL';$moduleErrors.Add("Capacity: $($capTables[2].Rows.Count) collection errors; see alerts.") }
    foreach($r in $capTables[2].Rows) {
     Add-Alert 'WARNING' 'CAPACITY COLLECTION' ([string]$r['DatabaseName']) ([string]$r['Details'])
    }
   }
   catch {
    $status='PARTIAL'
-   $capacityError=$_.Exception.Message
+   $capacityError=$_.Exception.Message;$moduleErrors.Add('Capacity: '+$capacityError)
    $transaction.Rollback('BeforeCapacity')
+   $totalRows=$savedRows;$warnings=$savedWarnings;$critical=$savedCritical;$storedResultSets=$savedSets
    Add-Alert 'WARNING' 'CAPACITY COLLECTION' 'module' ('Capacity module failed: '+$capacityError)
   }
  }
 
+
+ # Linked server history uses the existing JSON batches and retention.
+ if(-not $SkipLinkedServer) {
+  $savedRows=$totalRows;$savedWarnings=$warnings;$savedCritical=$critical;$savedSets=$storedResultSets
+  $transaction.Save('BeforeLinkedServer')
+  try {
+   $ls=Get-Tables (Query-Source (Join-Path $PSScriptRoot '47_LinkedServerCollect.sql'))
+   $names=@('LINKED_SERVER_CONFIGURATION','LINKED_SERVER_LOGIN_MAPPING','LINKED_SERVER_METADATA_STATUS')
+   if($ls.Count -ne 3){throw 'Unexpected linked server result set count.'}
+   for($k=0;$k -lt 3;$k++){
+    if(-not $ls[$k].Columns.Contains('Section')){throw 'Linked server result missing Section.'}
+    Write-Batches $ls[$k] (300+$k) $names[$k]
+    $totalRows+=$ls[$k].Rows.Count
+   }
+   # Reuse existing ERRORLOG rows; evidence is not attribution to linked servers.
+   $events=[System.Data.DataTable]::new()
+   foreach($col in @('Section','LogDate','ProcessInfo','Text')){[void]$events.Columns.Add($col)}
+   foreach($t in $mainTables){
+    if($t.Columns.Contains('LogDate') -and $t.Columns.Contains('ProcessInfo') -and ($t.Columns.Contains('Text') -or $t.Columns.Contains('Message'))){
+      $messageColumn=if($t.Columns.Contains('Text')){'Text'}else{'Message'}
+     foreach($row in $t.Rows){
+      if([string]$row[$messageColumn] -match 'ANONYMOUS LOGON'){
+       [void]$events.Rows.Add('LINKED_SERVER_AUTH_EVENTS',[string]$row['LogDate'],[string]$row['ProcessInfo'],[string]$row[$messageColumn])
+      }
+     }
+    }
+   }
+   Write-Batches $events 303 'LINKED_SERVER_AUTH_EVENTS'
+   $totalRows+=$events.Rows.Count
+   if($events.Rows.Count -gt 0){Add-Alert 'WARNING' 'LINKED SERVER AUTH' 'ANONYMOUS LOGON' 'Anonymous logon evidence in collected ERRORLOG; origin not established.'}
+   $probeIndex=310
+   foreach($name in ($LinkedServerProbeAllowlist | Select-Object -Unique)){
+    if([string]::IsNullOrWhiteSpace($name) -or $name.Length -gt 128){throw 'Invalid linked server allowlist name.'}
+    $prefix="DECLARE @ProbeName sysname=N'"+$name.Replace("'","''")+"';"+[Environment]::NewLine
+    $probe=Get-Tables (Query-Source (Join-Path $PSScriptRoot '48_LinkedServerConnectivity.sql') $prefix)
+    if($probe.Count -ne 1 -or $probe[0].Rows.Count -ne 1){throw 'Unexpected linked server probe output.'}
+    Write-Batches $probe[0] $probeIndex 'LINKED_SERVER_CONNECTIVITY'
+    $probeIndex++;$totalRows++
+    $row=$probe[0].Rows[0]
+    if([string]$row['ProbeStatus'] -eq 'FAILED'){Add-Alert 'WARNING' 'LINKED SERVER CONNECTIVITY' $name ([string]$row['Details'])}
+   }
+  } catch {
+   $message=$_.Exception.Message;$moduleErrors.Add('Linked Server: '+$message)
+   $transaction.Rollback('BeforeLinkedServer')
+   $totalRows=$savedRows;$warnings=$savedWarnings;$critical=$savedCritical;$storedResultSets=$savedSets
+   $status='PARTIAL'
+   Add-Alert 'WARNING' 'LINKED SERVER COLLECTION' 'module' $message
+  }
+ }
+
  if(-not $SkipTempDB) {
+  $savedRows=$totalRows;$savedWarnings=$warnings;$savedCritical=$critical;$savedSets=$storedResultSets
   $transaction.Save('BeforeTempDB')
   try {
    $tempTables=Get-Tables (Query-Source $TempDBSqlFile)
@@ -505,17 +712,18 @@ try {
    if(-not(Is-Null $o['OldestVersioningSeconds']) -and (Number $o['OldestVersioningSeconds']) -ge 3600){Add-Alert 'WARNING' 'TEMPDB' 'VersionStore' "Oldest versioning transaction = $($o['OldestVersioningSeconds']) seconds."}
    if((Number $o['LogFileCount']) -gt 1 -or (Number $o['PercentGrowthFileCount']) -gt 0){Add-Alert 'WARNING' 'TEMPDB' 'tempdb' "Log files=$($o['LogFileCount']); percent-growth files=$($o['PercentGrowthFileCount'])."}
   } catch {
-   $tempdbError=$_.Exception.Message;$status='PARTIAL'
+   $tempdbError=$_.Exception.Message;$moduleErrors.Add('TempDB: '+$tempdbError);$status='PARTIAL'
    $transaction.Rollback('BeforeTempDB')
+   $totalRows=$savedRows;$warnings=$savedWarnings;$critical=$savedCritical;$storedResultSets=$savedSets
    Add-Alert 'WARNING' 'TEMPDB' 'tempdb' ('Collector failed: '+$tempdbError)
    # A savepoint ensures no incomplete TempDB details remain after a failed module.
   }
  }
  Write-Sql 'UPDATE dhc.Run SET FinishedUTC=SYSUTCDATETIME(), Status=@Status, SourceResultSets=@SourceResultSets,SourceRowCount=@SourceRowCount,ErrorText=@ErrorText WHERE RunId=@RunId' @{
-  RunId=$runId;Status=$status;SourceResultSets=$mainTables.Count;SourceRowCount=$totalRows;ErrorText=$tempdbError }
+  RunId=$runId;Status=$status;SourceResultSets=$mainTables.Count;SourceRowCount=$totalRows;ErrorText=$(if($moduleErrors.Count){$joined=$moduleErrors -join ' | ';$joined.Substring(0,[Math]::Min(2000,$joined.Length))}else{$null}) }
  $transaction.Commit();$transaction=$null
  [pscustomobject]@{RunId=$runId;Source=$ServerInstance;Status=$status;ResultSets=$mainTables.Count;
- RowsStored=$totalRows;CriticalAlerts=$critical;WarningAlerts=$warnings;Repository='SQLManiakHealthHistory'}
+ SourceResultSets=$mainTables.Count;StoredResultSets=$storedResultSets;ModuleErrors=$moduleErrors.ToArray();RowsStored=$totalRows;CriticalAlerts=$critical;WarningAlerts=$warnings;Repository='SQLManiakHealthHistory'}
 } catch {
  if($null -ne $transaction){try{$transaction.Rollback()}catch{}};
  throw "DHC v1.7 run not committed to repository: $($_.Exception.Message)"

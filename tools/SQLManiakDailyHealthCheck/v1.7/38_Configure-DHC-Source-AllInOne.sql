@@ -15,7 +15,7 @@
  - VIEW SERVER PERFORMANCE STATE, VIEW SERVER SECURITY STATE, VIEW ANY ERROR LOG
  - VIEW ANY DEFINITION (required for sys.master_files metadata visibility)
  - msdb user mapped to login and membership in SQLAgentReaderRole
- - msdb.dhc_agent_history_reader with SELECT on four agent tables
+ - msdb.dhc_agent_history_reader with SELECT on five agent tables and EXECUTE on dbo.agent_datetime
  - legacy optional server role dhc_autogrowth_reader with ALTER TRACE (off by default;
    do NOT enable for XE-based collectors). XE session is installed separately by 39.
 
@@ -101,7 +101,7 @@ GRANT VIEW SERVER PERFORMANCE STATE TO [dhc_source_collector];
 GRANT VIEW SERVER SECURITY STATE TO [dhc_source_collector];
 GRANT VIEW ANY ERROR LOG TO [dhc_source_collector];
 -- SQL Server 2022: required to list database files from master.sys.master_files.
--- Metadata visibility is instance-wide; approved for the DHC deployment.
+-- Metadata visibility is instance-wide; review and approve before production.
 GRANT VIEW ANY DEFINITION TO [dhc_source_collector];
 
 IF @GrantAlterTrace=1

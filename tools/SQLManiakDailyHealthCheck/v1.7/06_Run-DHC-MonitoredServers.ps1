@@ -27,7 +27,9 @@ param(
     [string]$SqlFile = (Join-Path $PSScriptRoot 'SQLManiak_Daily_Health_Check_v1_5_CSV.sql'),
     [string]$TempDBSqlFile = (Join-Path $PSScriptRoot '02_TempDB_Collect.sql'),
     [string]$CapacitySqlFile = (Join-Path $PSScriptRoot '43_CapacityCollect.sql'),
-    [switch]$SkipCapacity
+    [switch]$SkipCapacity,
+    [switch]$SkipLinkedServer,
+    [hashtable]$LinkedServerProbeByInstance = @{}
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -192,6 +194,8 @@ foreach($item in $instances) {
             JsonBatchRows = $JsonBatchRows
             CapacitySqlFile = $CapacitySqlFile
             SkipCapacity = [bool]$SkipCapacity
+            SkipLinkedServer = [bool]$SkipLinkedServer
+            LinkedServerProbeAllowlist = $(if($LinkedServerProbeByInstance.ContainsKey($item.ServerInstance)){[string[]]$LinkedServerProbeByInstance[$item.ServerInstance]}else{[string[]]@()})
             TrustServerCertificate = [bool]$TrustServerCertificate
         }
         if($null -ne $SqlCredentialByServer) {
