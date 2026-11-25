@@ -1,8 +1,10 @@
 # SQLManiak Daily Health Check v1.7
 
-**Instrukcja produkcyjna:** [Architektura, instalacja i eksploatacja](PRODUCTION_DEPLOYMENT.md).
+**Dokumentacja:** [Architektura](ARCHITECTURE.md) · [Instalacja i eksploatacja](PRODUCTION_DEPLOYMENT.md) · [Audyt SQL](SOURCE_SQL_AUDIT.md).
 
-Repozytorium i instalatory: SQL Server 2022+. Źródło SQL Server 2019 wymaga osobnego pilotażu; SQL Server 2016 poza zakresem. Wymagany zewnętrzny plik `SQLManiak_Daily_Health_Check_v1_5_CSV.sql` (nie jest częścią Git).
+Repozytorium i instalatory: SQL Server 2022+. Źródło SQL Server 2019 wymaga osobnego pilotażu; SQL Server 2016 poza zakresem. Wymagany bazowy skrypt [SQLManiak_Daily_Health_Check_v1_5_CSV.sql](SQLManiak_Daily_Health_Check_v1_5_CSV.sql) jest teraz częścią pakietu. Nie trzeba kopiować go z innego repozytorium.
+
+SHA256 audytowanej wersji: `8978B06A630F24D672EDD78721B1B8A4A84DD6CCC724B9B87DF4DBB847DA67B8`. `.gitattributes` wyłącza normalizację zakończeń linii dla tego pliku. Przed wdrożeniem sprawdzić hash; audyt statyczny nie zastępuje pilotażu.
 
 - 37: czysta instalacja centralnego repozytorium (alternatywnie 34 i modularne definicje).
 - 38: konta i uprawnienia źródeł (alternatywnie 35).
