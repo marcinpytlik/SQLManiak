@@ -321,6 +321,63 @@ END CATCH;
     [System.Text.RegularExpressions.MatchEvaluator]{param($m) $replacement})
 }
 
+function Update-JobsDependency([string]$SqlText) {
+ # Keep v1.5 on disk unchanged. Fail closed for unrecognised SQL versions.
+ $rules=@(
+  @{
+   Pattern='(?m)^(/\* 3\. All SQL Server Agent jobs and recent failures \*/\r?\n)BEGIN TRY'
+   Replacement=@'
+$1CREATE TABLE #Jobs(
+ job_id uniqueidentifier NOT NULL, JobName sysname NOT NULL,
+ IsEnabled tinyint NULL, IsRunning int NOT NULL, RunningSince datetime NULL,
+ LastRunTime datetime NULL, LastRunStatus int NULL, LastMessage nvarchar(4000) NULL,
+ LastRunResult varchar(32) NOT NULL
+);
+DECLARE @JobsCollectionSucceeded bit=0;
+BEGIN TRY
+'@
+  },
+  @{
+   Pattern='(?m)^(\s*)SELECT j\.job_id, j\.name AS JobName, j\.enabled AS IsEnabled,'
+   Replacement='$1INSERT #Jobs(job_id,JobName,IsEnabled,IsRunning,RunningSince,LastRunTime,LastRunStatus,LastMessage,LastRunResult) SELECT j.job_id, j.name AS JobName, j.enabled AS IsEnabled,'
+  },
+  @{
+   Pattern='(?m)^[ \t]*INTO #Jobs[ \t]*\r?\n'
+   Replacement=''
+  },
+  @{
+   Pattern="(?m)^END TRY\r?\nBEGIN CATCH\r?\n[ \t]*INSERT #Alerts VALUES \('WARNING','JOBS',NULL,ERROR_MESSAGE\(\)\);\r?\nEND CATCH;"
+   Replacement=@'
+    SET @JobsCollectionSucceeded=1;
+END TRY
+BEGIN CATCH
+    INSERT #Alerts VALUES ('WARNING','JOBS',NULL,CONCAT('COLLECTION_FAILED: ',ERROR_MESSAGE()));
+END CATCH;
+'@
+  },
+  @{
+   Pattern='(?m)^BEGIN TRY\r?\n([ \t]*CREATE TABLE #ScheduleCoverage\()'
+   Replacement=@'
+BEGIN TRY
+    IF @JobsCollectionSucceeded=0
+        THROW 51071,'DEPENDENCY_FAILED: JOBS collection unavailable; schedule inference skipped.',1;
+$1
+'@
+  },
+  @{
+   Pattern="(?m)INSERT #Alerts VALUES \('WARNING','JOB SCHEDULE',NULL,ERROR_MESSAGE\(\)\);"
+   Replacement="INSERT #Alerts VALUES ('WARNING','JOB SCHEDULE',NULL,CONCAT('COLLECTION_FAILED: ',ERROR_MESSAGE()));"
+  }
+ )
+ foreach($rule in $rules){
+  if(([regex]::Matches($SqlText,$rule.Pattern)).Count -ne 1){
+   throw "DHC JOBS dependency rewrite: expected exactly one known anchor: $($rule.Pattern)"
+  }
+  $SqlText=[regex]::Replace($SqlText,$rule.Pattern,$rule.Replacement)
+ }
+ return $SqlText
+}
+
 function Query-Source([string]$QueryFile,[string]$Prefix='') {
  $args=@{ServerInstance=$ServerInstance;Database='master';QueryTimeout=$QueryTimeout;ConnectionTimeout=$ConnectionTimeout;
          OutputAs='DataSet';ErrorAction='Stop'}
@@ -336,6 +393,7 @@ function Query-Source([string]$QueryFile,[string]$Prefix='') {
   $args.Query=[regex]::Replace($args.Query,$pattern,'${1}0${2}')
   $args.Query=Update-ErrorLogScan $args.Query
   $args.Query=Update-AutogrowthScan $args.Query
+  $args.Query=Update-JobsDependency $args.Query
  }
  $args.Query=$Prefix+$args.Query
  return @(Invoke-Sqlcmd @args)
@@ -456,10 +514,10 @@ try {
  foreach($row in $summaryTable.Rows) {
   $sev=[string]$row['Severity'];if($sev -notin @('CRITICAL','WARNING')){continue}
   Add-Alert $sev ([string]$row['Area']) $(if($row.IsNull('ObjectName')){''}else{[string]$row['ObjectName']}) ([string]$row['Details'])
-  if([string]$row['Details'] -match '(?i)permission was denied|permission denied|access is denied|does not have permission|not authorized|odmowa dostępu|odmówiono uprawnień'){
+  if([string]$row['Details'] -match '(?i)COLLECTION_FAILED:|DEPENDENCY_FAILED:|permission was denied|permission denied|access is denied|does not have permission|not authorized|odmowa dostępu|odmówiono uprawnień'){
    $status='PARTIAL'
-   $moduleErrors.Add("Main SQL: possible access denial in $($row['Area']); see alerts.")
-   Add-Alert 'WARNING' 'COLLECTION CONTRACT' ([string]$row['Area']) 'Possible permission denial reported by legacy collector; review original alert.'
+   $moduleErrors.Add("Main SQL: collection failure or possible access denial in $($row['Area']); see alerts.")
+   Add-Alert 'WARNING' 'COLLECTION CONTRACT' ([string]$row['Area']) 'Collection failure or possible permission denial reported by legacy collector; review original alert.'
   }
  }
  }
