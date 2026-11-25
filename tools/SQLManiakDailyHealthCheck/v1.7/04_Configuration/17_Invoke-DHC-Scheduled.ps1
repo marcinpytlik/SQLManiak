@@ -39,7 +39,7 @@ foreach($entry in $cfg.Targets.PSObject.Properties) {
  $credentials[[string]$entry.Name]=Read-Cred ([string]$entry.Value)
 }
 try {
- $runner=Join-Path $PSScriptRoot '06_Run-DHC-MonitoredServers.ps1'
+ $runner=Join-Path $PSScriptRoot '../03_Collector/06_Run-DHC-MonitoredServers.ps1'
  $results=@(& $runner -RepositoryConnectionString $b.ConnectionString `
    -SqlCredentialByServer $credentials -Environment $Environment -Execute:$Execute `
    -TrustServerCertificate:([bool]$cfg.TrustServerCertificate) `

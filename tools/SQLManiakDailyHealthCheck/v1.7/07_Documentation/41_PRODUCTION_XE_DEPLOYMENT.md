@@ -1,5 +1,7 @@
 # SQLManiak DHC v1.7 — SQL Server 2022+ production XE deployment
 
+> Ścieżki poleceń PowerShell w tym dokumencie są względem głównego katalogu v1.7. Zachować strukturę podkatalogów; pełny wykaz plików i katalogów: [README](../README.md). Przed instalacją uruchomić ` .\05_Validation\Test-DHC-Package.ps1 `.
+
 **Status: production pilot candidate (SQL Server 2022+). Docker SQL Server 2022 LAB S10.3–S10.8 passed; this revision suppresses a legacy informational HISTORY notice and requires one follow-up regression run before merging. FCI and production-specific checks are still required.**
 All-in-one SQL installers are T-SQL for SSMS. Scheduled collector runtime remains PowerShell 7.5+.
 Do not install over the existing running collector until approved cutover.

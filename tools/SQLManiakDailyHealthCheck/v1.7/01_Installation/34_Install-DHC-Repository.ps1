@@ -59,7 +59,7 @@ $files=@('01_Repository.sql','04_MonitoredServers.sql','08_ExecutionLog.sql',
          '14_RunningWatch.sql','42_CapacityRepository.sql','44_CapacityForecast.sql','49_LinkedServerReports.sql',
          '20_RepositoryLeastPrivilege.sql')
 foreach($file in $files){
- if(-not(Test-Path -LiteralPath (Join-Path $PSScriptRoot $file) -PathType Leaf)){throw "Missing prerequisite: $file"}
+ if(-not(Test-Path -LiteralPath (Join-Path (Join-Path $PSScriptRoot '../02_Repository') $file) -PathType Leaf)){throw "Missing prerequisite: $file"}
 }
 if(-not $Apply){
  Write-Host "PREVIEW: deploy $($files -join ', ') to $ServerInstance and map $CollectorLogin to dhc_collector."
@@ -79,7 +79,7 @@ try {
  try{
   foreach($file in $files){
    Write-Host "Deploying $file"
-   Invoke-Sqlcmd -ConnectionString $b.ConnectionString -InputFile (Join-Path $PSScriptRoot $file) -AbortOnError -ErrorAction Stop -QueryTimeout 180 | Out-Null
+   Invoke-Sqlcmd -ConnectionString $b.ConnectionString -InputFile (Join-Path (Join-Path $PSScriptRoot '../02_Repository') $file) -AbortOnError -ErrorAction Stop -QueryTimeout 180 | Out-Null
   }
  }finally{$b.Clear()}
  Ensure-Login $conn

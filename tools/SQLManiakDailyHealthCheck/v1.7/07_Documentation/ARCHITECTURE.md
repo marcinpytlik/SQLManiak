@@ -1,4 +1,6 @@
 # SQLManiak Daily Health Check v1.7
+
+> Ścieżki poleceń PowerShell w tym dokumencie są względem głównego katalogu v1.7. Zachować strukturę podkatalogów; pełny wykaz plików i katalogów: [README](../README.md). Przed instalacją uruchomić ` .\05_Validation\Test-DHC-Package.ps1 `.
 ## Architektura techniczna i model bezpieczeństwa
 
 Data: 25.11.2026. Kod bazowy: master po PR #142 (5cbb7e9). Status: kandydat do pilotażu produkcyjnego SQL Server 2022. Dokument uzupełnia [instrukcję instalacji i eksploatacji](PRODUCTION_DEPLOYMENT.md).
@@ -77,9 +79,9 @@ $map = @{
     'FCI-B\SQL01' = (Get-Credential -UserName dhc_source_collector -Message 'FCI-B SQL01')
 }
 $dir = Join-Path $env:LOCALAPPDATA 'SQLManiakDHC-PROD'
-.\16_Save-DHC-SchedulerConfig.ps1 -RepositoryServer $repoServer -RepositoryCredential $repoCredential -SqlCredentialByServer $map -SecretsDirectory $dir
+.\04_Configuration\16_Save-DHC-SchedulerConfig.ps1 -RepositoryServer $repoServer -RepositoryCredential $repoCredential -SqlCredentialByServer $map -SecretsDirectory $dir
 $config = Join-Path $dir 'scheduler.json'
-.\21_Test-SchedulerIdentity.ps1 -ConfigPath $config -Environment PROD -CheckSqlPreview
+.\05_Validation\21_Test-SchedulerIdentity.ps1 -ConfigPath $config -Environment PROD -CheckSqlPreview
 ```
 
 Zastąpić symboliczne endpointy rzeczywistymi wartościami i dodać wszystkie zatwierdzone źródła. Wykonać pod rzeczywistą tożsamością zadania. Nie drukować connection string, nie commitować sekretów. Skrypt 16 odmawia nadpisania istniejącego katalogu; rotacja przez nowy katalog, weryfikację i przełączenie zadania. Zmiana hosta lub konta wymaga ponownego zapisu poświadczeń. DPAPI nie zastępuje zabezpieczeń hosta.
@@ -118,7 +120,7 @@ Runner przetwarza źródła sekwencyjnie; domyślny interwał inventory to 1440 
 | Linked Server | Metadane, widoczne mapowania, dowody ERRORLOG, opcjonalna sonda |
 | XE | Automatyczny dodatni wzrost plików, ograniczona historia rollover |
 
-Obowiązkowy [SQLManiak_Daily_Health_Check_v1_5_CSV.sql](SQLManiak_Daily_Health_Check_v1_5_CSV.sql) jest dostarczany w katalogu v1.7 w niezmienionej, audytowanej wersji. SHA256: `8978B06A630F24D672EDD78721B1B8A4A84DD6CCC724B9B87DF4DBB847DA67B8`. Lokalny `.gitattributes` wyłącza normalizację zakończeń linii. Kolektor adaptuje znane sekcje w pamięci i wymusza SaveHistory=0. Nie zapisuje historii na źródle; obecność starego schematu hc może jednak zmienić liczbę zestawów wynikowych. Przed pilotażem sprawdzić brak legacy hc.Sample zgodnie z [audytem](SOURCE_SQL_AUDIT.md).
+Obowiązkowy [SQLManiak_Daily_Health_Check_v1_5_CSV.sql](../03_Collector/SQLManiak_Daily_Health_Check_v1_5_CSV.sql) jest dostarczany w katalogu 03_Collector w niezmienionej, audytowanej wersji. SHA256: `8978B06A630F24D672EDD78721B1B8A4A84DD6CCC724B9B87DF4DBB847DA67B8`. Lokalny `.gitattributes` wyłącza normalizację zakończeń linii. Kolektor adaptuje znane sekcje w pamięci i wymusza SaveHistory=0. Nie zapisuje historii na źródle; obecność starego schematu hc może jednak zmienić liczbę zestawów wynikowych. Przed pilotażem sprawdzić brak legacy hc.Sample zgodnie z [audytem](SOURCE_SQL_AUDIT.md).
 
 ```mermaid
 erDiagram
@@ -153,4 +155,4 @@ Najpierw ręczny pilot jednej instancji 2022, potem weryfikacja kompletności, t
 
 ## 10. Podstawa i ograniczenia
 
-Źródła: [38](38_Configure-DHC-Source-AllInOne.sql), [16](16_Save-DHC-SchedulerConfig.ps1), [17](17_Invoke-DHC-Scheduled.ps1), [06](06_Run-DHC-MonitoredServers.ps1), [03](03_Run-DHC-v1_7.ps1), [37](37_Install-DHC-Repository-AllInOne.sql) i instrukcja produkcyjna. SQL Authentication potwierdzono w Docker SQL Server 2022. Windows FCI/Kerberos, SQL Server 2019, wydajność retencji i pełna kompatybilność raportów wymagają dalszej walidacji. Nazwy hostów, liczba instancji i interwały są przykładami. Dokument nie zmienia kodu wykonawczego ani produkcji.
+Źródła: [38](../01_Installation/38_Configure-DHC-Source-AllInOne.sql), [16](../04_Configuration/16_Save-DHC-SchedulerConfig.ps1), [17](../04_Configuration/17_Invoke-DHC-Scheduled.ps1), [06](../03_Collector/06_Run-DHC-MonitoredServers.ps1), [03](../03_Collector/03_Run-DHC-v1_7.ps1), [37](../01_Installation/37_Install-DHC-Repository-AllInOne.sql) i instrukcja produkcyjna. SQL Authentication potwierdzono w Docker SQL Server 2022. Windows FCI/Kerberos, SQL Server 2019, wydajność retencji i pełna kompatybilność raportów wymagają dalszej walidacji. Nazwy hostów, liczba instancji i interwały są przykładami. Dokument nie zmienia kodu wykonawczego ani produkcji.

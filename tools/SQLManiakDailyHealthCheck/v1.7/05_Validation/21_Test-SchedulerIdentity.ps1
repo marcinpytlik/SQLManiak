@@ -22,8 +22,8 @@ $ps= $PSVersionTable.PSVersion.ToString()
 $issues=[System.Collections.Generic.List[string]]::new()
 $path=[IO.Path]::GetFullPath($ConfigPath)
 $dir=Split-Path -Parent $path
-$runner=Join-Path $PSScriptRoot '17_Invoke-DHC-Scheduled.ps1'
-$source=Join-Path $PSScriptRoot 'SQLManiak_Daily_Health_Check_v1_5_CSV.sql'
+$runner=Join-Path $PSScriptRoot '../04_Configuration/17_Invoke-DHC-Scheduled.ps1'
+$source=Join-Path $PSScriptRoot '../03_Collector/SQLManiak_Daily_Health_Check_v1_5_CSV.sql'
 $config=$null
 Write-Host "Identity: $identity"
 Write-Host "Machine: $hostName; PowerShell: $ps"
