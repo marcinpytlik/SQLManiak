@@ -940,6 +940,21 @@ SELECT RunId,ServerInstance,StartedUTC,RunStatus,
 FROM dhc.vLinkedServerHistory WHERE SectionName='LINKED_SERVER_CONNECTIVITY';
 GO
 
+-- Observed transitions only; skipped probes break continuity.
+CREATE OR ALTER VIEW dhc.vLinkedServerStateChanges AS
+WITH samples AS (
+ SELECT *,LAG(ProbeStatus) OVER(PARTITION BY ServerInstance,LinkedServer ORDER BY StartedUTC,RunId) AS PreviousStatus,
+ LAG(StartedUTC) OVER(PARTITION BY ServerInstance,LinkedServer ORDER BY StartedUTC,RunId) AS PreviousSampleUTC
+ FROM dhc.vLinkedServerProbe
+)
+SELECT *,CASE WHEN ProbeStatus='SKIPPED' THEN 'SKIPPED'
+ WHEN PreviousStatus='PASS' AND ProbeStatus='FAILED' THEN 'OUTAGE'
+ WHEN PreviousStatus='FAILED' AND ProbeStatus='FAILED' THEN 'ONGOING OUTAGE'
+ WHEN PreviousStatus='FAILED' AND ProbeStatus='PASS' THEN 'RECOVERY'
+ WHEN PreviousStatus='PASS' AND ProbeStatus='PASS' THEN 'HEALTHY'
+ ELSE 'INITIAL / UNKNOWN' END AS StateChange
+FROM samples;
+GO
 /* ===== END 49_LinkedServerReports.sql ===== */
 
 /* ===== BEGIN 20_RepositoryLeastPrivilege.sql ===== */
@@ -1143,7 +1158,8 @@ INSERT @ExpectedObjects(Name,Type) VALUES
  (N'vMonitoringStatus','V'),(N'vMonitoringSummary','V'),
  (N'TryStartExecution','P'),(N'PurgeRuns','P'),
  (N'CapacityFileSample','U'),(N'CapacityLogSample','U'),(N'VolumeCapacityPolicy','U'),
- (N'vCapacityFilegroupCurrent','V'),(N'vCapacityForecast','V'),(N'vCapacityLogCurrent','V');
+ (N'vCapacityFilegroupCurrent','V'),(N'vCapacityForecast','V'),(N'vCapacityLogCurrent','V'),
+ (N'vLinkedServerHistory','V'),(N'vLinkedServerProbe','V'),(N'vLinkedServerStateChanges','V');
 IF EXISTS
 (
  SELECT 1 FROM @ExpectedObjects AS e
