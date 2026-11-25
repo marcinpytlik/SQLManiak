@@ -21,6 +21,14 @@ CREATE TABLE #CapLogs(
  RecoveryModel nvarchar(60) NULL
 );
 CREATE TABLE #CapErrors(DatabaseName sysname NOT NULL,Details nvarchar(2000) NOT NULL);
+-- Report visible online databases excluded by the access filter.
+-- Databases hidden by metadata permissions cannot be detected here.
+INSERT #CapErrors(DatabaseName,Details)
+SELECT name,N'LIMITED_ACCESS: Database is ONLINE but HAS_DBACCESS is not 1. Capacity measurements unavailable.'
+FROM sys.databases
+WHERE state=0 AND source_database_id IS NULL
+  AND ISNULL(HAS_DBACCESS(name),0)<>1;
+
 DECLARE @CapDB sysname,@CapId int,@CapSQL nvarchar(max);
 DECLARE cap_cursor CURSOR LOCAL FAST_FORWARD FOR
  SELECT name,database_id FROM sys.databases
