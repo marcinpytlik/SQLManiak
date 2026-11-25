@@ -12,6 +12,8 @@ param(
  [string]$TempDBSqlFile=(Join-Path $PSScriptRoot '02_TempDB_Collect.sql'),
  [string]$CapacitySqlFile=(Join-Path $PSScriptRoot '43_CapacityCollect.sql'),
  [switch]$SkipCapacity,
+ [switch]$SkipLinkedServer,
+ [string[]]$LinkedServerProbeAllowlist=@(),
  [PSCredential]$SqlCredential,
  [switch]$TrustServerCertificate,
  [switch]$SkipTempDB,
@@ -288,7 +290,7 @@ END CATCH;
     [System.Text.RegularExpressions.MatchEvaluator]{param($m) $replacement})
 }
 
-function Query-Source([string]$QueryFile) {
+function Query-Source([string]$QueryFile,[string]$Prefix='') {
  $args=@{ServerInstance=$ServerInstance;Database='master';QueryTimeout=$QueryTimeout;ConnectionTimeout=$ConnectionTimeout;
          OutputAs='DataSet';ErrorAction='Stop'}
  if ($null -ne $SqlCredential) { $args.Credential=$SqlCredential }
@@ -304,6 +306,7 @@ function Query-Source([string]$QueryFile) {
   $args.Query=Update-ErrorLogScan $args.Query
   $args.Query=Update-AutogrowthScan $args.Query
  }
+ $args.Query=$Prefix+$args.Query
  return @(Invoke-Sqlcmd @args)
 }
 function Remove-LegacyLocalHistoryNotice([System.Data.DataTable]$Table) {
@@ -400,6 +403,7 @@ try {
  # Optional capacity module: same run / transaction, isolated using a savepoint.
  # Database/file data are read-only at source. Partial failures are persisted as warnings.
  if(-not $SkipCapacity) {
+  $savedRows=$totalRows;$savedWarnings=$warnings;$savedCritical=$critical
   $transaction.Save('BeforeCapacity')
   try {
    $capTables=Get-Tables (Query-Source $CapacitySqlFile)
@@ -457,11 +461,62 @@ try {
    $status='PARTIAL'
    $capacityError=$_.Exception.Message
    $transaction.Rollback('BeforeCapacity')
+   $totalRows=$savedRows;$warnings=$savedWarnings;$critical=$savedCritical
    Add-Alert 'WARNING' 'CAPACITY COLLECTION' 'module' ('Capacity module failed: '+$capacityError)
   }
  }
 
+
+ # Linked server history uses the existing JSON batches and retention.
+ if(-not $SkipLinkedServer) {
+  $savedRows=$totalRows;$savedWarnings=$warnings;$savedCritical=$critical
+  $transaction.Save('BeforeLinkedServer')
+  try {
+   $ls=Get-Tables (Query-Source (Join-Path $PSScriptRoot '47_LinkedServerCollect.sql'))
+   $names=@('LINKED_SERVER_CONFIGURATION','LINKED_SERVER_LOGIN_MAPPING','LINKED_SERVER_METADATA_STATUS')
+   if($ls.Count -ne 3){throw 'Unexpected linked server result set count.'}
+   for($k=0;$k -lt 3;$k++){
+    if(-not $ls[$k].Columns.Contains('Section')){throw 'Linked server result missing Section.'}
+    Write-Batches $ls[$k] (300+$k) $names[$k]
+    $totalRows+=$ls[$k].Rows.Count
+   }
+   # Reuse existing ERRORLOG rows; evidence is not attribution to linked servers.
+   $events=[System.Data.DataTable]::new()
+   foreach($col in @('Section','LogDate','ProcessInfo','Text')){[void]$events.Columns.Add($col)}
+   foreach($t in $mainTables){
+    if($t.Columns.Contains('LogDate') -and $t.Columns.Contains('ProcessInfo') -and $t.Columns.Contains('Text')){
+     foreach($row in $t.Rows){
+      if([string]$row['Text'] -match 'ANONYMOUS LOGON'){
+       [void]$events.Rows.Add('LINKED_SERVER_AUTH_EVENTS',[string]$row['LogDate'],[string]$row['ProcessInfo'],[string]$row['Text'])
+      }
+     }
+    }
+   }
+   Write-Batches $events 303 'LINKED_SERVER_AUTH_EVENTS'
+   $totalRows+=$events.Rows.Count
+   if($events.Rows.Count -gt 0){Add-Alert 'WARNING' 'LINKED SERVER AUTH' 'ANONYMOUS LOGON' 'Anonymous logon evidence in collected ERRORLOG; origin not established.'}
+   $probeIndex=310
+   foreach($name in ($LinkedServerProbeAllowlist | Select-Object -Unique)){
+    if([string]::IsNullOrWhiteSpace($name) -or $name.Length -gt 128){throw 'Invalid linked server allowlist name.'}
+    $prefix="DECLARE @ProbeName sysname=N'"+$name.Replace("'","''")+"';"+[Environment]::NewLine
+    $probe=Get-Tables (Query-Source (Join-Path $PSScriptRoot '48_LinkedServerConnectivity.sql') $prefix)
+    if($probe.Count -ne 1 -or $probe[0].Rows.Count -ne 1){throw 'Unexpected linked server probe output.'}
+    Write-Batches $probe[0] $probeIndex 'LINKED_SERVER_CONNECTIVITY'
+    $probeIndex++;$totalRows++
+    $row=$probe[0].Rows[0]
+    if([string]$row['ProbeStatus'] -eq 'FAILED'){Add-Alert 'WARNING' 'LINKED SERVER CONNECTIVITY' $name ([string]$row['Details'])}
+   }
+  } catch {
+   $message=$_.Exception.Message
+   $transaction.Rollback('BeforeLinkedServer')
+   $totalRows=$savedRows;$warnings=$savedWarnings;$critical=$savedCritical
+   $status='PARTIAL'
+   Add-Alert 'WARNING' 'LINKED SERVER COLLECTION' 'module' $message
+  }
+ }
+
  if(-not $SkipTempDB) {
+  $savedRows=$totalRows;$savedWarnings=$warnings;$savedCritical=$critical
   $transaction.Save('BeforeTempDB')
   try {
    $tempTables=Get-Tables (Query-Source $TempDBSqlFile)
@@ -507,6 +562,7 @@ try {
   } catch {
    $tempdbError=$_.Exception.Message;$status='PARTIAL'
    $transaction.Rollback('BeforeTempDB')
+   $totalRows=$savedRows;$warnings=$savedWarnings;$critical=$savedCritical
    Add-Alert 'WARNING' 'TEMPDB' 'tempdb' ('Collector failed: '+$tempdbError)
    # A savepoint ensures no incomplete TempDB details remain after a failed module.
   }
