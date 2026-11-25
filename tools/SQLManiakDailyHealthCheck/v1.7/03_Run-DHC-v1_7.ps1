@@ -39,6 +39,37 @@ function Get-Tables([object[]]$Results) {
  }
  Write-Output -NoEnumerate $list
 }
+function Test-MainCollectionContract($Tables) {
+ # DHC v1.5 CSV + v1.7 XE rewrite: LAB-observed column signatures.
+ # Match exact column sets (case insensitive), not row count or ordinal.
+ $contract=[ordered]@{
+  INSTANCE='Section,SqlServerName,ConnectedInstance,ActiveNode,IsClustered,ProductVersion,ProductLevel,SqlServerStartTime,FromTime,ToTime'
+  SERVICES='Section,servicename,status_desc,startup_type_desc,last_startup_time,is_clustered,cluster_nodename'
+  ERRORLOG='Section,LogDate,ProcessInfo,Message'
+  JOBS_CURRENT='Section,JobName,IsEnabled,IsRunning,RunningSince,LastRunTime,LastRunResult,LastMessage'
+  JOBS_STEPS='Section,JobName,step_id,step_name,Status,RunTime,sql_message_id,sql_severity,message'
+  DISK_VOLUMES='Section,volume_mount_point,logical_volume_name,TotalGB,FreeGB,FreePercent,TotalBytes,FreeBytes'
+  DATABASES_BACKUPS='Section,DatabaseName,state_desc,recovery_model_desc,is_read_only,is_in_standby,LastFull,LastDiff,LastLog'
+  TRANSACTION_LOG='Section,DatabaseName,LogSizeMB,UsedPercent'
+  BLOCKING='Section,BlockedSessionId,BlockerSessionId,DatabaseName,wait_type,WaitSeconds,status,host_name,program_name,login_name,RunningStatement'
+  FILES_AUTOGROWTH='Section,DatabaseName,LogicalFileName,type_desc,AllocatedMB,GrowthSetting,MaxSizeSetting,PhysicalName'
+  MISSED_JOBS='Section,JobName,ScheduleName,ExpectedAt'
+  SCHEDULE_DIAGNOSTICS='Section,JobName,ScheduleName,Reason'
+  HISTORY='Section,Message'
+  AUTOGROWTH_EVENTS='Section,DatabaseName,LogicalFileName,FileType,AllocatedMB,GrowthSetting,HistoryStatus,Events24h,GrowthMB24h,LastAutoGrowth,MaxDurationMs24h,EventsInAvailableTrace,PhysicalName'
+  LOG_OVERSIZING='Section,DatabaseName,RecoveryModel,DataSizeGB,LogSizeGB,LogToDataRatio,LogUsedPercent,UsedLogMB,FreeLogMB,LogReuseWait,TotalVLF,ActiveVLF,ActiveVLFSizeMB,VLFStatus,Assessment'
+  SUMMARY='Section,Severity,Area,ObjectName,Details'
+  COUNTS='Section,CriticalAlerts,WarningAlerts,InfoAlerts,SinceTime,UntilTime'
+ }
+ $observed=@(foreach($t in $Tables){ ($t.Columns | ForEach-Object {$_.ColumnName.ToLowerInvariant()} | Sort-Object) -join ',' })
+ foreach($id in $contract.Keys){
+  $signature=(($contract[$id].ToLowerInvariant() -split ',') | Sort-Object) -join ','
+  $matches=@($observed | Where-Object {$_ -eq $signature}).Count
+  if($matches -ne 1){ "Contract v1: $id expected one matching result schema; found $matches." }
+ }
+ if($Tables.Count -ne $contract.Count){ "Contract v1: expected $($contract.Count) result sets; observed $($Tables.Count)." }
+}
+
 function Convert-Row([System.Data.DataRow]$Row) {
  $values=[ordered]@{}
  foreach($c in $Row.Table.Columns) {
@@ -412,12 +443,26 @@ try {
   $totalRows+=$t.Rows.Count
  }
  $summary=@($mainTables | Where-Object { $_.Columns.Contains('Section') -and $_.Columns.Contains('Severity') -and $_.Columns.Contains('Area') -and $_.Columns.Contains('Details') })
- if($summary.Count -ne 1) {throw "Expected one DHC summary result set, found $($summary.Count)."}
- foreach($row in $summary[0].Rows) {
+ foreach($issue in @(Test-MainCollectionContract $mainTables)){
+  $status='PARTIAL';$moduleErrors.Add('Main SQL: '+$issue)
+  Add-Alert 'WARNING' 'COLLECTION CONTRACT' 'Main SQL' $issue
+ }
+ if($summary.Count -ne 1){
+  $status='PARTIAL';$message="Expected one DHC summary result set, found $($summary.Count)."
+  $moduleErrors.Add('Main SQL: '+$message)
+  Add-Alert 'WARNING' 'COLLECTION CONTRACT' 'SUMMARY' $message
+ }
+ foreach($summaryTable in $summary){
+ foreach($row in $summaryTable.Rows) {
   $sev=[string]$row['Severity'];if($sev -notin @('CRITICAL','WARNING')){continue}
   Add-Alert $sev ([string]$row['Area']) $(if($row.IsNull('ObjectName')){''}else{[string]$row['ObjectName']}) ([string]$row['Details'])
+  if([string]$row['Details'] -match '(?i)permission was denied|permission denied|access is denied|does not have permission|not authorized|odmowa dostępu|odmówiono uprawnień'){
+   $status='PARTIAL'
+   $moduleErrors.Add("Main SQL: possible access denial in $($row['Area']); see alerts.")
+   Add-Alert 'WARNING' 'COLLECTION CONTRACT' ([string]$row['Area']) 'Possible permission denial reported by legacy collector; review original alert.'
+  }
  }
-
+ }
 
  # Optional capacity module: same run / transaction, isolated using a savepoint.
  # Database/file data are read-only at source. Partial failures are persisted as warnings.
