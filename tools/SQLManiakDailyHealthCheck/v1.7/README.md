@@ -694,7 +694,7 @@ Forecast is linear and needs **at least five COMPLETE measurements over at least
 - Source: read-only metadata/DMV queries and local \`#temp\` tables; no \`ALTER DATABASE\`, \`ADD FILE\`, \`SHRINK\`, or backup commands.
 - Repository: inserts snapshots and alerts and updates run status; deployment scripts require a DBA. Volume policies are changed only by explicit DBA commands.
 - SQL Server 2022 may require \`VIEW SERVER PERFORMANCE STATE\` for \`sys.dm_os_volume_stats\`, and database metadata/log DMV permissions must be checked using the service collector identity. The existing source permissions audit scripts should be rerun.
-- Use \`45_CapacityChecks.sql\` to verify measurements, missing policies, and forecasts. Validate installation and collection first in Docker LAB and then on a staging SQL instance before production. There is no claim of an executed SQL Server integration test for this extension.
+- Use \`45_CapacityChecks.sql\` to verify measurements, missing policies, and forecasts. Validate installation and collection first in Docker LAB and then on a staging SQL instance before production. SQL Server 2022 Docker integration evidence is recorded below; production-scale forecasting is not validated.
 - The original v1.7 scheduling and RUNNING lock/claim behavior stays unchanged. No scheduler is installed or enabled by this extension.
 
 
@@ -707,7 +707,7 @@ SQL Server 2016 is no longer a supported target for this project. Existing 2022 
 - 49_LinkedServerReports.sql: deploy on repository (included in both installers).
 - 50_LinkedServerChecks.sql: read-only repository checks.
 
-History is stored in existing dhc.ResultBatch, with reserved indexes 300–303 and 310+ for probes. No new tables, grants or retention procedure needed. Views expose history and probe outcomes to a DBA; no new Grafana access to login metadata is granted. Empty result sets retain schema. NO VISIBLE MAPPING is not proof of absent mapping. ANONYMOUS LOGON is evidence from already collected ERRORLOG result rows, not proof of linked server origin or complete audit coverage.
+History is stored in existing dhc.ResultBatch, with reserved indexes 300–303 and 310+ for probes. Linked-server history uses existing tables; retention hardening is described below. Views expose history and probe outcomes to a DBA; no new Grafana access to login metadata is granted. Empty result sets retain schema. NO VISIBLE MAPPING is not proof of absent mapping. ANONYMOUS LOGON is evidence from already collected ERRORLOG result rows, not proof of linked server origin or complete audit coverage.
 
 Single source: pass -LinkedServerProbeAllowlist @('LAB_LINK') explicitly to 03_Run-DHC-v1_7.ps1. Multi-source runner: pass -LinkedServerProbeByInstance @{'SQL01'=@('LAB_LINK')} with exact inventory endpoints. Empty allowlist means no remote connections; -SkipLinkedServer disables the module. Only enabled data access and effective finite connect/query timeouts <=15/30 seconds qualify. No timeout or linked server configuration changes. Driver/provider behavior can exceed these limits; outer QueryTimeout also applies. Never probe non-SQL targets with this template. Tests use collector credentials, not necessarily the affected interactive user. Provider errors may escape TRY/CATCH; module failures mark PARTIAL. 
 
@@ -733,8 +733,42 @@ Failure 11001 (TCP Provider: No such host is known) was stored with a WARNING al
 - ERRORLOG evidence accepts Message or Text column names. Anonymous logon evidence is not attribution. Positive evidence test remains pending.
 - Deploy updated 49_LinkedServerReports.sql on existing repositories. The DBA-only vLinkedServerStateChanges view classifies observed transitions, with SKIPPED breaking continuity; absent/passive runs are not observations. No automatic notification or exact outage duration is implied.
 - PowerShell connection builder examples should use indexer keys, e.g. $builder['Data Source'], $builder['Initial Catalog'], $builder['User ID'], $builder['Connect Timeout']; never print the password-bearing connection string.
-- Regression gate: re-run baseline, stopped/restored remote, passive, missing-table preflight (disposable repository), module exception and counter checks; verify state changes and positive authentication evidence. Test dedicated repository collector with existing grants, source least privilege, retention dry run and disposable deletion, then Windows 2019/2022 Kerberos pilot. Do not merge before review and regression. No new runtime validation of these hardening changes has been performed.
+- Regression gate: re-run baseline, stopped/restored remote, passive, missing-table preflight (disposable repository), module exception and counter checks; verify state changes and positive authentication evidence. Test dedicated repository collector with existing grants, source least privilege, retention dry run and disposable deletion, then Windows 2019/2022 Kerberos pilot. Do not merge before review and regression. Subsequent runtime evidence is recorded below.
 
 ### 2026-11-25 LAB — source permission regression
 
-With separate non-sysadmin source and repository logins, passive collection initially returned 13 main / 23 stored sets and 66 rows. VIEW ANY DEFINITION restored file and linked-server metadata (95 rows, still 13 main sets). Granting SELECT on msdb.dbo.sysschedules and EXECUTE on msdb.dbo.agent_datetime to dhc_agent_history_reader restored 17 main / 27 stored sets, 96 rows, COMPLETE, no module errors (RunId 343e15f5-9118-403e-821d-4a793f4cd441). No ALTER TRACE grant was needed for this LAB run with XE unavailable. The SQL-only installer already included these grants; PowerShell installer is now aligned. Review instance-wide metadata visibility before production. Counts are not proof of semantic completeness; audit sections and alerts. Active probe with the restricted source identity, XE enabled, SQL Server 2019, and Windows Kerberos remain separate tests.
+With separate non-sysadmin source and repository logins, passive collection initially returned 13 main / 23 stored sets and 66 rows. VIEW ANY DEFINITION restored file and linked-server metadata (95 rows, still 13 main sets). Granting SELECT on msdb.dbo.sysschedules and EXECUTE on msdb.dbo.agent_datetime to dhc_agent_history_reader restored 17 main / 27 stored sets, 96 rows, COMPLETE, no module errors (RunId 343e15f5-9118-403e-821d-4a793f4cd441). No ALTER TRACE grant was needed for this LAB run with XE unavailable. The SQL-only installer already included these grants; PowerShell installer is now aligned. Review instance-wide metadata visibility before production. Counts are not proof of semantic completeness; audit sections and alerts. The restricted source active probe was subsequently tested; XE enabled, SQL Server 2019, and Windows Kerberos remain separate tests.
+
+
+### Final functional LAB evidence — 2026-11-25
+
+Operator-reported SQL Server 2022 Linux Docker results (not an automated CI run):
+
+| Scenario | Observed result |
+|---|---|
+| Hardened baseline | COMPLETE, 17 source / 28 stored sets, 100 JSON rows; 9b0941ed-ca83-4303-a9c5-1013619644eb |
+| Missing repository tables | Preflight rejected disposable empty database before collection |
+| Intentional Capacity exception | PARTIAL, 17/25 sets, 85 rows; linked probe preserved; 3ccf2308-3cff-4c5f-a4b3-4db069142344 |
+| Remote login disabled | FAILED probe 18470, COMPLETE collection; 7c9c5146-ed56-46ca-a46a-712fce60814c |
+| Repository least privilege | COMPLETE 17/28; collector could insert, not delete, alter or purge; ef9994bc-4f61-4333-88ef-9ed5a6d853d0 |
+| Inaccessible model database | PARTIAL, explicit LIMITED_ACCESS; 6b443ccc-7b27-4227-bb61-a0b18e6469e5 |
+| Restored model access (LAB only) | COMPLETE, 11 file and 4 log samples; ead218b5-aa63-4e59-92eb-7ef92fb68c76 |
+| Missing Agent EXECUTE permission | PARTIAL, 13/23 sets; independent modules preserved; 6774fc6c-82e6-4b6b-9441-a18b078ea5b2 |
+| Stable section indexes | 23 surviving sets matched baseline; expected missing indexes 4,5,11,12; 93982630-4634-4dd8-8959-61e98b48654e |
+| Restricted collector linked probe | 7416 missing mapping, 18456 invalid password, then PASS (7 ms), remote SQL login dhc_linked_probe; c6110352-3547-420d-a72e-37cfe4b960c9 |
+| State changes | Separate histories by ServerInstance, LinkedServer and CollectorLogin; observed RECOVERY for restricted collector |
+
+Do not automatically provision a model user in production: model users may propagate to newly created databases. Source access gaps must be reviewed per database. Stable indexes apply to new runs; old partial runs were not rewritten.
+
+### Retention contract and LAB evidence
+
+`dhc.PurgeRuns @OlderThanUTC, @DryRun=1, @BatchSize=100` is manual. Dry-run counts all eligible runs, not just one batch. Actual deletion processes at most one batch (1–1000 runs), ordered by StartedUTC and RunId. Only COMPLETE, PARTIAL or FAILED runs with non-NULL FinishedUTC qualify. NULL parameters are rejected; actual deletion rejects an ambient transaction. XACT_ABORT and TRY/CATCH protect the batch; the result reports deleted rows per table. Batch size limits parent runs, not child rows. Deploy 42_CapacityRepository.sql on an existing full repository; the base-only 01 procedure covers only base tables until 42 is applied. Both definitions are embedded in installer 37. Do not rerun 01 alone on a capacity-enabled repository.
+
+LAB: original and hardened dry-run both returned 7 candidates with all 22 existing runs preserved. Five synthetic runs dated 2020 were inserted; three eligible, two protected (RUNNING and missing FinishedUTC). Batch size 2 deleted the oldest two with alerts and JSON batches. A synthetic FAILED run with one row in each of eight tables was protected by a temporary AFTER DELETE trigger raising 51999: XACT_STATE=0, @@TRANCOUNT=0, all eight rows preserved. Trigger removed; retry deleted one row per table. Remaining two synthetic runs were explicitly finalized and purged. Final checks: 22 original runs (18 COMPLETE, 4 PARTIAL), zero synthetic runs, zero eligible before 2021, no test trigger. No production purge or scheduler enablement occurred.
+
+### Remaining validation before production rollout
+
+- Dedicated SQL Server 2019 pilot, Windows FCI/Kerberos delegation with actual service identity, and XE-enabled collection permissions.
+- Positive ANONYMOUS LOGON evidence fixture, SKIPPED probe scenarios, unknown/duplicate main result schema fixtures and full downstream report compatibility audit remain unverified.
+- Retention throughput, log growth and concurrent collector/purge behavior at production volume are unmeasured. No automatic retention schedule is installed. Review metadata permissions and capacity forecasts before production use.
+- The external v1.5 CSV collector is required; contract validation is tied to the tested schema. No claim of universal compatibility or root-cause determination for the original Kerberos incident.
