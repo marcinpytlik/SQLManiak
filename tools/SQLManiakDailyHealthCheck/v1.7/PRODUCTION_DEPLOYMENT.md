@@ -230,7 +230,7 @@ $probes[$source] = @('REPLACE_WITH_APPROVED_LINK')
 ```
 vLinkedServerStateChanges rozdziela historie według źródła, linked servera i CollectorLogin. PASS→FAILED = OUTAGE, FAILED→PASS = RECOVERY; SKIPPED przerywa ciągłość, pasywny przebieg nie jest pomiarem dostępności. Nie oznacza dokładnego czasu awarii. SQL auth w LAB nie potwierdza Kerberos double hop.
 
-Grafana: użyć osobnego dhc_grafana_reader, wyłącznie wybrane widoki z 36, bez raw JSON i nowych uprawnień do linked login metadata. Dashboard MVP znajduje się poza katalogiem v1.7: [instrukcja portalu](../../../dashboards/sqlserver/SQLManiak-DHC-Portal-MVP.md). Nie zakładać, że wszystkie nowe widoki są dostępne w Grafana.
+Grafana: użyć osobnego dhc_grafana_reader, wyłącznie wybrane tabele i widoki z 36, bez raw JSON i nowych uprawnień do linked login metadata. Dashboard MVP znajduje się poza katalogiem v1.7: [instrukcja portalu](../../../dashboards/sqlserver/SQLManiak-DHC-Portal-MVP.md). Nie zakładać, że wszystkie nowe widoki są dostępne w Grafana.
 
 ## 11. Retencja i utrzymanie
 
@@ -240,7 +240,7 @@ DECLARE @Cutoff datetime2(3)=DATEADD(DAY,-90,SYSUTCDATETIME());
 EXEC dhc.PurgeRuns @OlderThanUTC=@Cutoff,@DryRun=1,@BatchSize=100;
 ```
 
-90 dni to przykład do uzgodnienia, nie przyjęta polityka banku. Domyślnie DryRun=1, liczy wszystkich kandydatów. DryRun=0 usuwa jedną partię maksymalnie 100 (zakres 1–1000) najstarszych zakończonych przebiegów, wraz z siedmioma tabelami zależnymi; bez RUNNING i bez FinishedUTC. XACT_ABORT, TRY/CATCH, rollback całej partii, brak zewnętrznej transakcji. Nie uruchamiać automatycznie przed benchmarkiem logu, blokad i backupu. Limit dotyczy przebiegów, nie liczby rekordów szczegółowych. Ręcznie powtarzać zatwierdzoną operację po sprawdzeniu wyników. ExecutionLog pozostaje poza retencją.
+90 dni to przykład do uzgodnienia, nie przyjęta polityka banku. Domyślnie DryRun=1, liczy wszystkich kandydatów. DryRun=0 usuwa jedną partię maksymalnie 100 (zakres 1–1000) najstarszych zakończonych przebiegów, wraz z siedmioma tabelami zależnymi; wykluczając RUNNING oraz każdy przebieg z FinishedUTC IS NULL. XACT_ABORT, TRY/CATCH, rollback całej partii, brak zewnętrznej transakcji. Nie uruchamiać automatycznie przed benchmarkiem logu, blokad i backupu. Limit dotyczy przebiegów, nie liczby rekordów szczegółowych. Ręcznie powtarzać zatwierdzoną operację po sprawdzeniu wyników. ExecutionLog pozostaje poza retencją.
 
 Codziennie: sprawdzić ostatnie próby, świeżość COMPLETE, PARTIAL, FAILED i zaległe RUNNING. Nie kasować/odblokowywać RUNNING bez potwierdzenia, że proces nie działa. Obserwować rozmiar i autogrowth repozytorium, log, czas kolekcji i przyrost JSON. Regularnie sprawdzać backup oraz odtworzenie. Nie włączać produkcyjnych sond bez oddzielnego testu.
 
