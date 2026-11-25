@@ -39,7 +39,7 @@ function Get-Tables([object[]]$Results) {
  }
  Write-Output -NoEnumerate $list
 }
-function Test-MainCollectionContract($Tables) {
+function Get-MainCollectionContract {
  # DHC v1.5 CSV + v1.7 XE rewrite: LAB-observed column signatures.
  # Match exact column sets (case insensitive), not row count or ordinal.
  $contract=[ordered]@{
@@ -61,7 +61,14 @@ function Test-MainCollectionContract($Tables) {
   SUMMARY='Section,Severity,Area,ObjectName,Details'
   COUNTS='Section,CriticalAlerts,WarningAlerts,InfoAlerts,SinceTime,UntilTime'
  }
- $observed=@(foreach($t in $Tables){ ($t.Columns | ForEach-Object {$_.ColumnName.ToLowerInvariant()} | Sort-Object) -join ',' })
+ return $contract
+}
+function Get-MainResultSignature($Table) {
+ return (($Table.Columns | ForEach-Object {$_.ColumnName.ToLowerInvariant()} | Sort-Object) -join ',')
+}
+function Test-MainCollectionContract($Tables) {
+ $contract=Get-MainCollectionContract
+ $observed=@(foreach($t in $Tables){ Get-MainResultSignature $t })
  foreach($id in $contract.Keys){
   $signature=(($contract[$id].ToLowerInvariant() -split ',') | Sort-Object) -join ','
   $matches=@($observed | Where-Object {$_ -eq $signature}).Count
@@ -490,14 +497,36 @@ try {
 
  $mainTables=Get-Tables (Query-Source $SqlFile)
  foreach($table in $mainTables) { Remove-LegacyLocalHistoryNotice $table }
+ # Stable indices for unique, recognised main schemas. Quarantine all duplicates
+ # and unknown schemas using negative indices (no overlap with module ranges).
+ $contract=Get-MainCollectionContract
+ $signatureMap=@{}
+ $index=0
+ foreach($id in $contract.Keys){
+  $index++
+  $signature=(($contract[$id].ToLowerInvariant() -split ',') | Sort-Object) -join ','
+  $signatureMap[$signature]=[pscustomobject]@{Index=$index;Id=$id}
+ }
+ $observed=@(foreach($t in $mainTables){Get-MainResultSignature $t})
  $i=0
  foreach($t in $mainTables) {
   $i++
-  $section="ResultSet_$i"
-  if($t.Columns.Contains('Section') -and $t.Rows.Count -gt 0) {
-   $candidate=[string]$t.Rows[0]['Section'];if($candidate.Trim()){$section=$candidate.Trim()}
+  $signature=Get-MainResultSignature $t
+  $resultIndex=-$i
+  $section="UNRECOGNIZED_$i"
+  if($signatureMap.ContainsKey($signature)){
+   $entry=$signatureMap[$signature]
+   if(@($observed | Where-Object {$_ -eq $signature}).Count -eq 1){
+    $resultIndex=$entry.Index
+    $section=$entry.Id
+    if($t.Columns.Contains('Section') -and $t.Rows.Count -gt 0){
+     $candidate=[string]$t.Rows[0]['Section'];if($candidate.Trim()){$section=$candidate.Trim()}
+    }
+   }else{
+    $section="DUPLICATE_$($entry.Id)_$i"
+   }
   }
-  Write-Batches $t $i $section
+  Write-Batches $t $resultIndex $section
   $totalRows+=$t.Rows.Count
  }
  $summary=@($mainTables | Where-Object { $_.Columns.Contains('Section') -and $_.Columns.Contains('Severity') -and $_.Columns.Contains('Area') -and $_.Columns.Contains('Details') })
