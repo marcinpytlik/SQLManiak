@@ -943,8 +943,8 @@ GO
 -- Observed transitions only; skipped probes break continuity.
 CREATE OR ALTER VIEW dhc.vLinkedServerStateChanges AS
 WITH samples AS (
- SELECT *,LAG(ProbeStatus) OVER(PARTITION BY ServerInstance,LinkedServer ORDER BY StartedUTC,RunId) AS PreviousStatus,
- LAG(StartedUTC) OVER(PARTITION BY ServerInstance,LinkedServer ORDER BY StartedUTC,RunId) AS PreviousSampleUTC
+ SELECT *,LAG(ProbeStatus) OVER(PARTITION BY ServerInstance,LinkedServer,CollectorLogin ORDER BY StartedUTC,RunId) AS PreviousStatus,
+ LAG(StartedUTC) OVER(PARTITION BY ServerInstance,LinkedServer,CollectorLogin ORDER BY StartedUTC,RunId) AS PreviousSampleUTC
  FROM dhc.vLinkedServerProbe
 )
 SELECT *,CASE WHEN ProbeStatus='SKIPPED' THEN 'SKIPPED'
