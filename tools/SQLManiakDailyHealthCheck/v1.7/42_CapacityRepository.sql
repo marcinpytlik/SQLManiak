@@ -137,25 +137,50 @@ GO
 /* Extend existing retention procedure so historical capacity FKs are removed
    before dhc.Run. No automatic deletion; DryRun remains default. */
 CREATE OR ALTER PROCEDURE dhc.PurgeRuns
- @OlderThanUTC datetime2(3), @DryRun bit=1
+ @OlderThanUTC datetime2(3), @DryRun bit=1, @BatchSize int=100
 AS
 BEGIN
  SET NOCOUNT ON;
+ SET XACT_ABORT ON;
+ IF @OlderThanUTC IS NULL OR @DryRun IS NULL OR @BatchSize IS NULL OR @BatchSize NOT BETWEEN 1 AND 1000
+  THROW 51201,'Invalid purge parameters.',1;
  IF @DryRun=1
  BEGIN
   SELECT COUNT_BIG(*) AS RunsToDelete
-  FROM dhc.Run WHERE StartedUTC<@OlderThanUTC;
+  FROM dhc.Run WHERE StartedUTC<@OlderThanUTC AND Status IN ('COMPLETE','PARTIAL','FAILED') AND FinishedUTC IS NOT NULL;
   RETURN;
  END;
- BEGIN TRAN;
- DELETE c FROM dhc.CapacityLogSample c JOIN dhc.Run r ON c.RunId=r.RunId WHERE r.StartedUTC<@OlderThanUTC;
- DELETE c FROM dhc.CapacityFileSample c JOIN dhc.Run r ON c.RunId=r.RunId WHERE r.StartedUTC<@OlderThanUTC;
- DELETE t FROM dhc.TempDBSession t JOIN dhc.Run r ON t.RunId=r.RunId WHERE r.StartedUTC<@OlderThanUTC;
- DELETE t FROM dhc.TempDBFile t JOIN dhc.Run r ON t.RunId=r.RunId WHERE r.StartedUTC<@OlderThanUTC;
- DELETE t FROM dhc.TempDBSnapshot t JOIN dhc.Run r ON t.RunId=r.RunId WHERE r.StartedUTC<@OlderThanUTC;
- DELETE t FROM dhc.Alert t JOIN dhc.Run r ON t.RunId=r.RunId WHERE r.StartedUTC<@OlderThanUTC;
- DELETE t FROM dhc.ResultBatch t JOIN dhc.Run r ON t.RunId=r.RunId WHERE r.StartedUTC<@OlderThanUTC;
- DELETE FROM dhc.Run WHERE StartedUTC<@OlderThanUTC;
- COMMIT;
+ IF @@TRANCOUNT<>0 THROW 51202,'PurgeRuns requires no ambient transaction.',1;
+ DECLARE @Ids TABLE(RunId uniqueidentifier PRIMARY KEY);
+ DECLARE @Deleted TABLE(TableName sysname, DeletedRows bigint);
+ BEGIN TRY
+  BEGIN TRAN;
+  INSERT @Ids(RunId)
+  SELECT TOP (@BatchSize) RunId FROM dhc.Run WITH (UPDLOCK,HOLDLOCK)
+  WHERE StartedUTC<@OlderThanUTC AND Status IN ('COMPLETE','PARTIAL','FAILED') AND FinishedUTC IS NOT NULL
+  ORDER BY StartedUTC,RunId;
+  DELETE t FROM dhc.CapacityLogSample t JOIN @Ids i ON t.RunId=i.RunId;
+  INSERT @Deleted VALUES(N'dhc.CapacityLogSample',ROWCOUNT_BIG());
+  DELETE t FROM dhc.CapacityFileSample t JOIN @Ids i ON t.RunId=i.RunId;
+  INSERT @Deleted VALUES(N'dhc.CapacityFileSample',ROWCOUNT_BIG());
+  DELETE t FROM dhc.TempDBSession t JOIN @Ids i ON t.RunId=i.RunId;
+  INSERT @Deleted VALUES(N'dhc.TempDBSession',ROWCOUNT_BIG());
+  DELETE t FROM dhc.TempDBFile t JOIN @Ids i ON t.RunId=i.RunId;
+  INSERT @Deleted VALUES(N'dhc.TempDBFile',ROWCOUNT_BIG());
+  DELETE t FROM dhc.TempDBSnapshot t JOIN @Ids i ON t.RunId=i.RunId;
+  INSERT @Deleted VALUES(N'dhc.TempDBSnapshot',ROWCOUNT_BIG());
+  DELETE t FROM dhc.Alert t JOIN @Ids i ON t.RunId=i.RunId;
+  INSERT @Deleted VALUES(N'dhc.Alert',ROWCOUNT_BIG());
+  DELETE t FROM dhc.ResultBatch t JOIN @Ids i ON t.RunId=i.RunId;
+  INSERT @Deleted VALUES(N'dhc.ResultBatch',ROWCOUNT_BIG());
+  DELETE t FROM dhc.Run t JOIN @Ids i ON t.RunId=i.RunId;
+  INSERT @Deleted VALUES(N'dhc.Run',ROWCOUNT_BIG());
+  COMMIT;
+ END TRY
+ BEGIN CATCH
+  IF XACT_STATE()<>0 ROLLBACK;
+  THROW;
+ END CATCH;
+ SELECT TableName,DeletedRows FROM @Deleted ORDER BY TableName;
 END;
 GO
