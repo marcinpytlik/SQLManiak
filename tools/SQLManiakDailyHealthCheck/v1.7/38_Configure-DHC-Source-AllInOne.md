@@ -15,8 +15,8 @@ Use `38_Configure-DHC-Source-AllInOne.sql` in **SSMS**, on **each monitored SQL 
 ## Objects and grants
 
 - SQL login/user: `dhc_source_collector` and `msdb.dhc_source_collector`
-- SQL2022+ server permissions: `VIEW SERVER PERFORMANCE STATE`, `VIEW SERVER SECURITY STATE`, `VIEW ANY ERROR LOG`
-- `msdb` membership: `SQLAgentReaderRole` and custom `dhc_agent_history_reader` (SELECT on `sysjobschedules`, `sysjobhistory`, `sysjobs`, `sysjobactivity`)
+- SQL2022+ server permissions: `VIEW SERVER PERFORMANCE STATE`, `VIEW SERVER SECURITY STATE`, `VIEW ANY ERROR LOG`, `VIEW ANY DEFINITION` (instance-wide metadata visibility; review before production)
+- `msdb` membership: `SQLAgentReaderRole` and custom `dhc_agent_history_reader` (SELECT on `sysjobschedules`, `sysjobhistory`, `sysjobs`, `sysjobactivity`, `sysschedules`; EXECUTE on `dbo.agent_datetime`)
 - `ALTER TRACE` only through optional `dhc_autogrowth_reader` server role; this is a broad permission and requires bank authorization.
 
 ## Limitations and operational requirements
