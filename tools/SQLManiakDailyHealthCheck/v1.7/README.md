@@ -10,7 +10,7 @@ See **[41_PRODUCTION_XE_DEPLOYMENT.md](41_PRODUCTION_XE_DEPLOYMENT.md)** for the
 - `40_Validate-DHC-Source-XE-Deployment.sql`: impersonated read-only permission, metadata and XEL verification.
 - `03_Run-DHC-v1_7.ps1`: rewrites original external v1.5 `12C AUTOGROWTH EVENTS` in memory to use XE, retains existing result columns/alert thresholds, marks rolling XE history `AVAILABLE_PARTIAL`.
 
-The source v1.5 SQL is still **not** checked into Git. The in-memory rewrite fails on an unexpected section layout. SQL 2016/2019 need separate support. Keep `@GrantAlterTrace=0` in installer 38: XE does not require ALTER TRACE. **These changes require a pilot run on SQL Server 2022 and approval before production cutover.**
+The source v1.5 SQL is still **not** checked into Git. The in-memory rewrite fails on an unexpected section layout. SQL Server 2019 needs separate source permission/XE validation; SQL Server 2016 is out of scope. Keep `@GrantAlterTrace=0` in installer 38: XE does not require ALTER TRACE. **These changes require a pilot run on SQL Server 2022 and approval before production cutover.**
 
 ## Architecture
 
@@ -625,7 +625,7 @@ The Windows Task Scheduler COM definition may report `Principal.UserId = blad` e
 - `34_Install-DHC-Repository.ps1`: deploys existing SQL files 01, 04, 08, 09, 12, 14 and 20 in order, then maps a dedicated SQL login to database role `dhc_collector`. Existing data is preserved.
 - `35_Configure-DHC-Source.ps1`: configures a dedicated non-sysadmin SQL login on one monitored SQL Server 2022+ source. Adds server diagnostic grants, SQLAgentReaderRole and narrow msdb Agent history SELECT grants. The broad `ALTER TRACE` permission is explicitly opt-in using `-GrantAlterTrace`.
 
-Both scripts are **preview by default**; use `-Apply` for changes. Use `-NewCollectorCredential` only when a missing SQL login must be created, without storing SQL passwords in source control. They do not reset existing logins, register target inventory, create DPAPI files or enable a scheduler. Partial failures may leave objects and must be reviewed before reruns. Use distinct credentials for Repository and Sources, and trusted TLS certificates in production. SQL Server 2016 and 2019 require separate permission evaluation.
+Both scripts are **preview by default**; use `-Apply` for changes. Use `-NewCollectorCredential` only when a missing SQL login must be created, without storing SQL passwords in source control. They do not reset existing logins, register target inventory, create DPAPI files or enable a scheduler. Partial failures may leave objects and must be reviewed before reruns. Use distinct credentials for Repository and Sources, and trusted TLS certificates in production. SQL Server 2019 requires separate permission evaluation; SQL Server 2016 is out of scope.
 
 Example (preview):
 ```powershell
@@ -696,3 +696,19 @@ Forecast is linear and needs **at least five COMPLETE measurements over at least
 - SQL Server 2022 may require \`VIEW SERVER PERFORMANCE STATE\` for \`sys.dm_os_volume_stats\`, and database metadata/log DMV permissions must be checked using the service collector identity. The existing source permissions audit scripts should be rerun.
 - Use \`45_CapacityChecks.sql\` to verify measurements, missing policies, and forecasts. Validate installation and collection first in Docker LAB and then on a staging SQL instance before production. There is no claim of an executed SQL Server integration test for this extension.
 - The original v1.7 scheduling and RUNNING lock/claim behavior stays unchanged. No scheduler is installed or enabled by this extension.
+
+
+## Linked Server monitoring (SQL Server 2019/2022)
+
+SQL Server 2016 is no longer a supported target for this project. Existing 2022 source provisioning and XE scripts remain 2022-specific; full 2019 collection needs a dedicated pilot and permission review.
+
+- 47_LinkedServerCollect.sql: passive metadata and mapping visibility, on by default.
+- 48_LinkedServerConnectivity.sql: optional SQL Server targets only; template invoked by collector, not standalone.
+- 49_LinkedServerReports.sql: deploy on repository (included in both installers).
+- 50_LinkedServerChecks.sql: read-only repository checks.
+
+History is stored in existing dhc.ResultBatch, with reserved indexes 300–303 and 310+ for probes. No new tables, grants or retention procedure needed. Views expose history and probe outcomes to a DBA; no new Grafana access to login metadata is granted. Empty result sets retain schema. NO VISIBLE MAPPING is not proof of absent mapping. ANONYMOUS LOGON is evidence from already collected ERRORLOG result rows, not proof of linked server origin or complete audit coverage.
+
+Single source: pass -LinkedServerProbeAllowlist @('LAB_LINK') explicitly to 03_Run-DHC-v1_7.ps1. Multi-source runner: pass -LinkedServerProbeByInstance @{'SQL01'=@('LAB_LINK')} with exact inventory endpoints. Empty allowlist means no remote connections; -SkipLinkedServer disables the module. Only enabled data access and effective finite connect/query timeouts <=15/30 seconds qualify. No timeout or linked server configuration changes. Driver/provider behavior can exceed these limits; outer QueryTimeout also applies. Never probe non-SQL targets with this template. Tests use collector credentials, not necessarily the affected interactive user. Provider errors may escape TRY/CATCH; module failures mark PARTIAL. 
+
+LAB acceptance: run passive collection with no linked servers; inspect empty batches; create a disposable SQL-to-SQL linked server with finite timeouts and explicit LAB-only credentials; verify PASS and remote identity, then simulate an unreachable target and inspect FAILED or PARTIAL. Test disabled data access and unlimited timeout as SKIPPED. Verify purge dry run and run counts. Windows Kerberos delegation requires a separate domain LAB; Docker cannot establish that behavior. No runtime tests have been performed here.
