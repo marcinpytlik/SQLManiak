@@ -118,7 +118,7 @@ Runner przetwarza źródła sekwencyjnie; domyślny interwał inventory to 1440 
 | Linked Server | Metadane, widoczne mapowania, dowody ERRORLOG, opcjonalna sonda |
 | XE | Automatyczny dodatni wzrost plików, ograniczona historia rollover |
 
-Zewnętrzny SQLManiak_Daily_Health_Check_v1_5_CSV.sql jest obowiązkowy, nie ma go w Git. Kolektor adaptuje znane sekcje w pamięci i wymusza SaveHistory=0. Nie zapisuje historii na źródle.
+Obowiązkowy [SQLManiak_Daily_Health_Check_v1_5_CSV.sql](SQLManiak_Daily_Health_Check_v1_5_CSV.sql) jest dostarczany w katalogu v1.7 w niezmienionej, audytowanej wersji. SHA256: `8978B06A630F24D672EDD78721B1B8A4A84DD6CCC724B9B87DF4DBB847DA67B8`. Lokalny `.gitattributes` wyłącza normalizację zakończeń linii. Kolektor adaptuje znane sekcje w pamięci i wymusza SaveHistory=0. Nie zapisuje historii na źródle; obecność starego schematu hc może jednak zmienić liczbę zestawów wynikowych. Przed pilotażem sprawdzić brak legacy hc.Sample zgodnie z [audytem](SOURCE_SQL_AUDIT.md).
 
 ```mermaid
 erDiagram
@@ -145,7 +145,7 @@ PurgeRuns domyślnie DryRun, usuwa partiami wyłącznie zakończone przebiegi z 
 |---|---|
 | Repozytorium SQL 2022+ | 37 lub 34 i jego zależności |
 | Każde źródło SQL 2022 | 38, 39, 40 |
-| Host Windows | 03,06,02,43,47,48,16,17,21 oraz zewnętrzny SQL v1.5 |
+| Host Windows | 03,06,02,43,47,48,16,17,21 oraz dołączony SQL v1.5 |
 | DBA | 10,45,50; inventory i polityka woluminów |
 | Grafana | Dashboardy w dashboards/sqlserver, osobny reader |
 
