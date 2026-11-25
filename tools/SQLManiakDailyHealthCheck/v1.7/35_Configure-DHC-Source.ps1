@@ -56,7 +56,7 @@ function Ensure-Login([Microsoft.Data.SqlClient.SqlConnection]$conn){
 
 # Source configuration: least privilege, optional broad trace permission.
 if(-not $Apply){
- Write-Host "PREVIEW: SQL Server $ServerInstance; source login $CollectorLogin; VIEW SERVER PERFORMANCE STATE, VIEW SERVER SECURITY STATE, VIEW ANY ERROR LOG, msdb Agent reader; ALTER TRACE=$([bool]$GrantAlterTrace)."
+ Write-Host "PREVIEW: SQL Server $ServerInstance; source login $CollectorLogin; VIEW SERVER PERFORMANCE STATE, VIEW SERVER SECURITY STATE, VIEW ANY ERROR LOG, VIEW ANY DEFINITION, msdb Agent reader; ALTER TRACE=$([bool]$GrantAlterTrace)."
  return
 }
 $conn=Open-Connection 'master'
@@ -67,6 +67,7 @@ try {
 GRANT VIEW SERVER PERFORMANCE STATE TO [$CollectorLogin];
 GRANT VIEW SERVER SECURITY STATE TO [$CollectorLogin];
 GRANT VIEW ANY ERROR LOG TO [$CollectorLogin];
+GRANT VIEW ANY DEFINITION TO [$CollectorLogin];
 "@
  if($GrantAlterTrace){
   Write-Warning 'ALTER TRACE is broad: grants trace management. Requires explicit security review.'
@@ -103,6 +104,8 @@ GRANT SELECT ON OBJECT::dbo.sysjobschedules TO dhc_agent_history_reader;
 GRANT SELECT ON OBJECT::dbo.sysjobhistory TO dhc_agent_history_reader;
 GRANT SELECT ON OBJECT::dbo.sysjobs TO dhc_agent_history_reader;
 GRANT SELECT ON OBJECT::dbo.sysjobactivity TO dhc_agent_history_reader;
+GRANT SELECT ON OBJECT::dbo.sysschedules TO dhc_agent_history_reader;
+GRANT EXECUTE ON OBJECT::dbo.agent_datetime TO dhc_agent_history_reader;
 IF NOT EXISTS (
  SELECT 1 FROM sys.database_role_members m
  JOIN sys.database_principals r ON r.principal_id=m.role_principal_id
