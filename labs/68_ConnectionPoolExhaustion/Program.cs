@@ -109,7 +109,13 @@ else
         Console.WriteLine($"OBSERVER SPID={await Execute(observer, "SELECT @@SPID")}");
         // Force locking read regardless of database RCSI configuration.
         var sw = Stopwatch.StartNew();
-        var pending = Execute(observer, $"SELECT V FROM {table} WITH (READCOMMITTEDLOCK) WHERE Id = 1");
+        async Task<(int Value, long ElapsedMs)> MeasureObserver()
+        {
+            var timer = Stopwatch.StartNew();
+            var value = Convert.ToInt32(await Execute(observer, $"SELECT V FROM {table} WITH (READCOMMITTEDLOCK) WHERE Id = 1"));
+            return (value, timer.ElapsedMilliseconds);
+        }
+        var pending = MeasureObserver();
         await Task.Delay(TimeSpan.FromSeconds(10));
         bool blocked = !pending.IsCompleted;
         Console.WriteLine($"{DateTime.UtcNow:O} OBSERVER PENDING AFTER 10s={blocked}");
@@ -122,8 +128,8 @@ else
             await reader.ReadAsync();
             Console.WriteLine($"{DateTime.UtcNow:O} REUSE SPID={Convert.ToInt32(reader.GetValue(0))} TRANCOUNT={reader.GetInt32(1)}");
         }
-        var value = Convert.ToInt32(await pending);
-        Console.WriteLine($"{DateTime.UtcNow:O} OBSERVER VALUE={value} elapsed={sw.ElapsedMilliseconds}ms (includes observation window)");
+        var (value, selectElapsedMs) = await pending;
+        Console.WriteLine($"{DateTime.UtcNow:O} OBSERVER VALUE={value} selectElapsed={selectElapsedMs}ms observationElapsed={sw.ElapsedMilliseconds}ms");
         if (blocked != (mode == "blocking") || value != 0)
             throw new Exception("Unexpected experiment outcome; inspect DMV and provider behavior");
         await Task.Delay(5000);
