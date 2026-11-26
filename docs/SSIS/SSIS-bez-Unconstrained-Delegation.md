@@ -1,13 +1,13 @@
 # SQL Server i SSIS bez Unconstrained Delegation
 
-**Wersja:** 1.0 | **Data:** 2026-11-26 | **Status:** projekt techniczny i runbook do walidacji  
+**Wersja:** 1.1 | **Data:** 2026-11-26 | **Status:** projekt techniczny i runbook do walidacji  
 **Zakres:** SQL Server 2022, SSISDB, SQL Server Agent, Active Directory, SMB, WSFC/FCI.
 
 ## 1. Cel i decyzja architektoniczna
 
-Usunąć zależność eksportów SSIS od nieograniczonej delegacji Kerberos na koncie usługi Database Engine. Nie wyłączamy zabezpieczeń Windows ani nie zastępujemy Kerberos przez NTLM. Rozdzielamy tożsamość zlecającego od tożsamości wykonawcy.
+Moim celem jest uniezależnienie eksportów SSIS od nieograniczonej delegacji Kerberos na koncie usługi Database Engine. Nie wyłączam zabezpieczeń Windows ani nie zastępuję protokołu Kerberos protokołem NTLM. Zamiast tego rozdzielam tożsamość zlecającego od tożsamości wykonawcy.
 
-Microsoft dokumentuje, że SSISDB nie obsługuje constrained delegation w opisanym scenariuszu double hop. Samo ustawienie KCD nie rozwiązuje więc problemu ISServerExec.exe. RBCD nie jest tutaj traktowane jako potwierdzony zamiennik. [1]
+Microsoft dokumentuje, że SSISDB nie obsługuje constrained delegation w opisanym scenariuszu double hop. Samo ustawienie KCD nie rozwiązuje więc problemu ISServerExec.exe. Nie traktuję RBCD jako potwierdzonego zamiennika w tym scenariuszu. [1]
 
 ## 2. Architektura
 
@@ -33,16 +33,18 @@ flowchart TD
  A -->|Odczyt statusu| Q
 ```
 
-Worker działa niezależnie od sesji aplikacji. Proxy uzyskuje własny kontekst logowania; dostęp do SMB nie powinien wymagać delegowania konta aplikacji. Warunkiem akceptacji jest potwierdzenie rzeczywistego konta po stronie SMB, nie tylko ustawienia Run as w jobie. Agent i katalog powinny znajdować się na tej samej instancji FCI; zdalny katalog może ponownie wprowadzić double hop.
+W proponowanej przeze mnie architekturze worker działa niezależnie od sesji aplikacji. Proxy uzyskuje własny kontekst logowania; dostęp do SMB nie powinien wymagać delegowania konta aplikacji. Za warunek akceptacji przyjmuję potwierdzenie rzeczywistego konta po stronie SMB, a nie jedynie sprawdzenie ustawienia `Run as` w zadaniu Agenta. Zakładam, że Agent i katalog znajdują się na tej samej instancji FCI; zdalny katalog może ponownie wprowadzić double hop.
 
 ## 3. Inwentaryzacja przed zmianą
 
-- Zidentyfikować wszystkie wywołania catalog.create_execution i catalog.start_execution, aplikacje, joby, pakiety, linked servers oraz zdalne źródła danych.
-- Ustalić konto Database Engine, Agent, IIS i faktyczne konto procesu wykonawczego SSIS.
-- Sprawdzić SPN VNN, port instancji, DNS, synchronizację czasu i stan AD.
-- Zapisać istniejące ustawienia delegacji oraz właścicieli jobów; nie publikować danych infrastruktury ani sekretów.
-- Ustalić kontrakt aplikacji: wynik synchroniczny czy identyfikator żądania. Kolejka nie jest przezroczystym zamiennikiem synchronicznego eksportu.
-- Zabezpieczyć kopie msdb, SSISDB, bazy kolejki oraz kluczy zgodnie z procedurą odtwarzania.
+Przed rozpoczęciem migracji wykonuję następujące czynności:
+
+- Identyfikuję wszystkie wywołania catalog.create_execution i catalog.start_execution, aplikacje, joby, pakiety, linked servers oraz zdalne źródła danych.
+- Ustalam konto Database Engine, Agent, IIS i faktyczne konto procesu wykonawczego SSIS.
+- Sprawdzam SPN VNN, port instancji, DNS, synchronizację czasu i stan AD.
+- Zapisuję istniejące ustawienia delegacji oraz właścicieli jobów; nie publikuję danych infrastruktury ani sekretów.
+- Ustalam kontrakt aplikacji: wynik synchroniczny czy identyfikator żądania. Kolejka nie jest przezroczystym zamiennikiem synchronicznego eksportu.
+- Zabezpieczam kopie msdb, SSISDB, bazy kolejki oraz kluczy zgodnie z procedurą odtwarzania.
 
 ```sql
 SELECT servicename, service_account, status_desc
@@ -74,9 +76,11 @@ Get-ADServiceAccount -Identity 'sqlserver' -Properties TrustedForDelegation,Serv
 setspn -Q MSSQLSvc/sql-vnn.example.test:1433
 ```
 
-Nazwy i porty w przykładach są fikcyjne. Dla zwykłego konta domenowego użyć Get-ADUser; nie utożsamiać gMSA z obiektem VNN lub węzła.
+W przykładach posługuję się fikcyjnymi nazwami i portami. W przypadku zwykłego konta domenowego korzystam z `Get-ADUser`. Nie utożsamiam konta gMSA z obiektem VNN ani z kontem komputera węzła klastra.
 
 ## 4. Model uprawnień
+
+Stosuję zasadę najmniejszych niezbędnych uprawnień i rozdzielam role zgodnie z poniższą tabelą.
 
 | Zasób | Konto aplikacji | Konto wykonawcy |
 |---|---|---|
@@ -87,11 +91,11 @@ Nazwy i porty w przykładach są fikcyjne. Dla zwykłego konta domenowego użyć
 | sysadmin | nie | nie |
 | Proxy Agent | brak | przypisanie do kroku joba przez DBA |
 
-Konto wykonawcy: dedykowane zwykłe konto domenowe, np. EXAMPLE\\svc_ssis_export. Credential z hasłem nie jest automatycznie zamiennikiem gMSA. Uzgodnić prawa logowania wymagane przez Agent i GPO na każdym węźle, rotację hasła oraz ograniczenie logowania interaktywnego. Nie nadawać Domain Admin ani lokalnego Administratora. Uprawnienia Share i NTFS muszą jednocześnie umożliwiać wymagane operacje; usuwanie tylko jeśli jest potrzebne.
+Jako konto wykonawcy wybieram dedykowane zwykłe konto domenowe, np. `EXAMPLE\svc_ssis_export`. Credential z hasłem nie jest automatycznie zamiennikiem gMSA. Uzgadniam prawa logowania wymagane przez Agenta oraz zasady GPO na każdym węźle, rotację hasła i ograniczenie logowania interaktywnego. Nie nadaję uprawnień administratora domeny ani administratora lokalnego. Uprawnienia Share i NTFS muszą jednocześnie umożliwiać wymagane operacje; prawo usuwania nadaję tylko wtedy, gdy jest niezbędne.
 
 ## 5. Credential i Proxy
 
-Skrypt wykonywany przez DBA w kontrolowanej sesji; nie zapisywać rzeczywistego sekretu w repozytorium, historii konsoli czy logach. Przykłady są jednorazowe, przed ponowieniem sprawdzić istniejące obiekty.
+Poniższy skrypt wykonuję jako DBA w kontrolowanej sesji. Nie zapisuję rzeczywistego sekretu w repozytorium, historii konsoli ani logach. Skrypt jest przeznaczony do jednorazowego wykonania; przed ponownym uruchomieniem sprawdzam istniejące obiekty.
 
 ```sql
 USE master;
@@ -119,9 +123,11 @@ FOR LOGIN [EXAMPLE\svc_ssis_export];
 GO
 ```
 
-W SSMS: Integration Services Catalogs > SSISDB > folder > Projects > projekt > Properties > Permissions. Nadać READ i EXECUTE na konkretnym projekcie oraz READ na wymaganym środowisku. Nie nadawać ssis_admin. Właściciel joba niebędący sysadmin musi mieć odpowiednie uprawnienia Agent oraz dostęp do proxy (sp_grant_login_to_proxy). Nie udostępniać proxy aplikacji.
+W SSMS przechodzę do: Integration Services Catalogs > SSISDB > folder > Projects > projekt > Properties > Permissions. Nadaję uprawnienia READ i EXECUTE na konkretnym projekcie oraz READ na wymaganym środowisku. Nie przypisuję roli `ssis_admin`. Właściciel joba niebędący sysadmin musi mieć odpowiednie uprawnienia Agent oraz dostęp do proxy (sp_grant_login_to_proxy). Nie udostępniam proxy aplikacji.
 
 ## 6. SQL Agent
+
+Konfiguruję zadanie Agenta zgodnie z poniższą tabelą.
 
 | Ustawienie | Wartość |
 |---|---|
@@ -131,14 +137,14 @@ W SSMS: Integration Services Catalogs > SSISDB > folder > Projects > projekt > P
 | Package source | SSIS Catalog |
 | Server | lokalna instancja FCI (właściwy VNN/instancja) |
 | Package | właściwy pakiet worker |
-| Schedule | np. co minutę; dobrać do SLA |
+| Schedule | np. co minutę; częstotliwość dobieram do SLA |
 | Retry | kontrolowany na poziomie żądania |
 
-Pakiet worker musi pobierać żądania z kolejki i raportować wyniki; samo stworzenie joba nie implementuje kolejki. Wariant alternatywny: lokalny worker uruchamiany w dedykowanym kontekście Windows, który używa API katalogu i czeka na zakończenie. Jeśli stosowany jest krok CmdExec/PowerShell zamiast SSIS, potrzebuje osobnego uprawnienia do właściwego subsystemu. Nie zakładać, że T-SQL job step używa Proxy.
+Projektuję pakiet worker tak, aby pobierał żądania z kolejki i raportował wyniki. Samo utworzenie zadania Agenta nie implementuje kolejki. Alternatywnie mogę uruchomić lokalnego workera w dedykowanym kontekście Windows, wykorzystującego API katalogu i oczekującego na zakończenie wykonania. Jeśli wybieram krok CmdExec lub PowerShell zamiast SSIS, nadaję osobne uprawnienie do właściwego podsystemu. Nie zakładam, że krok T-SQL korzysta z proxy.
 
 ## 7. Referencyjny model kolejki
 
-Przykład w dedykowanej bazie aplikacyjnej. Nie tworzyć własnych tabel w SSISDB. Procedury i kontrakt pakietu trzeba dostosować i przetestować; to szkielet integracyjny, nie gotowy pakiet DTSX.
+Kolejkę umieszczam w dedykowanej bazie aplikacyjnej. Nie tworzę własnych tabel w SSISDB. Przed wdrożeniem dostosowuję i testuję procedury oraz kontrakt pakietu. Poniżej przedstawiam szkielet integracyjny, a nie gotowy pakiet DTSX.
 
 ```sql
 CREATE TABLE dbo.ExportRequest
@@ -240,11 +246,13 @@ END;
 GO
 ```
 
-Nadać EXECUTE na procedurach odpowiednim użytkownikom bazy; aplikacji tylko RequestExport i GetExportStatus. Przy współdzielonym loginie IIS izolacja użytkowników końcowych wymaga dodatkowego autoryzowanego identyfikatora biznesowego. Nie przyjmować dowolnych ścieżek UNC od klienta. Parametry eksportu walidować i utrwalać w kolejce.
+Nadaję uprawnienie EXECUTE na procedurach odpowiednim użytkownikom bazy. Aplikacji udostępniam wyłącznie RequestExport i GetExportStatus. Przy współdzielonym loginie IIS izolacja użytkowników końcowych wymaga dodatkowego autoryzowanego identyfikatora biznesowego. Nie przyjmuję dowolnych ścieżek UNC od klienta. Parametry eksportu waliduję i zapisuję w kolejce.
 
-Worker: pobierz żądanie, zapisz identyfikator wykonania SSIS możliwie wcześnie, wykonaj eksport, opublikuj wynik, zakończ żądanie. Nie utrzymuj transakcji SQL przez cały eksport. Stosuj deterministyczne nazwy plików, plik tymczasowy i publikację po zakończeniu; retry musi być idempotentne. Nie ma gwarancji exactly-once między SQL i SMB. Po awarii Running nie wolno automatycznie ponawiać bez sprawdzenia aktywnego wykonania i pliku. Produkcyjny mechanizm odzyskiwania wymaga lease/heartbeat albo ręcznej rekoncyliacji. ClaimToken zapobiega zatwierdzeniu starego claimu, ale nie blokuje starego procesu przed zapisem pliku.
+W logice workera najpierw pobieram żądanie, następnie możliwie wcześnie zapisuję identyfikator wykonania SSIS, wykonuję eksport, publikuję wynik i zamykam żądanie. Nie utrzymuję transakcji SQL przez cały czas eksportu. Stosuję deterministyczne nazwy plików, zapis do pliku tymczasowego i publikację po zakończeniu. Ponowienia projektuję jako operacje idempotentne. Nie ma gwarancji exactly-once między SQL i SMB. Po awarii nie ponawiam automatycznie żądań o statusie Running bez sprawdzenia aktywnego wykonania i pliku. Produkcyjny mechanizm odzyskiwania wymaga lease/heartbeat albo ręcznej rekoncyliacji. ClaimToken zapobiega zatwierdzeniu starego claimu, ale nie blokuje starego procesu przed zapisem pliku.
 
 ## 8. Diagnostyka
+
+Diagnostykę rozpoczynam od sprawdzenia historii wykonań SSISDB, komunikatów i stanu kolejki.
 
 ```sql
 SELECT TOP (50) execution_id, folder_name, project_name, package_name,
@@ -265,20 +273,22 @@ FROM dbo.ExportRequest
 GROUP BY Status;
 ```
 
-Na serwerze plików sprawdzić Get-SmbSession / Get-SmbOpenFile oraz audyt Windows 4624 (typ logowania 3), 5140/5145 jeśli włączony. Korelować czas, klienta, ścieżkę i konto. Wynik executed_as_name w SSISDB sam w sobie nie dowodzi tożsamości SMB. Przy błędzie Access Denied sprawdzić oba ACL, rzeczywisty token, konto proxy, prawa logowania, DNS i łączność TCP 445. Nie obniżać zabezpieczeń SMB.
+Na serwerze plików korzystam z Get-SmbSession i Get-SmbOpenFile oraz sprawdzam zdarzenia audytu Windows 4624 (typ logowania 3) i 5140/5145, jeśli odpowiedni audyt jest włączony. Koreluję czas, klienta, ścieżkę i konto. Wynik executed_as_name w SSISDB sam w sobie nie dowodzi tożsamości SMB. Przy błędzie Access Denied sprawdzam oba zestawy ACL, rzeczywisty token, konto proxy, prawa logowania, DNS i łączność TCP 445. Nie obniżam poziomu zabezpieczeń SMB.
 
 ## 9. FCI i plan wdrożenia
 
-1. Zatwierdzić zakres z właścicielami aplikacji, AD i bezpieczeństwa.
-2. Wdrożyć kolejkę, proxy i worker równolegle do istniejącego mechanizmu.
-3. Przetestować połączenia lokalne i z aplikacji; potwierdzić konto SMB.
-4. Przełączyć aplikację na nowy kontrakt; opróżnić stare wykonania.
-5. Zweryfikować inne zależności delegacji (w szczególności linked servers).
-6. W uzgodnionym oknie AD wyłączyć delegację tylko na zidentyfikowanym koncie usługi Database Engine.
-7. Uwzględnić replikację AD, ważność biletów i konieczność odnowienia sesji usług. Restart usługi wyłącznie po analizie wpływu i zatwierdzeniu okna. Nie wymuszać failoveru produkcyjnego.
-8. Ponowić pełne testy i monitorować backlog, błędy oraz czas eksportu.
+W środowisku klastrowym przyjmuję następującą kolejność działań:
 
-Przykład dla administratora AD — polecenie zmienia ustawienie bezpieczeństwa, nie uruchamiać bez zatwierdzenia:
+1. Zatwierdzam zakres z właścicielami aplikacji, AD i bezpieczeństwa.
+2. Wdrażam kolejkę, proxy i worker równolegle do istniejącego mechanizmu.
+3. Testuję połączenia lokalne i z aplikacji; potwierdzam konto SMB.
+4. Przełączam aplikację na nowy kontrakt; czekam na zakończenie dotychczasowych wykonań.
+5. Weryfikuję inne zależności delegacji (w szczególności linked servers).
+6. W uzgodnionym oknie zmian zlecam administratorowi AD wyłączenie delegacji tylko na zidentyfikowanym koncie usługi Database Engine.
+7. Uwzględniam replikację AD, ważność biletów i konieczność odnowienia sesji usług. Restart usługi planuję wyłącznie po analizie wpływu i zatwierdzeniu okna. Nie wymuszam failoveru produkcyjnego.
+8. Ponawiam pełne testy i monitoruję backlog, błędy oraz czas eksportu.
+
+Poniższe polecenie przekazuję administratorowi AD. Zmienia ono ustawienie bezpieczeństwa, dlatego nie wykonuję go bez zatwierdzenia:
 
 ```powershell
 Set-ADAccountControl -Identity (Get-ADServiceAccount -Identity 'sqlserver') -TrustedForDelegation $false
@@ -286,7 +296,7 @@ Get-ADServiceAccount -Identity 'sqlserver' -Properties TrustedForDelegation |
     Select-Object Name,TrustedForDelegation
 ```
 
-Na wszystkich węzłach FCI zweryfikować komponenty SSIS, wersje runtime i sterowników, prawa logowania, dostęp do UNC, parametry środowiskowe oraz brak zależności od lokalnych ścieżek. Test przełączenia wykonać w labie lub podczas osobno zatwierdzonego okna. Zachować SPN VNN; wyłączenie delegacji nie wymaga usunięcia SPN.
+Na wszystkich węzłach FCI weryfikuję komponenty SSIS, wersje runtime i sterowników, prawa logowania, dostęp do UNC, parametry środowiskowe oraz brak zależności od lokalnych ścieżek. Test przełączenia wykonuję w labie lub podczas osobno zatwierdzonego okna. Zachowuję SPN VNN; wyłączenie delegacji nie wymaga usunięcia SPN.
 
 ## 10. Macierz testów i kryteria odbioru
 
@@ -304,24 +314,26 @@ Na wszystkich węzłach FCI zweryfikować komponenty SSIS, wersje runtime i ster
 | Inne aplikacje i linked servers | brak regresji |
 | Drugi węzeł FCI w labie | zgodność konfiguracji i poprawne wykonanie |
 
-Wszystkie wyniki należy udokumentować (UTC, wersja, konto, execution ID, wynik, dowód). Dokument nie stanowi potwierdzenia wykonania tych testów.
+Wszystkie wyniki dokumentuję, zapisując czas UTC, wersję, konto, execution ID, wynik i dowód wykonania. Tego planu nie przedstawiam jako potwierdzenia przeprowadzonych testów.
 
 ## 11. Rollback
 
-- Wstrzymać przyjmowanie nowych żądań i harmonogram workera; nie przerywać aktywnych eksportów bez analizy.
-- Uzgodnić statusy Running i istniejące pliki; zachować kolejkę i logi.
-- Przywrócić poprzednią wersję procedury/aplikacji wyłącznie gdy jest zgodna z aktualną polityką bezpieczeństwa.
-- Jeżeli stary mechanizm wymaga nieograniczonej delegacji, jej ponowne włączenie jest osobną decyzją bezpieczeństwa, nie automatycznym rollbackiem. Preferować kontrolowaną przerwę lub alternatywny eksport.
-- Po akceptacji i ustabilizowaniu systemu usunąć zbędne proxy/credential oraz uprawnienia zgodnie z zależnościami; nie usuwać współdzielonych obiektów.
-- Rejestrować każdą zmianę, potwierdzić stan AD i powtórzyć testy.
+Jeżeli zmiana nie spełni kryteriów odbioru, postępuję według następującego planu:
+
+- Wstrzymuję przyjmowanie nowych żądań i harmonogram workera; nie przerywam aktywnych eksportów bez analizy.
+- Uzgadniam statusy Running i istniejące pliki; zachowuję kolejkę i logi.
+- Przywracam poprzednią wersję procedury/aplikacji wyłącznie gdy jest zgodna z aktualną polityką bezpieczeństwa.
+- Jeżeli stary mechanizm wymaga nieograniczonej delegacji, jej ponowne włączenie jest osobną decyzją bezpieczeństwa, nie automatycznym rollbackiem. Preferuję kontrolowaną przerwę lub alternatywny eksport.
+- Po akceptacji i ustabilizowaniu systemu usuwam zbędne proxy/credential oraz uprawnienia zgodnie z zależnościami; nie usuwam współdzielonych obiektów.
+- Rejestruję każdą zmianę, potwierdzam stan AD i powtarzam testy.
 
 ## 12. Ograniczenia i źródła
 
-Wariant bazuje na architekturze Request → Queue → Worker. Nie zweryfikowano tutaj rzeczywistego środowiska ani kodu wcześniejszego POC. Skrypty są przykładami do review i testów na SQL Server 2022, a nie potwierdzonym wdrożeniem. W szczególności należy zweryfikować kontekst wykonania ISServerExec i SMB, kompatybilność kontraktu aplikacji oraz odzyskiwanie po awarii.
+Moje rozwiązanie opieram na architekturze Request → Queue → Worker. W tej dokumentacji nie przedstawiam ponownej weryfikacji rzeczywistego środowiska ani kodu wcześniejszego POC. Skrypty udostępniam jako przykłady do przeglądu i testów na SQL Server 2022, a nie jako potwierdzone wdrożenie. Przed wdrożeniem weryfikuję przede wszystkim kontekst wykonania ISServerExec i SMB, zgodność kontraktu aplikacji oraz mechanizm odzyskiwania po awarii.
 
 1. [Microsoft Learn — SSIS Catalog, double-hop scenarios](https://learn.microsoft.com/en-us/sql/integration-services/catalog/ssis-catalog?view=sql-server-ver16#ssisdb-catalog-and-delegation-in-double-hop-scenarios)
 2. [Microsoft Learn — SQL Server Agent Jobs for Packages](https://learn.microsoft.com/en-us/sql/integration-services/packages/sql-server-agent-jobs-for-packages)
 3. [Microsoft Learn — Create a SQL Server Agent Proxy](https://learn.microsoft.com/en-us/sql/ssms/agent/create-a-sql-server-agent-proxy)
 4. [Microsoft Learn — Windows prevents unconstrained delegation](https://learn.microsoft.com/en-us/troubleshoot/sql/database-engine/connect/windows-prevents-unconstrained-delegation)
 
-**Zasada:** eliminujemy konieczność przekazywania poświadczeń aplikacji, zamiast próbować obejść ograniczenie delegacji.
+**Zasada:** eliminuję konieczność przekazywania poświadczeń aplikacji, zamiast próbować obejść ograniczenie delegacji.
