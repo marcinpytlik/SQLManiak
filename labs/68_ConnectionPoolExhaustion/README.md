@@ -33,3 +33,14 @@ Oczekiwania (hipotezy, nie wyniki pomiarów): baseline: ponowne użycie SPID; ex
 Zakończenie: `docker compose down` oraz `Remove-Item Env:LAB_PASSWORD`. Wersja obrazu jest ruchoma; do publikacji zapisz @@VERSION i digest obrazu oraz rzeczywistą wersję SqlClient z programu. Nie używaj na produkcji.
 
 Opcjonalny Extended Events: uruchom xe.sql przed eksperymentem, odczytaj ring_buffer według komentarza i usuń sesję po pomiarach. Zdarzenie login nie musi oznaczać nowego fizycznego połączenia; uwzględnij ponowne użycie SPID i dane DMV.
+
+## Automated experiments
+
+Run in PowerShell 7 with LAB_PASSWORD set and the container running:
+
+```powershell
+.\Invoke-Lab68.ps1 -Scenario blocking,rollback -XE
+.\Invoke-Lab68.ps1 -Scenario exhaustion -Counters -XE
+```
+
+Install dotnet-counters separately if needed. Logs are isolated by run timestamp and excluded from Git. XE is optional; login events may include cached logins, and reset evidence must be inspected rather than inferred. Counter collector output must be checked for completeness. The blocking test creates a uniquely named tempdb table, uses a separate nonpooled observer with READCOMMITTEDLOCK, and expects the read to wait until the owner connection is reused. The rollback control expects immediate read and value 0. Both are hypotheses until tested. Run scenarios serially, never on production. If interrupted, inspect remaining dbo.Lab68_* tables in the dedicated lab container.
