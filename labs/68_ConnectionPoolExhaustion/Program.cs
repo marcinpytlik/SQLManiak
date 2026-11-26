@@ -13,14 +13,23 @@ async Task Probe(bool expectFailure = false)
 {
     await using var db = new LabContext(options);
     var sw = Stopwatch.StartNew();
-    try
+    if (expectFailure)
     {
-        var spid = await db.Database.SqlQueryRaw<int>("SELECT CAST(@@SPID AS int) AS Value").SingleAsync();
-        Console.WriteLine($"{DateTime.UtcNow:O} SUCCESS SPID={spid} elapsed={sw.ElapsedMilliseconds}ms");
-        if (expectFailure) throw new Exception("Expected pool exhaustion but probe succeeded");
+        // Only classify an exception from opening the fourth connection
+        // in the controlled saturation experiment, not from executing SQL.
+        try
+        {
+            await db.Database.OpenConnectionAsync();
+        }
+        catch (InvalidOperationException ex) when (sw.Elapsed >= TimeSpan.FromSeconds(4))
+        {
+            Console.WriteLine($"{DateTime.UtcNow:O} EXPECTED TIMEOUT elapsed={sw.ElapsedMilliseconds}ms: {ex.Message}");
+            return;
+        }
+        throw new Exception("Expected pool exhaustion but opening the fourth connection succeeded");
     }
-    catch (InvalidOperationException ex) when (expectFailure && ex.Message.Contains("pool", StringComparison.OrdinalIgnoreCase))
-    { Console.WriteLine($"{DateTime.UtcNow:O} EXPECTED TIMEOUT elapsed={sw.ElapsedMilliseconds}ms: {ex.Message}"); }
+    var spid = await db.Database.SqlQueryRaw<int>("SELECT CAST(@@SPID AS int) AS Value").SingleAsync();
+    Console.WriteLine($"{DateTime.UtcNow:O} SUCCESS SPID={spid} elapsed={sw.ElapsedMilliseconds}ms");
 }
 if (mode == "baseline")
 {
@@ -45,7 +54,9 @@ else if (mode == "exhaustion")
         await Task.Delay(15000);
     }
     finally { foreach (var db in held) await db.DisposeAsync(); }
+    Console.WriteLine($"{DateTime.UtcNow:O} Held connections released; recovery probe");
     await Probe();
+    await Task.Delay(10000);
 }
 else
 {
